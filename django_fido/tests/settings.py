@@ -7,6 +7,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.auth',
+    'django.contrib.staticfiles',
     'django_fido',
 ]
 
@@ -18,3 +19,4 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 ]
+STATIC_URL = '/static/'

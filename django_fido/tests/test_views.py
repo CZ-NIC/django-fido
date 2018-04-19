@@ -1,12 +1,17 @@
 """Test `django_fido.views` module."""
 from __future__ import unicode_literals
 
+import json
+
 from django.contrib.auth import get_user_model
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase, override_settings
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 from django_fido.models import U2fDevice
 from django_fido.views import REGISTRATION_REQUEST_SESSION_KEY
+
+from .utils import TEMPLATES
 
 User = get_user_model()
 
@@ -63,3 +68,84 @@ class TestU2fRegistrationRequestView(TestCase):
         response_data = {'appId': 'http://testserver', 'registerRequests': u2f_request['registerRequests'],
                          'registeredKeys': [public_registered_key]}
         self.assertEqual(response.json(), response_data)
+
+
+@override_settings(ROOT_URLCONF='django_fido.tests.urls', TEMPLATES=TEMPLATES)
+class TestU2fRegistrationView(TestCase):
+    """Test `U2fRegistrationView` class."""
+
+    url = reverse_lazy('django_fido:registration')
+    u2f_request = {'appId': 'http://testserver', 'registeredKeys': [],
+                   'registerRequests': [{'challenge': 'Listers_underpants', 'version': 'U2F_V2'}]}
+    u2f_response = {
+        'registrationData': ('BQR4cOSm5qgX1VDRogGXslsVW6wbVI04ccE3g3D5nBvITulx8ad26J6fzhFR5A-tNYUzCB-nEXmC1dagSMidDXiFQ'
+                             'ImCDvzeNu-hzQ_1-SFfEj-xYvW0HMXSHjh7tq_cH-0bhbqfcsAfl8FNfGJGNAlrB_O9Pqm2XcO6uSbs8hOBqkEwgg'
+                             'JEMIIBLqADAgECAgR4wN8OMAsGCSqGSIb3DQEBCzAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWF'
+                             'sIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowKjEoMCYGA1UEAwwfWXViaWNvIFUy'
+                             'RiBFRSBTZXJpYWwgMjAyNTkwNTkzNDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLW4cVyD_f4OoVxFd6yFjfSMF'
+                             '2_eh53K9Lg9QNMg8m-t5iX89_XIr9g1GPjbniHsCDsYRYDHF-xKRwuWim-6P2-jOzA5MCIGCSsGAQQBgsQKAgQVMS'
+                             '4zLjYuMS40LjEuNDE0ODIuMS4xMBMGCysGAQQBguUcAgEBBAQDAgUgMAsGCSqGSIb3DQEBCwOCAQEAPvar9kqRawv'
+                             '5lJON3JU04FRAAmhWeKcsQ6er5l2QZf9h9FHOijru2GaJ0ZC5UK8AelTRMe7wb-JrTqe7PjK3kgWl36dgBDRT40r4'
+                             'RMN81KhfjFwthw4KKLK37UQCQf2zeSsgdrDhivqbQy7u_CZYugkFxBskqTxuyLum1W8z6NZT189r1QFUVaJll0D33'
+                             'MUcwDFgnNA-ps3pOZ7KCHYykHY_tMjQD1aQaaElSQBq67BqIaIU5JmYN7Qp6B1-VtM6VJLdOhYcgpOVQIGqfu90nD'
+                             'pWPb3X26OVzEc-RGltQZGFwkN6yDrAZMHL5HIn_3obd8fV6gw2fUX2ML2ZjVmybjBEAiBTOUwY12wm2TrRMsAs-EK'
+                             'PacouX_X7bOEz6vnLk03JtAIgaqR9H4lOx4JBeQb-xwLPz1shKfxwD1pVY67X-m8ACEI'),
+        'clientData': ('eyAiY2hhbGxlbmdlIjogIkxpc3RlcnNfdW5kZXJwYW50cyIsICJvcmlnaW4iOiAiaHR0cDpcL1wvbW9qZWlkLnZ6aW1hIiw'
+                       'gInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCIgfQ'),
+        'version': 'U2F_V2'}
+
+    def test_anonymous(self):
+        with self.settings(LOGIN_URL='/login/'):
+            response = self.client.get(self.url)
+
+        self.assertRedirects(response, '/login/?next={}'.format(self.url), fetch_redirect_response=False)
+
+    def test_get(self):
+        user = User.objects.create_user('kryten')
+        self.client.force_login(user)
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'Register U2F key')
+
+    def test_post(self):
+        user = User.objects.create_user('kryten')
+        self.client.force_login(user)
+        session = self.client.session
+        session[REGISTRATION_REQUEST_SESSION_KEY] = self.u2f_request
+        session.save()
+
+        response = self.client.post(self.url, {'u2f_response': json.dumps(self.u2f_response)})
+
+        self.assertRedirects(response, reverse('django_fido:registration_done'))
+        queryset = U2fDevice.objects.values_list('user__pk', 'version', 'key_handle', 'public_key', 'app_id',
+                                                 'raw_transports')
+        key_data = (user.pk, 'U2F_V2',
+                    'iYIO_N4276HND_X5IV8SP7Fi9bQcxdIeOHu2r9wf7RuFup9ywB-XwU18YkY0CWsH870-qbZdw7q5JuzyE4GqQQ',
+                    'BHhw5KbmqBfVUNGiAZeyWxVbrBtUjThxwTeDcPmcG8hO6XHxp3bonp_OEVHkD601hTMIH6cReYLV1qBIyJ0NeIU',
+                    'http://testserver', 'usb')
+        self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
+        self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
+
+    def test_post_no_session(self):
+        user = User.objects.create_user('kryten')
+        self.client.force_login(user)
+
+        response = self.client.post(self.url, {'u2f_response': 'null'})
+
+        self.assertContains(response, 'Register U2F key')
+        self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration request not found.']})
+        self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
+
+    def test_post_invalid_response(self):
+        user = User.objects.create_user('kryten')
+        self.client.force_login(user)
+        session = self.client.session
+        session[REGISTRATION_REQUEST_SESSION_KEY] = self.u2f_request
+        session.save()
+
+        response = self.client.post(self.url, {'u2f_response': 'null'})
+
+        self.assertContains(response, 'Register U2F key')
+        self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration failed.']})
+        self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
