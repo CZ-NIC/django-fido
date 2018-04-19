@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 import django_fido
 
-INSTALL_REQUIRES = ['Django>=1.11']
+INSTALL_REQUIRES = ['Django>=1.11', 'python-u2flib-server>=5', 'six']
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle'],
                   'test': ['mock']}
 
