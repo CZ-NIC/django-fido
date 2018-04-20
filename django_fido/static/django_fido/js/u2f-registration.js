@@ -2,6 +2,7 @@ U2F_FORM_ID = 'django-fido-u2f-form'
 U2F_ERROR_LIST_ID = 'django-fido-u2f-errors'
 // U2F request identifiers - shared between code and JS
 U2F_REGISTRATION_REQUEST = 'registration'
+U2F_AUTHENTICATION_REQUEST = 'authentication'
 // Timeout for the U2F request
 U2F_TIMEOUT = 30
 
@@ -34,6 +35,13 @@ function u2fRegistrationRequestCallback() {
     };
 }
 
+function u2fAuthenticationRequestCallback() {
+    if (this.readyState == 4 && this.status == 200) {
+        var u2f_request = JSON.parse(this.responseText);
+        u2f.sign(u2f_request.appId, u2f_request.challenge, u2f_request.registeredKeys, u2fResponseCallback, U2F_TIMEOUT);
+    };
+}
+
 function processU2fRequest(url, callback) {
     var http_request = new XMLHttpRequest();
     http_request.onreadystatechange = callback;
@@ -51,7 +59,9 @@ function startU2f() {
         addU2fError("U2F is not available");
         return
     };
-    if (form.dataset.mode == U2F_REGISTRATION_REQUEST) {
+    if (form.dataset.mode == U2F_AUTHENTICATION_REQUEST) {
+        processU2fRequest(form.dataset.url, u2fAuthenticationRequestCallback);
+    } else if (form.dataset.mode == U2F_REGISTRATION_REQUEST) {
         processU2fRequest(form.dataset.url, u2fRegistrationRequestCallback);
     } else {
         addU2fError("Unknown U2F request.");
