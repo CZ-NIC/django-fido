@@ -9,7 +9,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
 
 from django_fido.models import U2fDevice
-from django_fido.views import REGISTRATION_REQUEST_SESSION_KEY
+from django_fido.views import (AUTHENTICATION_REQUEST_SESSION_KEY, AUTHENTICATION_USER_SESSION_KEY,
+                               REGISTRATION_REQUEST_SESSION_KEY)
 
 from .utils import TEMPLATES
 
@@ -149,3 +150,54 @@ class TestU2fRegistrationView(TestCase):
         self.assertContains(response, 'Register U2F key')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration failed.']})
         self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
+
+
+@override_settings(ROOT_URLCONF='django_fido.tests.urls')
+class TestU2fAuthenticationRequestView(TestCase):
+    """Test `U2fAuthenticationRequestView` class."""
+
+    url = reverse_lazy('django_fido:u2f_authentication_request')
+    session_key = AUTHENTICATION_REQUEST_SESSION_KEY
+
+    def test_no_user(self):
+        with self.settings(LOGIN_URL='/login/'):
+            response = self.client.get(self.url)
+
+        self.assertRedirects(response, '/login/', fetch_redirect_response=False)
+
+    def test_get(self):
+        user = User.objects.create_user('kryten')
+        U2fDevice.objects.create(user=user, version='42', key_handle='Left nipple', public_key='Yes', app_id='FM Radio',
+                                 transports=['ble'])
+        session = self.client.session
+        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session.save()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        # Check request structure
+        u2f_request = self.client.session[self.session_key]
+        self.assertEqual(u2f_request['appId'], 'http://testserver')
+        registered_key = {'keyHandle': 'Left nipple', 'publicKey': 'Yes', 'appId': 'FM Radio', 'version': '42',
+                          'transports': ['ble']}
+        self.assertEqual(u2f_request['registeredKeys'], [registered_key])
+        self.assertIn('challenge', u2f_request)
+        # Check response contains the same request as session (except for the public key).
+        public_registered_key = {'keyHandle': 'Left nipple', 'appId': 'FM Radio', 'version': '42',
+                                 'transports': ['ble']}
+        response_data = {'appId': 'http://testserver', 'registeredKeys': [public_registered_key],
+                         'challenge': u2f_request['challenge']}
+        self.assertEqual(response.json(), response_data)
+
+    def test_get_no_keys(self):
+        user = User.objects.create_user('kryten')
+        session = self.client.session
+        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session.save()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'error': "Can't create U2F request: Must have at least one RegisteredKey"})
+        self.assertNotIn(self.session_key, self.client.session)

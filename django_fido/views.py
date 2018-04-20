@@ -5,8 +5,11 @@ import logging
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.six import with_metaclass
@@ -16,7 +19,8 @@ from six.moves import http_client
 from six.moves.urllib.parse import urlsplit, urlunsplit
 from u2flib_server import u2f
 
-from .constants import REGISTRATION_REQUEST_SESSION_KEY, U2F_REGISTRATION_REQUEST
+from .constants import (AUTHENTICATION_REQUEST_SESSION_KEY, AUTHENTICATION_USER_SESSION_KEY,
+                        REGISTRATION_REQUEST_SESSION_KEY, U2F_REGISTRATION_REQUEST)
 from .forms import U2fResponseForm
 from .models import U2fDevice
 
@@ -123,3 +127,36 @@ class U2fRegistrationView(LoginRequiredMixin, FormView):
             user=self.request.user, version=device['version'], key_handle=device['keyHandle'],
             public_key=device['publicKey'], app_id=device['appId'], transports=device['transports'])
         return super(U2fRegistrationView, self).form_valid(form)
+
+
+class U2fAuthenticationViewMixin(object):
+    """
+    Mixin for U2F authentication views.
+
+    Ensure user to be authenticated exists.
+    """
+
+    def get_user(self):
+        """
+        Return user which is to be authenticated.
+
+        Return None, if no user could be found.
+        """
+        user_pk = self.request.session.get(AUTHENTICATION_USER_SESSION_KEY)
+        if user_pk is None:
+            return None
+        return get_user_model().objects.get(pk=user_pk)
+
+    def dispatch(self, request, *args, **kwargs):
+        """Redirect to login, if user couldn't be found."""
+        user = self.get_user()
+        if user is None or not user.is_authenticated:
+            return redirect(settings.LOGIN_URL)
+        return super(U2fAuthenticationViewMixin, self).dispatch(request, *args, **kwargs)
+
+
+class U2fAuthenticationRequestView(U2fAuthenticationViewMixin, BaseU2fRequestView):
+    """Returns authentication request and stores it in session."""
+
+    session_key = AUTHENTICATION_REQUEST_SESSION_KEY
+    u2f_request_factory = staticmethod(u2f.begin_authentication)
