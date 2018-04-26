@@ -5,8 +5,12 @@ import logging
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.six import with_metaclass
@@ -16,7 +20,8 @@ from six.moves import http_client
 from six.moves.urllib.parse import urlsplit, urlunsplit
 from u2flib_server import u2f
 
-from .constants import REGISTRATION_REQUEST_SESSION_KEY, U2F_REGISTRATION_REQUEST
+from .constants import (AUTHENTICATION_REQUEST_SESSION_KEY, AUTHENTICATION_USER_SESSION_KEY,
+                        REGISTRATION_REQUEST_SESSION_KEY, U2F_AUTHENTICATION_REQUEST, U2F_REGISTRATION_REQUEST)
 from .forms import U2fResponseForm
 from .models import U2fDevice
 
@@ -123,3 +128,81 @@ class U2fRegistrationView(LoginRequiredMixin, FormView):
             user=self.request.user, version=device['version'], key_handle=device['keyHandle'],
             public_key=device['publicKey'], app_id=device['appId'], transports=device['transports'])
         return super(U2fRegistrationView, self).form_valid(form)
+
+
+class U2fAuthenticationViewMixin(object):
+    """
+    Mixin for U2F authentication views.
+
+    Ensure user to be authenticated exists.
+    """
+
+    def get_user(self):
+        """
+        Return user which is to be authenticated.
+
+        Return None, if no user could be found.
+        """
+        user_pk = self.request.session.get(AUTHENTICATION_USER_SESSION_KEY)
+        if user_pk is None:
+            return None
+        return get_user_model().objects.get(pk=user_pk)
+
+    def dispatch(self, request, *args, **kwargs):
+        """Redirect to login, if user couldn't be found."""
+        user = self.get_user()
+        if user is None or not user.is_authenticated:
+            return redirect(settings.LOGIN_URL)
+        return super(U2fAuthenticationViewMixin, self).dispatch(request, *args, **kwargs)
+
+
+class U2fAuthenticationRequestView(U2fAuthenticationViewMixin, BaseU2fRequestView):
+    """Returns authentication request and stores it in session."""
+
+    session_key = AUTHENTICATION_REQUEST_SESSION_KEY
+    u2f_request_factory = staticmethod(u2f.begin_authentication)
+
+
+class U2fAuthenticationView(U2fAuthenticationViewMixin, LoginView):
+    """
+    View to authenticate U2F key.
+
+    @cvar title: View title.
+    @cvar u2f_request_url: URL at which an U2F request is provided.
+    @cvar u2f_request_type: U2F request type
+    """
+
+    form_class = U2fResponseForm
+    template_name = 'django_fido/u2f_form.html'
+
+    title = _("Authenticate U2F key")
+    u2f_request_url = reverse_lazy('django_fido:u2f_authentication_request')
+    u2f_request_type = U2F_AUTHENTICATION_REQUEST
+
+    def get_form_kwargs(self):
+        """Return form arguments - exclude request."""
+        kwargs = super(U2fAuthenticationView, self).get_form_kwargs()
+        # U2fResponseForm doesn't accept request.
+        kwargs.pop('request', None)
+        return kwargs
+
+    def form_valid(self, form):
+        """Complete the registration process."""
+        u2f_request = self.request.session.pop(AUTHENTICATION_REQUEST_SESSION_KEY, None)
+        if u2f_request is None:
+            form.add_error(None, _('Authentication request not found.'))
+            return self.form_invalid(form)
+
+        u2f_response = form.cleaned_data['u2f_response']
+
+        user = authenticate(request=self.request, user=self.get_user(), u2f_request=u2f_request,
+                            u2f_response=u2f_response)
+        if user is None:
+            form.add_error(None, _('Authentication failed.'))
+            return self.form_invalid(form)
+
+        login(self.request, user)
+        # Ensure user is deleted from session.
+        self.request.session.pop(AUTHENTICATION_USER_SESSION_KEY, None)
+
+        return redirect(self.get_success_url())
