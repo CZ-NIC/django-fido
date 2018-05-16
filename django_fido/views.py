@@ -63,7 +63,7 @@ class BaseU2fRequestView(with_metaclass(ABCMeta, View)):
         except ValueError as error:
             raise ValueError("Can't create U2F request: {}".format(error))
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         """Return JSON with U2F request."""
         try:
             u2f_request = self.create_u2f_request()
