@@ -31,7 +31,7 @@ Django-fido provides basic components for authentication using FIDO U2F - model 
        ]
 
 ## Changes ##
-See [changelog](https://github.com/ziima/django-fido/blob/readme/CHANGELOG.md).
+See [changelog](https://github.com/ziima/django-fido/blob/master/CHANGELOG.md).
 
 ## Testing ##
 Use `tox` to run tests
@@ -40,4 +40,4 @@ Use `tox` to run tests
 
 ## License ##
 
-See [LICENSE](https://github.com/ziima/django-fido/blob/readme/LICENSE).
+See [LICENSE](https://github.com/ziima/django-fido/blob/master/LICENSE).
