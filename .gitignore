@@ -49,6 +49,8 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+# C locales generated for msgcmp
+/django_fido/locale/C/LC_MESSAGES/*.po
 
 # Django stuff:
 *.log

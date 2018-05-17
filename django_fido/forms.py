@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 class U2fResponseForm(forms.Form):
     """Form for U2F responses."""
 
-    u2f_response = forms.CharField(error_messages={'required': _("Registration wasn't complete.")},
+    u2f_response = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
                                    widget=forms.HiddenInput)
 
     class Media:

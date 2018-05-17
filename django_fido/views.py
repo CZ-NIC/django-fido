@@ -104,7 +104,7 @@ class U2fRegistrationView(LoginRequiredMixin, FormView):
     template_name = 'django_fido/u2f_form.html'
     success_url = reverse_lazy('django_fido:registration_done')
 
-    title = _("Register U2F key")
+    title = _("Register Universal 2nd Factor (U2F) key")
     u2f_request_url = reverse_lazy('django_fido:u2f_registration_request')
     u2f_request_type = U2F_REGISTRATION_REQUEST
 
@@ -175,7 +175,7 @@ class U2fAuthenticationView(U2fAuthenticationViewMixin, LoginView):
     form_class = U2fResponseForm
     template_name = 'django_fido/u2f_form.html'
 
-    title = _("Authenticate U2F key")
+    title = _("Authenticate Universal 2nd Factor (U2F) key")
     u2f_request_url = reverse_lazy('django_fido:u2f_authentication_request')
     u2f_request_type = U2F_AUTHENTICATION_REQUEST
 
