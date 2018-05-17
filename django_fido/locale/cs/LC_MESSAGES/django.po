@@ -1,0 +1,63 @@
+# This file is distributed under the same license as the django-fido package.
+msgid ""
+msgstr ""
+"Project-Id-Version: django-fido\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-05-17 16:01+0200\n"
+"Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+msgid "Authenticate Universal 2nd Factor (U2F) key"
+msgstr "Přihlásit se s univerzálním 2. faktorem (U2F)"
+
+msgid "Authentication failed."
+msgstr "Přihlášení selhalo."
+
+msgid "Authentication request not found."
+msgstr "Požadavek na přihlášení nenalezen."
+
+msgid "Bluetooth Classic (Bluetooth BR/EDR)"
+msgstr "Klasický bluetooth (Bluetooth BR/EDR)"
+
+msgid "Bluetooth Low Energy (Bluetooth Smart)"
+msgstr "Nízkoenergetický bluetooth (Bluetooth smart)"
+
+msgid "Counter of the U2F device decreased. Device may have been duplicated."
+msgstr ""
+"U2F zařízení vrátilo nižší hodnotu počítadla přihlášení. Zařízení mohlo být "
+"zduplikováno."
+
+msgid "Near-Field Communications"
+msgstr "Bezkontaktní komunikace (NFC)"
+
+msgid "Non-removable USB HID"
+msgstr "Neodstanitelné USB zařízení"
+
+msgid "Operation wasn't completed."
+msgstr "Operace nebyla dokončena."
+
+msgid "Register Universal 2nd Factor (U2F) key"
+msgstr "Zaregistrovat univerzální 2. faktor (U2F)"
+
+msgid "Registration done"
+msgstr "Registrace dokončena"
+
+msgid "Registration failed."
+msgstr "Registrace selhala."
+
+msgid "Registration request not found."
+msgstr "Registrační požadavek nenalezen."
+
+#, python-format
+msgid "Select a valid choice. %(value)s is not one of the available choices."
+msgstr "Vyberte platnou možnost, \"%(value)s\" není k dispozici."
+
+msgid "U2F response is malformed."
+msgstr "Chybná odpověd z U2F zařízení."
+
+msgid "USB HID"
+msgstr "USB zařízení"

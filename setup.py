@@ -1,7 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Setup script for django_fido."""
+from __future__ import unicode_literals
+
+from distutils.command.build import build
+
 from setuptools import find_packages, setup
+from setuptools.command.sdist import sdist
 
 import django_fido
 
@@ -24,8 +29,22 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Security :: Cryptography',
                'Topic :: Software Development :: Libraries :: Python Modules']
 INSTALL_REQUIRES = ['Django>=1.11', 'python-u2flib-server>=5', 'six']
-EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle'],
+EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'polint'],
                   'test': ['mock']}
+
+
+class custom_build(build):
+
+    sub_commands = [('compile_catalog', lambda x: True)] + build.sub_commands
+
+
+class custom_sdist(sdist):
+
+    def run(self):
+        self.run_command('compile_catalog')
+        # sdist is an old style class so super cannot be used.
+        sdist.run(self)
+
 
 setup(name='django-fido',
       version=django_fido.__version__,
@@ -37,7 +56,9 @@ setup(name='django-fido',
       url='https://github.com/ziima/django-fido',
       packages=find_packages(),
       python_requires='>=2.7',
+      setup_requires=['Babel >=2.3'],
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       keywords=['django', 'fido', 'u2f'],
-      classifiers=CLASSIFIERS)
+      classifiers=CLASSIFIERS,
+      cmdclass={'build': custom_build, 'sdist': custom_sdist})

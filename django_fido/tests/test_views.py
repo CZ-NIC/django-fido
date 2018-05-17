@@ -107,7 +107,7 @@ class TestU2fRegistrationView(TestCase):
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, 'Register U2F key')
+        self.assertContains(response, 'Register Universal 2nd Factor (U2F) key')
 
     def test_post(self):
         user = User.objects.create_user('kryten')
@@ -134,7 +134,7 @@ class TestU2fRegistrationView(TestCase):
 
         response = self.client.post(self.url, {'u2f_response': 'null'})
 
-        self.assertContains(response, 'Register U2F key')
+        self.assertContains(response, 'Register Universal 2nd Factor (U2F) key')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration request not found.']})
         self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
 
@@ -147,7 +147,7 @@ class TestU2fRegistrationView(TestCase):
 
         response = self.client.post(self.url, {'u2f_response': 'null'})
 
-        self.assertContains(response, 'Register U2F key')
+        self.assertContains(response, 'Register Universal 2nd Factor (U2F) key')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration failed.']})
         self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
 
@@ -238,7 +238,7 @@ class TestU2fAuthenticationView(TestCase):
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, 'Authenticate U2F key')
+        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
 
     def test_post(self):
         user = User.objects.create_user('kryten')
@@ -266,7 +266,7 @@ class TestU2fAuthenticationView(TestCase):
 
         response = self.client.post(self.url, {'u2f_response': 'null'})
 
-        self.assertContains(response, 'Authenticate U2F key')
+        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Authentication request not found.']})
         self.assertNotIn(AUTHENTICATION_REQUEST_SESSION_KEY, self.client.session)
         self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], user.pk)
@@ -281,7 +281,7 @@ class TestU2fAuthenticationView(TestCase):
 
         response = self.client.post(self.url, {'u2f_response': 'null'})
 
-        self.assertContains(response, 'Authenticate U2F key')
+        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Authentication failed.']})
         self.assertNotIn(AUTHENTICATION_REQUEST_SESSION_KEY, self.client.session)
         self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], user.pk)
