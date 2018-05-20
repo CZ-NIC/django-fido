@@ -4,7 +4,7 @@ class U2FRegistration {
         this.U2F_ERROR_LIST_ID = 'django-fido-u2f-errors';
         this.U2F_REGISTRATION_REQUEST = 'registration';
         this.U2F_AUTHENTICATION_REQUEST = 'authentication';
-        this.U2F_TIMEOUT = 5;
+        this.U2F_TIMEOUT = 30;
         this.U2F_ERROR_CODES = {
             1: gettext('An error occurred while processing U2F request'),
             2: gettext('U2F request cannot be processed.'),
