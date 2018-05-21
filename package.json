@@ -1,0 +1,59 @@
+{
+  "name": "django-fido-js",
+  "version": "1.0.0",
+  "description": "JavaScript environment for django-fido",
+  "author": "Vlastimil Zíma <vlastimil.zima@nic.cz>",
+  "license": "GPL-3.0",
+  "scripts": {
+    "check": "eslint django_fido/tests-js django_fido/static/django_fido/js/es6",
+    "build": "webpack",
+    "watch": "webpack-dev-server --watch",
+    "test": "ava",
+    "test-coverage": "nyc --all ava"
+  },
+  "devDependencies": {
+    "ava": "^0.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "browser-env": "^3.2.4",
+    "eslint": "^4.12.0",
+    "nyc": "^11.3.0",
+    "uglifyjs-webpack-plugin": "^1.1.6",
+    "webpack": "^3.8.1",
+    "webpack-dev-middleware": "^1.12.0",
+    "webpack-dev-server": "^2.9.4",
+    "ajv": "^5.0.0"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ],
+    "ignore": "django_fido/tests-js/**/*.js"
+  },
+  "ava": {
+    "files": [
+      "django_fido/tests-js/*.js"
+    ],
+    "source": [
+      "django_fido/static/django_fido/js/es6/*.js"
+    ],
+    "concurrency": 8,
+    "require": [
+      "babel-register",
+      "./django_fido/tests-js/helpers/setup-browser-env.js"
+    ]
+  },
+  "nyc": {
+    "include": [
+      "django_fido/static/django_fido/js/es6/**/*.js",
+      "django_fido/tests-js/**/*.js"
+    ],
+    "require": [
+      "babel-register"
+    ]
+  }
+}

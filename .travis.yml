@@ -1,13 +1,25 @@
-language: python
-sudo: false
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
+matrix:
+    include:
+      # Python part
+      - language: python
+        sudo: false
+        python:
+          - "2.7"
+          - "3.5"
+          - "3.6"
 
-install:
-  # tox-travis automatically splits the jobs
-  - pip install tox-travis
+        install:
+          # tox-travis automatically splits the jobs
+          - pip install tox-travis
 
-script:
-  - tox
+        script:
+          - tox
+
+      # Eslint in node JS
+      - language: node_js
+        sudo: false
+
+        script:
+          - npm run check
+          - npm run test
+          - npm run test-coverage -- --verbose
