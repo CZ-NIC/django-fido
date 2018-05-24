@@ -1,6 +1,8 @@
 """Models for storing keys."""
 from __future__ import unicode_literals
 
+import base64
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -54,6 +56,7 @@ class U2fDevice(models.Model):
      * public_key
      * app_id
      * raw_transports - comma separated list of transports
+     * attestation - Base64 encoded attestation certificate (X509 in DER format)
 
     Authentication fields:
      * counter
@@ -67,6 +70,7 @@ class U2fDevice(models.Model):
     public_key = models.TextField()
     app_id = models.TextField(blank=True, null=True, default=None)
     raw_transports = models.TextField(blank=True, null=True, default=None, validators=[TransportsValidator()])
+    attestation = models.TextField(blank=True, null=True, default=None)
 
     counter = models.PositiveIntegerField(default=0)
 
@@ -83,6 +87,24 @@ class U2fDevice(models.Model):
             self.raw_transports = None
         else:
             self.raw_transports = ','.join(value)
+
+    @property
+    def raw_attestation(self):
+        """Return attestation certificate in DER format.
+
+        @rtype: bytes
+        """
+        if self.attestation is None:
+            return None
+        return base64.b64decode(self.attestation)
+
+    @raw_attestation.setter
+    def raw_attestation(self, value):
+        if value is None:
+            self.attestation = None
+        else:
+            # Encode to base64 and the decode to six.text_type
+            self.attestation = base64.b64encode(value).decode('utf-8')
 
     def get_registered_key(self):
         """Return data for `RegisteredKey` structure.
