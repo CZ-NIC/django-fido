@@ -126,7 +126,8 @@ class U2fRegistrationView(LoginRequiredMixin, FormView):
 
         U2fDevice.objects.create(
             user=self.request.user, version=device['version'], key_handle=device['keyHandle'],
-            public_key=device['publicKey'], app_id=device['appId'], transports=device['transports'])
+            public_key=device['publicKey'], app_id=device['appId'], transports=device['transports'],
+            raw_attestation=attestation_cert)
         return super(U2fRegistrationView, self).form_valid(form)
 
 

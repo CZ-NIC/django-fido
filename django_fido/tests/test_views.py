@@ -95,6 +95,16 @@ class TestU2fRegistrationView(TestCase):
                        'gInR5cCI6ICJuYXZpZ2F0b3IuaWQuZmluaXNoRW5yb2xsbWVudCIgfQ'),
         'version': 'U2F_V2'}
 
+    attestation = (
+        'MIICRDCCAS6gAwIBAgIEeMDfDjALBgkqhkiG9w0BAQswLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIB'
+        'cNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMCoxKDAmBgNVBAMMH1l1YmljbyBVMkYgRUUgU2VyaWFsIDIwMjU5MDU5MzQwWTATBgcq'
+        'hkjOPQIBBggqhkjOPQMBBwNCAAS1uHFcg/3+DqFcRXeshY30jBdv3oedyvS4PUDTIPJvreYl/Pf1yK/YNRj4254h7Ag7GEWAxxfsSkcLlopvuj'
+        '9vozswOTAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuMTATBgsrBgEEAYLlHAIBAQQEAwIFIDALBgkqhkiG9w0BAQsDggEBAD72'
+        'q/ZKkWsL+ZSTjdyVNOBUQAJoVninLEOnq+ZdkGX/YfRRzoo67thmidGQuVCvAHpU0THu8G/ia06nuz4yt5IFpd+nYAQ0U+NK+ETDfNSoX4xcLY'
+        'cOCiiyt+1EAkH9s3krIHaw4Yr6m0Mu7vwmWLoJBcQbJKk8bsi7ptVvM+jWU9fPa9UBVFWiZZdA99zFHMAxYJzQPqbN6Tmeygh2MpB2P7TI0A9W'
+        'kGmhJUkAauuwaiGiFOSZmDe0KegdflbTOlSS3ToWHIKTlUCBqn7vdJw6Vj2919ujlcxHPkRpbUGRhcJDesg6wGTBy+RyJ/96G3fH1eoMNn1F9j'
+        'C9mY1Zsm4=')
+
     def test_anonymous(self):
         with self.settings(LOGIN_URL='/login/'):
             response = self.client.get(self.url)
@@ -120,11 +130,11 @@ class TestU2fRegistrationView(TestCase):
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
         queryset = U2fDevice.objects.values_list('user__pk', 'version', 'key_handle', 'public_key', 'app_id',
-                                                 'raw_transports')
+                                                 'raw_transports', 'attestation')
         key_data = (user.pk, 'U2F_V2',
                     'iYIO_N4276HND_X5IV8SP7Fi9bQcxdIeOHu2r9wf7RuFup9ywB-XwU18YkY0CWsH870-qbZdw7q5JuzyE4GqQQ',
                     'BHhw5KbmqBfVUNGiAZeyWxVbrBtUjThxwTeDcPmcG8hO6XHxp3bonp_OEVHkD601hTMIH6cReYLV1qBIyJ0NeIU',
-                    'http://testserver', 'usb')
+                    'http://testserver', 'usb', self.attestation)
         self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
         self.assertNotIn(REGISTRATION_REQUEST_SESSION_KEY, self.client.session)
 
