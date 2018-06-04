@@ -6,6 +6,16 @@ U2F_AUTHENTICATION_REQUEST = 'authentication'
 // Timeout for the U2F request
 U2F_TIMEOUT = 30
 
+// Error messages
+if (typeof(gettext) === "undefined") {
+    gettext = function(msg) {
+        return msg;
+    };
+}
+U2F_ERROR_MESSAGES = {
+    4: gettext("Connected device can't process the request."),
+    5: gettext('Time for authentication run out.')
+};
 
 function addU2fError(message) {
     var error_list = document.getElementById(U2F_ERROR_LIST_ID);
@@ -20,7 +30,15 @@ function isU2fAvailabile() {
 
 function u2fResponseCallback(u2f_response) {
     if (u2f_response.errorCode) {
-        addU2fError('An error ' + u2f_response.errorCode + ' occured.');
+        error_msg = U2F_ERROR_MESSAGES[u2f_response.errorCode];
+        if (error_msg === undefined) {
+            if (u2f_response.errorMessage) {
+                error_msg = gettext('Request failed with error ') + u2f_response.errorMessage + gettext(' (error code ') + u2f_response.errorCode + ').';
+            } else {
+                error_msg = gettext('Request failed with error ') + u2f_response.errorCode + '.';
+            };
+        };
+        addU2fError(error_msg);
         return
     }
     var form = document.getElementById(U2F_FORM_ID);
