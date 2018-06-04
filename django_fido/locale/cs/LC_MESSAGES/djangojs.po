@@ -1,0 +1,24 @@
+# This file is distributed under the same license as the django-fido package.
+msgid ""
+msgstr ""
+"Project-Id-Version: django-fido-js\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-06-04 14:11+0200\n"
+"Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+msgid " (error code "
+msgstr " (kód chyby "
+
+msgid "Connected device can't process the request."
+msgstr "Připojené zařízení nemůže zpracovat požadavek."
+
+msgid "Request failed with error "
+msgstr "Požadavek selhal s chybou "
+
+msgid "Time for authentication run out."
+msgstr "Čas na přihlášení vypršel."
