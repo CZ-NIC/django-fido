@@ -1,5 +1,9 @@
 # Changelog #
 
+## 0.4 ##
+ * Update JS messages.
+ * Drop unused `polint` environment in tox.
+
 ## 0.3 ##
  * Store attestation certificate in database #6
  * Install package data #7
