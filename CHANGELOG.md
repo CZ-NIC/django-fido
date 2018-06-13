@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.5 ##
+ * Fix JS translation lazynes
+
 ## 0.4 ##
  * Update JS messages.
  * Drop unused `polint` environment in tox.

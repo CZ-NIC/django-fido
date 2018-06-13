@@ -1,3 +1,3 @@
 """Django application for FIDO protocol U2F."""
 
-__version__ = '0.4'
+__version__ = '0.5'
