@@ -13,8 +13,8 @@ if (typeof(gettext) === "undefined") {
     };
 }
 U2F_ERROR_MESSAGES = {
-    4: gettext("Connected device can't process the request."),
-    5: gettext('Time for authentication run out.')
+    4: "Connected device can't process the request.",
+    5: 'Time for authentication run out.'
 };
 
 function addU2fError(message) {
@@ -30,7 +30,7 @@ function isU2fAvailabile() {
 
 function u2fResponseCallback(u2f_response) {
     if (u2f_response.errorCode) {
-        error_msg = U2F_ERROR_MESSAGES[u2f_response.errorCode];
+        error_msg = gettext(U2F_ERROR_MESSAGES[u2f_response.errorCode]);
         if (error_msg === undefined) {
             if (u2f_response.errorMessage) {
                 error_msg = gettext('Request failed with error ') + u2f_response.errorMessage + gettext(' (error code ') + u2f_response.errorCode + ').';
