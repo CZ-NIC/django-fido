@@ -1,7 +1,7 @@
 # django-fido #
 
-[![Build Status](https://travis-ci.org/ziima/django-fido.svg?branch=master)](https://travis-ci.org/ziima/django-fido)
-[![codecov](https://codecov.io/gh/ziima/django-fido/branch/master/graph/badge.svg)](https://codecov.io/gh/ziima/django-fido)
+[![Build Status](https://travis-ci.org/CZ-NIC/django-fido.svg?branch=master)](https://travis-ci.org/CZ-NIC/django-fido)
+[![codecov](https://codecov.io/gh/CZ-NIC/django-fido/branch/master/graph/badge.svg)](https://codecov.io/gh/CZ-NIC/django-fido)
 
 > Django application for FIDO protocol U2F
 
@@ -31,7 +31,7 @@ Django-fido provides basic components for authentication using FIDO U2F - model 
        ]
 
 ## Changes ##
-See [changelog](https://github.com/ziima/django-fido/blob/master/CHANGELOG.md).
+See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).
 
 ## Testing ##
 Use `tox` to run tests
@@ -40,4 +40,4 @@ Use `tox` to run tests
 
 ## License ##
 
-See [LICENSE](https://github.com/ziima/django-fido/blob/master/LICENSE).
+See [LICENSE](https://github.com/CZ-NIC/django-fido/blob/master/LICENSE).
