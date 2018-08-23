@@ -9,6 +9,7 @@ from django.db import models
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
+from fido2.ctap2 import AttestedCredentialData
 
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
 TRANSPORT_CHOICES = (
@@ -119,3 +120,27 @@ class U2fDevice(models.Model):
             # Avoid bug in python-u2flib-server - https://github.com/Yubico/python-u2flib-server/issues/45
             'publicKey': self.public_key,
         }
+
+
+class Authenticator(models.Model):
+    """Represents a registered FIDO2 authenticator.
+
+    Autheticator fields, see https://www.w3.org/TR/webauthn/#sec-authenticator-data
+     * credential_data - base64 encoded attested credential data
+     * counter
+    """
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='authenticators', on_delete=models.CASCADE)
+    create_datetime = models.DateTimeField(auto_now_add=True)
+
+    credential_data = models.TextField()
+    counter = models.PositiveIntegerField(default=0)
+
+    @property
+    def credential(self) -> AttestedCredentialData:
+        """Return AttestedCredentialData object."""
+        return AttestedCredentialData(base64.b64decode(self.credential_data))
+
+    @credential.setter
+    def credential(self, value: AttestedCredentialData):
+        self.credential_data = base64.b64encode(value).decode('utf-8')

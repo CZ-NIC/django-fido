@@ -1,13 +1,18 @@
 """Test `django_fido.models`."""
 from __future__ import unicode_literals
 
+import base64
 from typing import List, Optional, Tuple
 
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
+from fido2.cose import ES256
+from fido2.ctap2 import AttestedCredentialData
 from mock import sentinel
 
-from django_fido.models import TransportsValidator, U2fDevice
+from django_fido.models import Authenticator, TransportsValidator, U2fDevice
+
+from .data import CREDENTIAL_DATA, CREDENTIAL_ID
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -112,3 +117,21 @@ class TestU2fDevice(SimpleTestCase):
                            'version': sentinel.version,
                            'transports': ['usb', 'nfs']}
         self.assertEqual(u2f_key.get_registered_key(), retgistered_key)
+
+
+class TestAuthenticator(SimpleTestCase):
+    """Test `Authenticator` model."""
+
+    def test_credential_getter(self):
+        authenticator = Authenticator(credential_data=CREDENTIAL_DATA)
+
+        self.assertEqual(authenticator.credential.aaguid, b'\0' * 16)
+        self.assertEqual(authenticator.credential.credential_id, base64.b64decode(CREDENTIAL_ID))
+        self.assertIsInstance(authenticator.credential.public_key, ES256)
+
+    def test_credential_setter(self):
+        authenticator = Authenticator()
+
+        authenticator.credential = AttestedCredentialData(base64.b64decode(CREDENTIAL_DATA))
+
+        authenticator.credential_data = CREDENTIAL_DATA
