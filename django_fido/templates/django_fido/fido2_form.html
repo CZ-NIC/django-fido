@@ -1,0 +1,16 @@
+{% extends base_template|default:"django_fido/base.html" %}
+{% load staticfiles %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+    <form method="post" id="django-fido-form" data-mode="{{ view.fido2_request_type }}" data-url="{{ view.fido2_request_url }}">
+        <ul id="django-fido-errors">
+        </ul>
+        {% csrf_token %}
+        {{ form }}
+    </form>
+{% endblock %}

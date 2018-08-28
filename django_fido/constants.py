@@ -1,6 +1,8 @@
 """
 Django FIDO constants.
 
+Session key to store FIDO2 requests: FIDO2_REQUEST_SESSION_KEY
+
 Session keys to store U2F requests:
  * REGISTRATION_REQUEST_SESSION_KEY
  * AUTHENTICATION_REQUEST_SESSION_KEY
@@ -14,6 +16,8 @@ U2F request type identifiers:
 These are shared between code and JS.
 """
 from __future__ import unicode_literals
+
+FIDO2_REQUEST_SESSION_KEY = 'fido2_request'
 
 REGISTRATION_REQUEST_SESSION_KEY = 'fido_u2f_registration_request'
 AUTHENTICATION_REQUEST_SESSION_KEY = 'fido_u2f_authentication_request'

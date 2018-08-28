@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-fido-js\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-06-04 14:11+0200\n"
+"POT-Creation-Date: 2019-05-07 14:50+0200\n"
 "Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -17,8 +17,14 @@ msgstr " (kód chyby "
 msgid "Connected device can't process the request."
 msgstr "Připojené zařízení nemůže zpracovat požadavek."
 
+msgid "FIDO 2 is not available."
+msgstr "FIDO 2 není dostupné."
+
 msgid "Request failed with error "
 msgstr "Požadavek selhal s chybou "
 
 msgid "Time for authentication run out."
 msgstr "Čas na přihlášení vypršel."
+
+msgid "Unknown FIDO 2 request."
+msgstr "Neznámý FIDO 2 požadavek."
