@@ -15,7 +15,7 @@ Django-fido provides basic components for authentication using FIDO U2F - model 
 - [License](#license)
 
 ## Dependencies ##
- * Python 2.7 or 3.5 and higher
+ * Python 3.5 and higher
  * Django >= 1.11
  * python-u2flib-server
  * python-six
