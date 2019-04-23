@@ -28,7 +28,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Security :: Cryptography',
                'Topic :: Software Development :: Libraries :: Python Modules']
 INSTALL_REQUIRES = ['Django>=1.11', 'python-u2flib-server>=5', 'six']
-EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'polint'],
+EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock']}
 
 

@@ -1,6 +1,8 @@
 """Test `django_fido.models`."""
 from __future__ import unicode_literals
 
+from typing import List, Optional, Tuple
+
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from mock import sentinel
@@ -71,7 +73,7 @@ class TestU2fDevice(SimpleTestCase):
         (None, []),
         ('usb', ['usb']),
         ('bt,ble', ['bt', 'ble']),
-    )
+    )  # type: Tuple[Tuple[Optional[str], List[str]], ...]
 
     def test_transports_getter(self):
         for raw, full in self.transport_values:
