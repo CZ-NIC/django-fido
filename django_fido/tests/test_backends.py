@@ -15,8 +15,8 @@ from mock import sentinel
 from django_fido.backends import Fido2AuthenticationBackend
 from django_fido.models import Authenticator
 
-from .test_views import (AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_DATA,
-                         CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
+from .data import (AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_DATA,
+                   CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
 
 User = get_user_model()
 

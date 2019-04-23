@@ -11,8 +11,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-msgid "Authenticate Universal 2nd Factor (U2F) key"
-msgstr "Přihlásit se s univerzálním 2. faktorem (U2F)"
+msgid "Authenticate a FIDO 2 authenticator"
+msgstr "Přihlásit se s FIDO 2 klíčem"
 
 msgid "Authentication failed."
 msgstr "Přihlášení selhalo."

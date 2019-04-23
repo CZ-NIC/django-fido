@@ -51,16 +51,12 @@ function fido2SuccessRegistrationCallback(attestation) {
     form.submit();
 }
 
-function fido2SuccessAuthenticationCallback(public_key) {
+function fido2SuccessAuthenticationCallback(assertion) {
     var form = document.getElementById(DJANGO_FIDO_FORM_ID);
-
-    var decoder = new TextDecoder()
-    var response = {
-        'id': public_key.id,
-        'clientData': bytes_to_base64(public_key.response.clientDataJSON),
-        'attestation': bytes_to_base64(public_key.response.attestationObject)
-    }
-    form.fido2_response.value = JSON.stringify(response);
+    form.client_data.value = bytes_to_base64(assertion.response.clientDataJSON)
+    form.credential_id.value = bytes_to_base64(assertion.rawId)
+    form.authenticator_data.value = bytes_to_base64(assertion.response.authenticatorData)
+    form.signature.value = bytes_to_base64(assertion.response.signature)
     form.submit();
 }
 
@@ -90,8 +86,19 @@ function fido2RegistrationRequestCallback() {
 
 function fido2AuthenticationRequestCallback() {
     if (this.readyState == 4 && this.status == 200) {
-        var u2f_request = JSON.parse(this.responseText);
-        u2f.sign(u2f_request.appId, u2f_request.challenge, u2f_request.registeredKeys, fido2SuccessAuthenticationCallback, U2F_TIMEOUT);
+        var fido2_request = JSON.parse(this.responseText);
+        var publicKey = fido2_request.publicKey
+        publicKey.challenge = base64_to_bytes(publicKey.challenge)
+        // Decode allowCredentials
+        var decoded_credentials = []
+        for (var i = 0; i < publicKey.allowCredentials.length; i++) {
+            var credential = publicKey.allowCredentials[i]
+            credential.id = base64_to_bytes(credential.id)
+            decoded_credentials.push(credential)
+        }
+        publicKey.allowCredentials = decoded_credentials
+
+        navigator.credentials.get({ publicKey }).then(fido2SuccessAuthenticationCallback).catch(fido2ErrorResponseCallback);
     };
 }
 

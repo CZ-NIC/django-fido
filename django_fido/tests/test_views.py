@@ -11,12 +11,12 @@ from django.urls import reverse, reverse_lazy
 from fido2.server import USER_VERIFICATION
 from fido2.utils import websafe_decode
 
-from django_fido.constants import (AUTHENTICATION_REQUEST_SESSION_KEY, AUTHENTICATION_USER_SESSION_KEY,
-                                   FIDO2_REQUEST_SESSION_KEY)
-from django_fido.models import Authenticator, U2fDevice
+from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
+from django_fido.models import Authenticator
 
-from .data import (ATTESTATION_OBJECT, CREDENTIAL_DATA, CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE,
-                   REGISTRATION_CLIENT_DATA, USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
+from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
+                   CREDENTIAL_DATA, CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA,
+                   SIGNATURE, USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
 
 User = get_user_model()
@@ -137,11 +137,13 @@ class TestFido2RegistrationView(TestCase):
 
 
 @override_settings(ROOT_URLCONF='django_fido.tests.urls')
-class TestU2fAuthenticationRequestView(TestCase):
-    """Test `U2fAuthenticationRequestView` class."""
+class TestFido2AuthenticationRequestView(TestCase):
+    """Test `Fido2AuthenticationRequestView` class."""
 
-    url = reverse_lazy('django_fido:u2f_authentication_request')
-    session_key = AUTHENTICATION_REQUEST_SESSION_KEY
+    url = reverse_lazy('django_fido:authentication_request')
+
+    def setUp(self):
+        self.user = User.objects.create_user(USERNAME)
 
     def test_no_user(self):
         with self.settings(LOGIN_URL='/login/'):
@@ -150,63 +152,48 @@ class TestU2fAuthenticationRequestView(TestCase):
         self.assertRedirects(response, '/login/', fetch_redirect_response=False)
 
     def test_get(self):
-        user = User.objects.create_user('kryten')
-        U2fDevice.objects.create(user=user, version='42', key_handle='Left nipple', public_key='Yes', app_id='FM Radio',
-                                 transports=['ble'])
+        Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
         session.save()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        # Check request structure
-        u2f_request = self.client.session[self.session_key]
-        self.assertEqual(u2f_request['appId'], 'http://testserver')
-        registered_key = {'keyHandle': 'Left nipple', 'publicKey': 'Yes', 'appId': 'FM Radio', 'version': '42',
-                          'transports': ['ble']}
-        self.assertEqual(u2f_request['registeredKeys'], [registered_key])
-        self.assertIn('challenge', u2f_request)
-        # Check response contains the same request as session (except for the public key).
-        public_registered_key = {'keyHandle': 'Left nipple', 'appId': 'FM Radio', 'version': '42',
-                                 'transports': ['ble']}
-        response_data = {'appId': 'http://testserver', 'registeredKeys': [public_registered_key],
-                         'challenge': u2f_request['challenge']}
-        self.assertEqual(response.json(), response_data)
+        # Check response
+        state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
+        challenge = websafe_decode(state['challenge'])
+        fido2_request = {
+            'publicKey': {'rpId': 'testserver',
+                          'challenge': base64.b64encode(challenge).decode('utf-8'),
+                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
+                          'timeout': 30000,
+                          'userVerification': 'preferred'}}
+        self.assertEqual(response.json(), fido2_request)
 
     def test_get_no_keys(self):
-        user = User.objects.create_user('kryten')
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
         session.save()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {'error': "Can't create U2F request: Must have at least one RegisteredKey"})
-        self.assertNotIn(self.session_key, self.client.session)
+        self.assertEqual(response.json(), {'error': "Can't create FIDO 2 authentication request, no authenticators."})
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
 
 @override_settings(ROOT_URLCONF='django_fido.tests.urls', TEMPLATES=TEMPLATES,
-                   AUTHENTICATION_BACKENDS=['django_fido.backends.U2fAuthenticationBackend'])
-class TestU2fAuthenticationView(TestCase):
-    """Test `U2fAuthenticationView` class."""
+                   AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2AuthenticationBackend'])
+class TestFido2AuthenticationView(TestCase):
+    """Test `Fido2AuthenticationView` class."""
 
     url = reverse_lazy('django_fido:authentication')
-    # Valid U2F data
-    key_handle = 'iYIO_N4276HND_X5IV8SP7Fi9bQcxdIeOHu2r9wf7RuFup9ywB-XwU18YkY0CWsH870-qbZdw7q5JuzyE4GqQQ'
-    public_key = 'BHhw5KbmqBfVUNGiAZeyWxVbrBtUjThxwTeDcPmcG8hO6XHxp3bonp_OEVHkD601hTMIH6cReYLV1qBIyJ0NeIU'
-    registered_key = {'publicKey': public_key, 'keyHandle': key_handle, 'version': 'U2F_V2', 'transports': ['usb'],
-                      'appId': 'http://testserver'}
-    u2f_request = {'appId': 'http://testserver',
-                   'challenge': 'Listers_underpants',
-                   'registeredKeys': [registered_key]}
-    u2f_response = {
-        'signatureData': ('AQAAABQwRQIhAOsMkVTyzVdHUeOvNJpCzUZjsHIs8vCJlmrwEwH90tR4AiAJHH-KB7OjUAoEemUkyiiyYd4QMK4YmTTr'
-                          'dqCzn9U8YQ'),
-        'clientData': ('eyAiY2hhbGxlbmdlIjogIkxpc3RlcnNfdW5kZXJwYW50cyIsICJvcmlnaW4iOiAiaHR0cDpcL1wvdGVzdHNlcnZlciIsICJ'
-                       '0eXAiOiAibmF2aWdhdG9yLmlkLmdldEFzc2VydGlvbiIgfQ'),
-        'keyHandle': key_handle}
+    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': USER_VERIFICATION.PREFERRED}
+
+    def setUp(self):
+        self.user = User.objects.create_user(USERNAME)
+        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
 
     def test_no_user(self):
         with self.settings(LOGIN_URL='/login/'):
@@ -215,57 +202,57 @@ class TestU2fAuthenticationView(TestCase):
         self.assertRedirects(response, '/login/', fetch_redirect_response=False)
 
     def test_get(self):
-        user = User.objects.create_user('kryten')
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
         session.save()
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
+        self.assertContains(response, 'Authenticate a FIDO 2 authenticator')
 
     def test_post(self):
-        user = User.objects.create_user('kryten')
-        U2fDevice.objects.create(user=user, version='U2F_V2', key_handle=self.key_handle, public_key=self.public_key)
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
-        session[AUTHENTICATION_REQUEST_SESSION_KEY] = self.u2f_request
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
         session.save()
 
+        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'credential_id': CREDENTIAL_ID,
+                'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
         with self.settings(LOGIN_REDIRECT_URL='/redirect/'):
-            response = self.client.post(self.url, {'u2f_response': json.dumps(self.u2f_response)})
+            response = self.client.post(self.url, post)
 
         self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
-        self.assertEqual(get_user(self.client), user)
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 20)], transform=tuple)
-        self.assertNotIn(AUTHENTICATION_REQUEST_SESSION_KEY, self.client.session)
+        self.assertEqual(get_user(self.client), self.user)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+                                 transform=tuple)
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
 
     def test_post_no_session(self):
-        # Test U2F request is not stored in session
-        user = User.objects.create_user('kryten')
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
         session.save()
 
-        response = self.client.post(self.url, {'u2f_response': 'null'})
+        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'credential_id': CREDENTIAL_ID,
+                'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
+        response = self.client.post(self.url, post)
 
-        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
+        self.assertContains(response, 'Authenticate a FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Authentication request not found.']})
-        self.assertNotIn(AUTHENTICATION_REQUEST_SESSION_KEY, self.client.session)
-        self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], user.pk)
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+        self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], self.user.pk)
 
     def test_post_invalid_response(self):
-        user = User.objects.create_user('kryten')
-        self.client.force_login(user)
         session = self.client.session
-        session[AUTHENTICATION_USER_SESSION_KEY] = user.pk
-        session[AUTHENTICATION_REQUEST_SESSION_KEY] = self.u2f_request
+        session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
         session.save()
 
-        response = self.client.post(self.url, {'u2f_response': 'null'})
+        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'credential_id': CREDENTIAL_ID,
+                'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'INVALID='}
+        response = self.client.post(self.url, post)
 
-        self.assertContains(response, 'Authenticate Universal 2nd Factor (U2F) key')
+        self.assertContains(response, 'Authenticate a FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Authentication failed.']})
-        self.assertNotIn(AUTHENTICATION_REQUEST_SESSION_KEY, self.client.session)
-        self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], user.pk)
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+        self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], self.user.pk)
