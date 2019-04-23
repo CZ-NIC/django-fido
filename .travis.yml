@@ -1,9 +1,11 @@
 language: python
 sudo: false
+dist: xenial  # Avoid https://code.djangoproject.com/ticket/30055#comment:12
 python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 install:
   # tox-travis automatically splits the jobs
