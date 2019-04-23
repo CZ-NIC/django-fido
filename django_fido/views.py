@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import logging
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from http.client import BAD_REQUEST
 from typing import Optional
+from urllib.parse import urlsplit, urlunsplit
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
@@ -16,8 +18,6 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
-from six.moves import http_client
-from six.moves.urllib.parse import urlsplit, urlunsplit
 from u2flib_server import u2f
 
 from .constants import (AUTHENTICATION_REQUEST_SESSION_KEY, AUTHENTICATION_USER_SESSION_KEY,
@@ -68,7 +68,7 @@ class BaseU2fRequestView(View, metaclass=ABCMeta):
         try:
             u2f_request = self.create_u2f_request()
         except ValueError as error:
-            return JsonResponse({'error': force_text(error)}, status=http_client.BAD_REQUEST)
+            return JsonResponse({'error': force_text(error)}, status=BAD_REQUEST)
         self.request.session[self.session_key] = u2f_request
 
         # Avoid bug in python-u2flib-server - https://github.com/Yubico/python-u2flib-server/issues/45
