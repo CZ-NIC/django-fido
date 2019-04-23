@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import logging
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
@@ -13,7 +14,6 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_text
-from django.utils.six import with_metaclass
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
 from six.moves import http_client
@@ -28,15 +28,15 @@ from .models import U2fDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-class BaseU2fRequestView(with_metaclass(ABCMeta, View)):
+class BaseU2fRequestView(View, metaclass=ABCMeta):
     """Base view for U2F request views.
 
     @cvar session_key: Session key where the U2F request is stored.
     @cvar u2f_request_factory: Function which accepts `app_id` and `registered_keys` and returns U2F request.
     """
 
-    session_key = None
-    u2f_request_factory = None
+    session_key = None  # type: Optional[str]
+    u2f_request_factory = None  # type: Optional[staticmethod]
 
     def get_app_id(self):
         """Return appId - base URL to the web."""
@@ -154,7 +154,7 @@ class U2fAuthenticationViewMixin(object):
         user = self.get_user()
         if user is None or not user.is_authenticated:
             return redirect(settings.LOGIN_URL)
-        return super(U2fAuthenticationViewMixin, self).dispatch(request, *args, **kwargs)
+        return super(U2fAuthenticationViewMixin, self).dispatch(request, *args, **kwargs)  # type: ignore
 
 
 class U2fAuthenticationRequestView(U2fAuthenticationViewMixin, BaseU2fRequestView):
