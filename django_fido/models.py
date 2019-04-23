@@ -103,7 +103,7 @@ class U2fDevice(models.Model):
         if value is None:
             self.attestation = None
         else:
-            # Encode to base64 and the decode to six.text_type
+            # Encode to base64 and the decode to str
             self.attestation = base64.b64encode(value).decode('utf-8')
 
     def get_registered_key(self):
