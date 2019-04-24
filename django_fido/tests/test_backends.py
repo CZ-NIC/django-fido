@@ -1,96 +1,100 @@
 """Test `django_fido.backends` module."""
 from __future__ import unicode_literals
 
+import base64
+
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.cookie import CookieStorage
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
+from fido2.client import ClientData
+from fido2.ctap2 import AuthenticatorData
+from fido2.server import USER_VERIFICATION, Fido2Server, RelyingParty
 from mock import sentinel
 
-from django_fido.backends import U2fAuthenticationBackend
-from django_fido.models import U2fDevice
+from django_fido.backends import Fido2AuthenticationBackend
+from django_fido.models import Authenticator
+
+from .test_views import (AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_DATA,
+                         CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
 
 User = get_user_model()
 
 
-class TestU2fAuthenticationBackend(TestCase):
-    """Test `U2fAuthenticationBackend` class."""
+class TestFido2AuthenticationBackend(TestCase):
+    """Test `Fido2AuthenticationBackend` class."""
 
-    backend = U2fAuthenticationBackend()
+    backend = Fido2AuthenticationBackend()
 
-    # Valid U2F data
-    key_handle = 'iYIO_N4276HND_X5IV8SP7Fi9bQcxdIeOHu2r9wf7RuFup9ywB-XwU18YkY0CWsH870-qbZdw7q5JuzyE4GqQQ'
-    public_key = 'BHhw5KbmqBfVUNGiAZeyWxVbrBtUjThxwTeDcPmcG8hO6XHxp3bonp_OEVHkD601hTMIH6cReYLV1qBIyJ0NeIU'
-    registered_key = {'publicKey': public_key, 'keyHandle': key_handle, 'version': 'U2F_V2', 'transports': ['usb'],
-                      'appId': 'http://testserver'}
-    u2f_request = {'appId': 'http://testserver',
-                   'challenge': 'Listers_underpants',
-                   'registeredKeys': [registered_key]}
-    u2f_response = {
-        'signatureData': ('AQAAABQwRQIhAOsMkVTyzVdHUeOvNJpCzUZjsHIs8vCJlmrwEwH90tR4AiAJHH-KB7OjUAoEemUkyiiyYd4QMK4YmTTr'
-                          'dqCzn9U8YQ'),
-        'clientData': ('eyAiY2hhbGxlbmdlIjogIkxpc3RlcnNfdW5kZXJwYW50cyIsICJvcmlnaW4iOiAiaHR0cDpcL1wvdGVzdHNlcnZlciIsICJ'
-                       '0eXAiOiAibmF2aWdhdG9yLmlkLmdldEFzc2VydGlvbiIgfQ'),
-        'keyHandle': key_handle}
+    server = Fido2Server(RelyingParty(HOSTNAME))
+
+    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': USER_VERIFICATION.PREFERRED}
+    fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+                      'credential_id': base64.b64decode(CREDENTIAL_ID),
+                      'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+                      'signature': base64.b64decode(SIGNATURE)}
+
+    def setUp(self):
+        self.user = User.objects.create_user(USERNAME)
+        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
 
     def test_authenticate(self):
-        user = User.objects.create_user('kryten')
-        U2fDevice.objects.create(user=user, version='U2F_V2', key_handle=self.key_handle, public_key=self.public_key)
+        authenticated_user = self.backend.authenticate(sentinel.request, self.user, self.server, self.state,
+                                                       self.fido2_response)
 
-        authenticated_user = self.backend.authenticate(sentinel.request, user, self.u2f_request, self.u2f_response)
-
-        self.assertEqual(authenticated_user, user)
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 20)], transform=tuple)
+        self.assertEqual(authenticated_user, self.user)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+                                 transform=tuple)
 
     def test_authenticate_wrong_counter(self):
-        user = User.objects.create_user('kryten')
-        U2fDevice.objects.create(user=user, version='U2F_V2', key_handle=self.key_handle, public_key=self.public_key,
-                                 counter=42)
+        self.device.counter = 160
+        self.device.save()
         request = RequestFactory().get('/dummy/')
         request._messages = CookieStorage(request)
 
         self.assertRaisesMessage(PermissionDenied, "Counter didn't increase.",
-                                 self.backend.authenticate, request, user, self.u2f_request, self.u2f_response)
+                                 self.backend.authenticate, request, self.user, self.server, self.state,
+                                 self.fido2_response)
 
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 42)], transform=tuple)
-
-    def test_authenticate_invalid_request(self):
-        self.assertIsNone(self.backend.authenticate(sentinel.request, sentinel.user, {}, self.u2f_response))
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
+                                 transform=tuple)
 
     def test_authenticate_invalid_response(self):
-        self.assertIsNone(self.backend.authenticate(sentinel.request, sentinel.user, self.u2f_request, {}))
+        fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+                          'credential_id': base64.b64decode(CREDENTIAL_ID),
+                          'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+                          'signature': b'INVALID'}
+        self.assertIsNone(
+            self.backend.authenticate(sentinel.request, self.user, self.server, self.state, fido2_response))
 
     def test_mark_device_used(self):
-        user = User.objects.create_user('kryten')
-        u2f_device = U2fDevice.objects.create(user=user, version='U2F_V2', key_handle='Left nipple', public_key='Turn')
+        self.backend.mark_device_used(self.device, 42)
 
-        self.backend.mark_device_used(u2f_device, 42)
-
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 42)], transform=tuple)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
 
     def test_mark_device_used_equal(self):
         # Test device returned the same counter.
-        user = User.objects.create_user('kryten')
-        u2f_device = U2fDevice.objects.create(user=user, version='U2F_V2', key_handle='Left nipple', public_key='Turn',
-                                              counter=42)
+        self.device.counter = 42
+        self.device.save()
 
-        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, u2f_device, 42)
+        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 42)
 
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 42)], transform=tuple)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
 
     def test_mark_device_used_decrease(self):
         # Test device returned lower counter.
-        user = User.objects.create_user('kryten')
-        u2f_device = U2fDevice.objects.create(user=user, version='U2F_V2', key_handle='Left nipple', public_key='Turn',
-                                              counter=42)
+        self.device.counter = 42
+        self.device.save()
 
-        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, u2f_device, 41)
+        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 41)
 
-        self.assertQuerysetEqual(U2fDevice.objects.values_list('user', 'counter'), [(user.pk, 42)], transform=tuple)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
 
     def test_get_user(self):
-        user = User.objects.create_user('kryten')
-        self.assertEqual(self.backend.get_user(user.pk), user)
+        self.assertEqual(self.backend.get_user(self.user.pk), self.user)
 
     def test_get_user_unknown(self):
         self.assertIsNone(self.backend.get_user(42))
