@@ -23,8 +23,8 @@ from django.views.generic import FormView, View
 from fido2.ctap2 import AttestationObject
 from fido2.server import Fido2Server, RelyingParty
 
-from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY, U2F_AUTHENTICATION_REQUEST,
-                        U2F_REGISTRATION_REQUEST)
+from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
+                        FIDO2_REQUEST_SESSION_KEY)
 from .forms import Fido2AuthenticationForm, Fido2RegistrationForm
 from .models import Authenticator
 
@@ -158,7 +158,7 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
 
     title = _("Register a new FIDO 2 authenticator")
     fido2_request_url = reverse_lazy('django_fido:registration_request')
-    fido2_request_type = U2F_REGISTRATION_REQUEST
+    fido2_request_type = FIDO2_REGISTRATION_REQUEST
 
     def complete_registration(self, form: Form) -> AttestationObject:
         """
@@ -251,7 +251,7 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
 
     title = _("Authenticate a FIDO 2 authenticator")
     fido2_request_url = reverse_lazy('django_fido:authentication_request')
-    fido2_request_type = U2F_AUTHENTICATION_REQUEST
+    fido2_request_type = FIDO2_AUTHENTICATION_REQUEST
 
     def get_form_kwargs(self):
         """Return form arguments - exclude request."""

@@ -1,4 +1,4 @@
-"""Forms for U2F registration and login."""
+"""Forms for FIDO 2 registration and login."""
 from __future__ import unicode_literals
 
 import base64

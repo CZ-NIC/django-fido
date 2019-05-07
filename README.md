@@ -3,9 +3,9 @@
 [![Build Status](https://travis-ci.org/CZ-NIC/django-fido.svg?branch=master)](https://travis-ci.org/CZ-NIC/django-fido)
 [![codecov](https://codecov.io/gh/CZ-NIC/django-fido/branch/master/graph/badge.svg)](https://codecov.io/gh/CZ-NIC/django-fido)
 
-> Django application for FIDO protocol U2F
+> Django application for FIDO protocol
 
-Django-fido provides basic components for authentication using FIDO U2F - model to store user's U2F-related data and basic views.
+Django-fido provides basic components for FIDO 2 authentication - model to store user's FIDO 2 authenticator data and basic views.
 
 ## Table of Contents ##
 - [Dependencies](#dependencies)
@@ -21,7 +21,7 @@ Django-fido provides basic components for authentication using FIDO U2F - model 
 ## Configuration ##
 
 1. Add `django_fido` to `INSTALLED_APPS`.
-2. Add `django_fido.backends.U2fAuthenticationBackend` to `AUTHENTICATION_BACKENDS`.
+2. Add `django_fido.backends.Fido2AuthenticationBackend` to `AUTHENTICATION_BACKENDS`.
 3. Link django-fido URLs into your `urls.py`:
 
        urlpatterns += [
