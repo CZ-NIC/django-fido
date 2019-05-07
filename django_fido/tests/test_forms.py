@@ -7,7 +7,7 @@ from django.test import SimpleTestCase
 from fido2.client import ClientData
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 
-from django_fido.forms import Fido2AuthenticationForm, Fido2RegistrationForm, U2fResponseForm
+from django_fido.forms import Fido2AuthenticationForm, Fido2RegistrationForm
 
 from .data import ATTESTATION_OBJECT
 
@@ -148,19 +148,3 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'signature': ['FIDO 2 response is malformed.']})
-
-
-class TestU2fResponseForm(SimpleTestCase):
-    """Test `U2fResponseForm` class."""
-
-    def test_clean_u2f_response(self):
-        form = U2fResponseForm({'u2f_response': '{"answer": 42}'})
-
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data, {'u2f_response': {'answer': 42}})
-
-    def test_clean_u2f_response_invalid(self):
-        form = U2fResponseForm({'u2f_response': 'JUNK'})
-
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors, {'u2f_response': ['U2F response is malformed.']})

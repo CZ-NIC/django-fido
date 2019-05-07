@@ -60,8 +60,5 @@ msgstr "Registrační požadavek nenalezen."
 msgid "Select a valid choice. %(value)s is not one of the available choices."
 msgstr "Vyberte platnou možnost, \"%(value)s\" není k dispozici."
 
-msgid "U2F response is malformed."
-msgstr "Chybná odpověd z U2F zařízení."
-
 msgid "USB HID"
 msgstr "USB zařízení"

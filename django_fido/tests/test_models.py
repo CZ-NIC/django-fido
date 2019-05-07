@@ -2,15 +2,13 @@
 from __future__ import unicode_literals
 
 import base64
-from typing import List, Optional, Tuple
 
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from fido2.cose import ES256
 from fido2.ctap2 import AttestedCredentialData
-from mock import sentinel
 
-from django_fido.models import Authenticator, TransportsValidator, U2fDevice
+from django_fido.models import Authenticator, TransportsValidator
 
 from .data import CREDENTIAL_DATA, CREDENTIAL_ID
 
@@ -68,55 +66,6 @@ class TestTransportsValidator(SimpleTestCase):
         validator = TransportsValidator(message="You're a smeghead.")
 
         self.assertRaisesMessage(ValidationError, "You're a smeghead.", validator, 'rimmer')
-
-
-class TestU2fDevice(SimpleTestCase):
-    """Test `U2fDevice` model."""
-
-    # serialized, deserialized pairs
-    transport_values = (
-        (None, []),
-        ('usb', ['usb']),
-        ('bt,ble', ['bt', 'ble']),
-    )  # type: Tuple[Tuple[Optional[str], List[str]], ...]
-
-    def test_transports_getter(self):
-        for raw, full in self.transport_values:
-            u2f_key = U2fDevice(raw_transports=raw)
-            self.assertEqual(u2f_key.transports, full)
-
-    def test_transports_setter(self):
-        for raw, full in self.transport_values:
-            u2f_key = U2fDevice()
-            u2f_key.transports = full
-            self.assertEqual(u2f_key.raw_transports, raw)
-
-    # base64 encoded, decoded pairs
-    attestation_values = (
-        (None, None),
-        ('UmltbWVyJ3Mgc2lsdmVyIHN3aW1taW5nIGNlcnRpZmljYXRl', b"Rimmer's silver swimming certificate"),
-    )
-
-    def test_raw_attestation_getter(self):
-        for encoded, decoded in self.attestation_values:
-            u2f_key = U2fDevice(attestation=encoded)
-            self.assertEqual(u2f_key.raw_attestation, decoded)
-
-    def test_raw_attestation_setter(self):
-        for encoded, decoded in self.attestation_values:
-            u2f_key = U2fDevice()
-            u2f_key.raw_attestation = decoded
-            self.assertEqual(u2f_key.attestation, encoded)
-
-    def test_get_registered_key(self):
-        u2f_key = U2fDevice(key_handle=sentinel.key_handle, app_id=sentinel.app_id, version=sentinel.version,
-                            raw_transports='usb,nfs', public_key=sentinel.public_key)
-        retgistered_key = {'keyHandle': sentinel.key_handle,
-                           'publicKey': sentinel.public_key,
-                           'appId': sentinel.app_id,
-                           'version': sentinel.version,
-                           'transports': ['usb', 'nfs']}
-        self.assertEqual(u2f_key.get_registered_key(), retgistered_key)
 
 
 class TestAuthenticator(SimpleTestCase):
