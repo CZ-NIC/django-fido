@@ -1,5 +1,11 @@
 # Changelog #
 
+## 0.6 ##
+ * Use FIDO 2 instead of U2F.
+ * Drop python 2.7.
+ * Add annotations and mypy check.
+ * Move repository to a CZ.NIC account.
+
 ## 0.5 ##
  * Fix JS translation lazynes
 
