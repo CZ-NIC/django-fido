@@ -16,6 +16,8 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Framework :: Django',
                'Framework :: Django :: 1.11',
                'Framework :: Django :: 2.0',
+               'Framework :: Django :: 2.1',
+               'Framework :: Django :: 2.2',
                'Intended Audience :: Developers',
                'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
                'Operating System :: OS Independent',
@@ -27,7 +29,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Internet :: WWW/HTTP',
                'Topic :: Security :: Cryptography',
                'Topic :: Software Development :: Libraries :: Python Modules']
-INSTALL_REQUIRES = ['Django>=1.11', 'python-u2flib-server>=5']
+INSTALL_REQUIRES = ['Django>=1.11', 'fido2']
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock']}
 
@@ -47,7 +49,7 @@ class custom_sdist(sdist):
 
 setup(name='django-fido',
       version=django_fido.__version__,
-      description='Django application for FIDO protocol U2F',
+      description='Django application for FIDO protocol',
       long_description=LONG_DESCRIPTION,
       long_description_content_type='text/markdown',
       author='Vlastimil Zíma',
@@ -59,6 +61,6 @@ setup(name='django-fido',
       setup_requires=['Babel >=2.3'],
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
-      keywords=['django', 'fido', 'u2f'],
+      keywords=['django', 'fido', 'u2f', 'fido2'],
       classifiers=CLASSIFIERS,
       cmdclass={'build': custom_build, 'sdist': custom_sdist})

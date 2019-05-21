@@ -1,51 +1,59 @@
 """Authentication backends for Django FIDO."""
 from __future__ import unicode_literals
 
+import base64
 import logging
+from typing import Any, Dict, Optional
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest
 from django.utils.translation import ugettext_lazy as _
-from u2flib_server import u2f
+from fido2.server import Fido2Server
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class U2fAuthenticationBackend(object):
+class Fido2AuthenticationBackend(object):
     """
-    Authenticate user using U2F.
+    Authenticate user using FIDO 2.
 
-    @cvar counter_error_message: Error message in case U2F device counter didn't increase.
+    @cvar counter_error_message: Error message in case FIDO 2 device counter didn't increase.
     """
 
-    counter_error_message = _("Counter of the U2F device decreased. Device may have been duplicated.")
+    counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
 
-    def authenticate(self, request, user, u2f_request, u2f_response):
-        """Authenticate using U2F."""
+    def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
+                     fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+        """Authenticate using FIDO 2."""
+        credentials = [a.credential for a in user.authenticators.all()]
         try:
-            device, counter, user_presence = u2f.complete_authentication(u2f_request, u2f_response)
-        except (TypeError, ValueError, KeyError) as error:
-            _LOGGER.info("U2F authentication failed with error: %r", error)
+            credential = fido2_server.authenticate_complete(
+                fido2_state, credentials, fido2_response['credential_id'], fido2_response['client_data'],
+                fido2_response['authenticator_data'], fido2_response['signature'])
+        except ValueError as error:
+            _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
 
-        u2f_device = user.u2f_devices.get(key_handle=device['keyHandle'])
+        device = user.authenticators.get(credential_data=base64.b64encode(credential).decode('utf-8'))
         try:
-            self.mark_device_used(u2f_device, counter)
+            self.mark_device_used(device, fido2_response['authenticator_data'].counter)
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
             raise PermissionDenied("Counter didn't increase.")
         return user
 
-    def mark_device_used(self, u2f_device, counter):
-        """Update U2F device usage information."""
-        if counter <= u2f_device.counter:
-            _LOGGER.info("U2F authentication failed because of not increasing counter.")
+    def mark_device_used(self, device, counter):
+        """Update FIDO 2 device usage information."""
+        if counter <= device.counter:
+            _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
             raise ValueError("Counter didn't increase.")
-        u2f_device.counter = counter
-        u2f_device.full_clean()
-        u2f_device.save()
+        device.counter = counter
+        device.full_clean()
+        device.save()
 
     def get_user(self, user_id):
         """Return user based on its ID."""

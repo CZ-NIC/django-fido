@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import base64
+import warnings
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -9,7 +10,9 @@ from django.db import models
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
+from fido2.ctap2 import AttestedCredentialData
 
+# Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
 TRANSPORT_CHOICES = (
     ('bt', _('Bluetooth Classic (Bluetooth BR/EDR)')),
@@ -33,6 +36,7 @@ class TransportsValidator(object):
 
     def __init__(self, choices=None, code=None, message=None):
         """Set custom `choices`, `code` or `message`."""
+        warnings.warn("TransportsValidator is deprecated. It is kept only for migrations.", DeprecationWarning)
         if choices is not None:
             self.choices = choices
         if code is not None:
@@ -47,75 +51,25 @@ class TransportsValidator(object):
                 raise ValidationError(self.message, code=self.code, params={'value': chunk})
 
 
-class U2fDevice(models.Model):
-    """Represents a registered U2F device.
+class Authenticator(models.Model):
+    """Represents a registered FIDO2 authenticator.
 
-    U2F registered key fields:
-     * version
-     * key_handle
-     * public_key
-     * app_id
-     * raw_transports - comma separated list of transports
-     * attestation - Base64 encoded attestation certificate (X509 in DER format)
-
-    Authentication fields:
+    Autheticator fields, see https://www.w3.org/TR/webauthn/#sec-authenticator-data
+     * credential_data - base64 encoded attested credential data
      * counter
     """
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='u2f_devices', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='authenticators', on_delete=models.CASCADE)
     create_datetime = models.DateTimeField(auto_now_add=True)
 
-    version = models.TextField()
-    key_handle = models.TextField()
-    public_key = models.TextField()
-    app_id = models.TextField(blank=True, null=True, default=None)
-    raw_transports = models.TextField(blank=True, null=True, default=None, validators=[TransportsValidator()])
-    attestation = models.TextField(blank=True, null=True, default=None)
-
+    credential_data = models.TextField()
     counter = models.PositiveIntegerField(default=0)
 
     @property
-    def transports(self):
-        """Return U2F transports."""
-        if not self.raw_transports:
-            return []
-        return self.raw_transports.split(',')
+    def credential(self) -> AttestedCredentialData:
+        """Return AttestedCredentialData object."""
+        return AttestedCredentialData(base64.b64decode(self.credential_data))
 
-    @transports.setter
-    def transports(self, value):
-        if not value:
-            self.raw_transports = None
-        else:
-            self.raw_transports = ','.join(value)
-
-    @property
-    def raw_attestation(self):
-        """Return attestation certificate in DER format.
-
-        @rtype: bytes
-        """
-        if self.attestation is None:
-            return None
-        return base64.b64decode(self.attestation)
-
-    @raw_attestation.setter
-    def raw_attestation(self, value):
-        if value is None:
-            self.attestation = None
-        else:
-            # Encode to base64 and the decode to str
-            self.attestation = base64.b64encode(value).decode('utf-8')
-
-    def get_registered_key(self):
-        """Return data for `RegisteredKey` structure.
-
-        See https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html
-        """
-        return {
-            'keyHandle': self.key_handle,
-            'appId': self.app_id,
-            'version': self.version,
-            'transports': self.transports,
-            # Avoid bug in python-u2flib-server - https://github.com/Yubico/python-u2flib-server/issues/45
-            'publicKey': self.public_key,
-        }
+    @credential.setter
+    def credential(self, value: AttestedCredentialData):
+        self.credential_data = base64.b64encode(value).decode('utf-8')

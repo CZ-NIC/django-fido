@@ -7,8 +7,8 @@
 {% endblock %}
 
 {% block content %}
-    <form method="post" id="django-fido-u2f-form" data-mode="{{ view.u2f_request_type }}" data-url="{{ view.u2f_request_url }}">
-        <ul id="django-fido-u2f-errors">
+    <form method="post" id="django-fido-form" data-mode="{{ view.fido2_request_type }}" data-url="{{ view.fido2_request_url }}">
+        <ul id="django-fido-errors">
         </ul>
         {% csrf_token %}
         {{ form }}
