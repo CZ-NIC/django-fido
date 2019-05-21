@@ -20,8 +20,8 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
-from fido2.ctap2 import AttestationObject
-from fido2.server import Fido2Server, RelyingParty
+from fido2.ctap2 import AuthenticatorData
+from fido2.server import ATTESTATION, Fido2Server, RelyingParty
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
@@ -36,10 +36,13 @@ class Fido2ViewMixin(object):
     Mixin with common methods for all FIDO 2 views.
 
     @cvar rp_name: Name of the relying party. If None, the RP ID is used instead.
+    @cvar attestation: Attestation conveyance preference,
+                       see https://www.w3.org/TR/webauthn/#enumdef-attestationconveyancepreference
     @cvar session_key: Session key where the FIDO 2 state is stored.
     """
 
     rp_name = None  # type: Optional[str]
+    attestation = ATTESTATION.NONE
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     def get_rp_id(self) -> str:
@@ -51,7 +54,7 @@ class Fido2ViewMixin(object):
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
         rp = RelyingParty(self.get_rp_id(), self.rp_name)
-        return Fido2Server(rp)
+        return Fido2Server(rp, attestation=self.attestation)
 
     @abstractmethod
     def get_user(self) -> AbstractBaseUser:
@@ -160,7 +163,7 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
     fido2_request_url = reverse_lazy('django_fido:registration_request')
     fido2_request_type = FIDO2_REGISTRATION_REQUEST
 
-    def complete_registration(self, form: Form) -> AttestationObject:
+    def complete_registration(self, form: Form) -> AuthenticatorData:
         """
         Complete the registration.
 
@@ -180,12 +183,13 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the registration and return response."""
         try:
-            attestation = self.complete_registration(form)
+            auth_data = self.complete_registration(form)
         except ValidationError as error:
             form.add_error(None, error)
             return self.form_invalid(form)
 
-        Authenticator.objects.create(user=self.request.user, credential=attestation.credential_data)
+        Authenticator.objects.create(user=self.request.user, credential=auth_data.credential_data,
+                                     attestation=form.cleaned_data['attestation'])
         return super().form_valid(form)
 
     def form_invalid(self, form: Form) -> HttpResponse:

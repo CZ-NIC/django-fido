@@ -107,8 +107,8 @@ class TestFido2RegistrationView(TestCase):
                                     {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
-        queryset = Authenticator.objects.values_list('user__pk', 'credential_data', 'counter')
-        key_data = (self.user.pk, CREDENTIAL_DATA, 0)
+        queryset = Authenticator.objects.values_list('user__pk', 'credential_data', 'attestation_data', 'counter')
+        key_data = (self.user.pk, CREDENTIAL_DATA, ATTESTATION_OBJECT, 0)
         self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
@@ -193,7 +193,8 @@ class TestFido2AuthenticationView(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
-        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
+        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA,
+                                                   attestation_data=ATTESTATION_OBJECT)
 
     def test_no_user(self):
         with self.settings(LOGIN_URL='/login/'):

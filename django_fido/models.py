@@ -10,7 +10,7 @@ from django.db import models
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
-from fido2.ctap2 import AttestedCredentialData
+from fido2.ctap2 import AttestationObject, AttestedCredentialData
 
 # Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
@@ -56,6 +56,7 @@ class Authenticator(models.Model):
 
     Autheticator fields, see https://www.w3.org/TR/webauthn/#sec-authenticator-data
      * credential_data - base64 encoded attested credential data
+     * attestation_data - base64 encoded attestation object
      * counter
     """
 
@@ -63,6 +64,7 @@ class Authenticator(models.Model):
     create_datetime = models.DateTimeField(auto_now_add=True)
 
     credential_data = models.TextField()
+    attestation_data = models.TextField()
     counter = models.PositiveIntegerField(default=0)
 
     @property
@@ -73,3 +75,12 @@ class Authenticator(models.Model):
     @credential.setter
     def credential(self, value: AttestedCredentialData):
         self.credential_data = base64.b64encode(value).decode('utf-8')
+
+    @property
+    def attestation(self) -> AttestationObject:
+        """Return AttestationObject object."""
+        return AttestationObject(base64.b64decode(self.attestation_data))
+
+    @attestation.setter
+    def attestation(self, value: AttestationObject):
+        self.attestation_data = base64.b64encode(value).decode('utf-8')

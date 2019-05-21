@@ -15,8 +15,8 @@ from mock import sentinel
 from django_fido.backends import Fido2AuthenticationBackend
 from django_fido.models import Authenticator
 
-from .data import (AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_DATA,
-                   CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
+from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
+                   CREDENTIAL_DATA, CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
 
 User = get_user_model()
 
@@ -36,7 +36,8 @@ class TestFido2AuthenticationBackend(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
-        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
+        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA,
+                                                   attestation_data=ATTESTATION_OBJECT)
 
     def test_authenticate(self):
         authenticated_user = self.backend.authenticate(sentinel.request, self.user, self.server, self.state,
