@@ -6,11 +6,11 @@ import base64
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from fido2.cose import ES256
-from fido2.ctap2 import AttestedCredentialData
+from fido2.ctap2 import AttestationObject, AttestedCredentialData, AuthenticatorData
 
 from django_fido.models import Authenticator, TransportsValidator
 
-from .data import CREDENTIAL_DATA, CREDENTIAL_ID
+from .data import ATTESTATION_OBJECT, CREDENTIAL_DATA, CREDENTIAL_ID
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -84,3 +84,16 @@ class TestAuthenticator(SimpleTestCase):
         authenticator.credential = AttestedCredentialData(base64.b64decode(CREDENTIAL_DATA))
 
         authenticator.credential_data = CREDENTIAL_DATA
+
+    def test_attestation_getter(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)
+
+        self.assertEqual(authenticator.attestation.fmt, 'fido-u2f')
+        self.assertIsInstance(authenticator.attestation.auth_data, AuthenticatorData)
+
+    def test_attestation_setter(self):
+        authenticator = Authenticator()
+
+        authenticator.attestation = AttestationObject(base64.b64decode(ATTESTATION_OBJECT))
+
+        authenticator.attestation_data = ATTESTATION_OBJECT

@@ -29,7 +29,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Internet :: WWW/HTTP',
                'Topic :: Security :: Cryptography',
                'Topic :: Software Development :: Libraries :: Python Modules']
-INSTALL_REQUIRES = ['Django>=1.11', 'fido2']
+INSTALL_REQUIRES = ['Django>=1.11', 'fido2', 'sqlparse']  # sqlparse is required for Django < 2.2
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock']}
 
