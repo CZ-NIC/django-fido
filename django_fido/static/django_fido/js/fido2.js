@@ -116,7 +116,8 @@ function startFido2() {
         return
     };
     if (!isFido2Availabile()) {
-        addFido2Error(gettext("FIDO 2 is not available."));
+        addFido2Error(
+            gettext("FIDO 2 is not available. Your browser may not support it or your connection is not secure."));
         return
     };
     if (form.dataset.mode == FIDO2_AUTHENTICATION_REQUEST) {
