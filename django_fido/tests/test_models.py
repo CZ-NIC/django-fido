@@ -83,7 +83,7 @@ class TestAuthenticator(SimpleTestCase):
 
         authenticator.credential = AttestedCredentialData(base64.b64decode(CREDENTIAL_DATA))
 
-        authenticator.credential_data = CREDENTIAL_DATA
+        self.assertEqual(authenticator.credential_data, CREDENTIAL_DATA)
 
     def test_attestation_getter(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)
@@ -96,4 +96,4 @@ class TestAuthenticator(SimpleTestCase):
 
         authenticator.attestation = AttestationObject(base64.b64decode(ATTESTATION_OBJECT))
 
-        authenticator.attestation_data = ATTESTATION_OBJECT
+        self.assertEqual(authenticator.attestation_data, ATTESTATION_OBJECT)
