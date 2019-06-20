@@ -71,6 +71,11 @@ class TestTransportsValidator(SimpleTestCase):
 class TestAuthenticator(SimpleTestCase):
     """Test `Authenticator` model."""
 
+    def test_credential_id_getter(self):
+        authenticator = Authenticator(credential_id_data='Q1JFREVOVElBTF9JRA==')
+
+        self.assertEqual(authenticator.credential_id, b'CREDENTIAL_ID')
+
     def test_credential_getter(self):
         authenticator = Authenticator(credential_data=CREDENTIAL_DATA)
 
@@ -97,3 +102,4 @@ class TestAuthenticator(SimpleTestCase):
         authenticator.attestation = AttestationObject(base64.b64decode(ATTESTATION_OBJECT))
 
         self.assertEqual(authenticator.attestation_data, ATTESTATION_OBJECT)
+        self.assertEqual(authenticator.credential_id_data, CREDENTIAL_ID)

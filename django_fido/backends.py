@@ -37,7 +37,7 @@ class Fido2AuthenticationBackend(object):
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
 
-        device = user.authenticators.get(credential_data=base64.b64encode(credential).decode('utf-8'))
+        device = user.authenticators.get(credential_id_data=base64.b64encode(credential.credential_id).decode('utf-8'))
         try:
             self.mark_device_used(device, fido2_response['authenticator_data'].counter)
         except ValueError:
