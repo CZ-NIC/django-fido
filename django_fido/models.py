@@ -55,6 +55,8 @@ class Authenticator(models.Model):
     """Represents a registered FIDO2 authenticator.
 
     Autheticator fields, see https://www.w3.org/TR/webauthn/#sec-authenticator-data
+     * credential_id_data - base64 encoded credential ID https://www.w3.org/TR/webauthn/#credential-id
+       * This field should be used for readonly purposes only.
      * credential_data - base64 encoded attested credential data
      * attestation_data - base64 encoded attestation object
      * counter
@@ -63,9 +65,15 @@ class Authenticator(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='authenticators', on_delete=models.CASCADE)
     create_datetime = models.DateTimeField(auto_now_add=True)
 
+    credential_id_data = models.TextField(unique=True)
     credential_data = models.TextField()
     attestation_data = models.TextField()
     counter = models.PositiveIntegerField(default=0)
+
+    @property
+    def credential_id(self) -> bytes:
+        """Return raw credential ID."""
+        return base64.b64decode(self.credential_id_data)
 
     @property
     def credential(self) -> AttestedCredentialData:
@@ -84,3 +92,4 @@ class Authenticator(models.Model):
     @attestation.setter
     def attestation(self, value: AttestationObject):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
+        self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')

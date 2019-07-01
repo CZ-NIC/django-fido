@@ -36,7 +36,9 @@ class TestFido2AuthenticationBackend(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
-        self.device = Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA,
+        self.device = Authenticator.objects.create(user=self.user,
+                                                   credential_id_data=CREDENTIAL_ID,
+                                                   credential_data=CREDENTIAL_DATA,
                                                    attestation_data=ATTESTATION_OBJECT)
 
     def test_authenticate(self):
