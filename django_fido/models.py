@@ -57,7 +57,6 @@ class Authenticator(models.Model):
     Autheticator fields, see https://www.w3.org/TR/webauthn/#sec-authenticator-data
      * credential_id_data - base64 encoded credential ID https://www.w3.org/TR/webauthn/#credential-id
        * This field should be used for readonly purposes only.
-     * credential_data - base64 encoded attested credential data
      * attestation_data - base64 encoded attestation object
      * counter
     """
@@ -66,7 +65,6 @@ class Authenticator(models.Model):
     create_datetime = models.DateTimeField(auto_now_add=True)
 
     credential_id_data = models.TextField(unique=True)
-    credential_data = models.TextField()
     attestation_data = models.TextField()
     counter = models.PositiveIntegerField(default=0)
 
@@ -78,11 +76,7 @@ class Authenticator(models.Model):
     @property
     def credential(self) -> AttestedCredentialData:
         """Return AttestedCredentialData object."""
-        return AttestedCredentialData(base64.b64decode(self.credential_data))
-
-    @credential.setter
-    def credential(self, value: AttestedCredentialData):
-        self.credential_data = base64.b64encode(value).decode('utf-8')
+        return self.attestation.auth_data.credential_data
 
     @property
     def attestation(self) -> AttestationObject:

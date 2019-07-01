@@ -183,13 +183,13 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the registration and return response."""
         try:
-            auth_data = self.complete_registration(form)
+            # Return value is ignored, because we need whole attestation.
+            self.complete_registration(form)
         except ValidationError as error:
             form.add_error(None, error)
             return self.form_invalid(form)
 
-        Authenticator.objects.create(user=self.request.user, credential=auth_data.credential_data,
-                                     attestation=form.cleaned_data['attestation'])
+        Authenticator.objects.create(user=self.request.user, attestation=form.cleaned_data['attestation'])
         return super().form_valid(form)
 
     def form_invalid(self, form: Form) -> HttpResponse:
