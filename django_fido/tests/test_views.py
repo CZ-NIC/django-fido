@@ -15,8 +15,8 @@ from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
-                   CREDENTIAL_DATA, CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA,
-                   SIGNATURE, USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
+                   CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE,
+                   USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
 
 User = get_user_model()
@@ -61,7 +61,7 @@ class TestFido2RegistrationRequestView(TestCase):
         self.assertEqual(response.json(), self._get_fido2_request(challenge, []))
 
     def test_get_registered_keys(self):
-        Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
+        Authenticator.objects.create(user=self.user, attestation_data=ATTESTATION_OBJECT)
         self.client.force_login(self.user)
 
         response = self.client.get(self.url)
@@ -107,8 +107,8 @@ class TestFido2RegistrationView(TestCase):
                                     {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
-        queryset = Authenticator.objects.values_list('user__pk', 'credential_data', 'attestation_data', 'counter')
-        key_data = (self.user.pk, CREDENTIAL_DATA, ATTESTATION_OBJECT, 0)
+        queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
+        key_data = (self.user.pk, CREDENTIAL_ID, ATTESTATION_OBJECT, 0)
         self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
@@ -152,7 +152,7 @@ class TestFido2AuthenticationRequestView(TestCase):
         self.assertRedirects(response, '/login/', fetch_redirect_response=False)
 
     def test_get(self):
-        Authenticator.objects.create(user=self.user, credential_data=CREDENTIAL_DATA)
+        Authenticator.objects.create(user=self.user, attestation_data=ATTESTATION_OBJECT)
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
         session.save()
@@ -194,7 +194,6 @@ class TestFido2AuthenticationView(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
         self.device = Authenticator.objects.create(user=self.user, credential_id_data=CREDENTIAL_ID,
-                                                   credential_data=CREDENTIAL_DATA,
                                                    attestation_data=ATTESTATION_OBJECT)
 
     def test_no_user(self):

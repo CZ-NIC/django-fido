@@ -16,7 +16,7 @@ from django_fido.backends import Fido2AuthenticationBackend
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
-                   CREDENTIAL_DATA, CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
+                   CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
 
 User = get_user_model()
 
@@ -38,7 +38,6 @@ class TestFido2AuthenticationBackend(TestCase):
         self.user = User.objects.create_user(USERNAME)
         self.device = Authenticator.objects.create(user=self.user,
                                                    credential_id_data=CREDENTIAL_ID,
-                                                   credential_data=CREDENTIAL_DATA,
                                                    attestation_data=ATTESTATION_OBJECT)
 
     def test_authenticate(self):
