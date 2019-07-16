@@ -11,6 +11,16 @@ if (typeof(gettext) === "undefined") {
     };
 }
 
+ERROR_MESSAGES = {
+    'NotSupportedError': gettext("The security token (FIDO 2) does not support the requested operation."),
+    'SecurityError': gettext("The request is insecure."),
+    'AbortError': gettext("The request has been aborted."),
+    'ConstraintError': gettext("The security token (FIDO 2) does not meet required criteria."),
+    'NotAllowedError': gettext("The request has been refused either by you, your browser, or your operating system. "
+                               + "Or the request timed out.")
+}
+GENERIC_ERROR_MESSAGE = gettext("An unknown error has occurred.")
+
 function addFido2Error(message) {
     var error_list = document.getElementById(DJANGO_FIDO_ERROR_LIST_ID);
     var new_item = document.createElement("li");
@@ -61,7 +71,11 @@ function fido2SuccessAuthenticationCallback(assertion) {
 }
 
 function fido2ErrorResponseCallback(error) {
-    addFido2Error(error.message);
+    var message = GENERIC_ERROR_MESSAGE
+    if (ERROR_MESSAGES.hasOwnProperty(error.name)) {
+        message = ERROR_MESSAGES[error.name]
+    }
+    addFido2Error(message)
     if (typeof closeFidoWindow === 'function') {
         closeFidoWindow();
     }

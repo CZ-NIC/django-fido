@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-fido-js\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-22 11:12+0200\n"
+"POT-Creation-Date: 2019-07-16 19:59+0200\n"
 "Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -11,12 +11,34 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
+msgid "An unknown error has occurred."
+msgstr "Nastala neznámá chyba."
+
 msgid ""
 "FIDO 2 is not available. Your browser may not support it or your connection "
 "is not secure."
 msgstr ""
 "FIDO 2 není dostupné. Váš prohlížeč jej nepodporuje nebo spojení není "
 "zabezpečené."
+
+msgid "The request has been aborted."
+msgstr "Požadavek byl přerušen."
+
+msgid ""
+"The request has been refused either by you, your browser, or your operating "
+"system. Or the request timed out."
+msgstr ""
+"Požadavek byl odmítnut vámi, vaším prohlížečem nebo operačním systémem. Nebo "
+"vypršel určený čas."
+
+msgid "The request is insecure."
+msgstr "Požadavek není bezpečný."
+
+msgid "The security token (FIDO 2) does not meet required criteria."
+msgstr "Bezpečnostní token (FIDO 2) nesplňuje požadované vlastnosti."
+
+msgid "The security token (FIDO 2) does not support the requested operation."
+msgstr "Bezpečnostní token (FIDO 2) nepodporuje požadovanou akci."
 
 msgid "Unknown FIDO 2 request."
 msgstr "Neznámý FIDO 2 požadavek."
