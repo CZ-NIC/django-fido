@@ -1,6 +1,4 @@
 include *.md
-graft django_fido/locale
+graft django_fido
 exclude django_fido/locale/C/**
 exclude django_fido/locale/*.pot
-graft django_fido/static
-graft django_fido/templates
