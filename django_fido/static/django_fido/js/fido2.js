@@ -62,9 +62,15 @@ function fido2SuccessAuthenticationCallback(assertion) {
 
 function fido2ErrorResponseCallback(error) {
     addFido2Error(error.message);
+    if (typeof closeFidoWindow === 'function') {
+        closeFidoWindow();
+    }
 }
 
 function fido2RegistrationRequestCallback() {
+    if (typeof activeFidoWindow === 'function') {
+        activeFidoWindow();
+    }
     if (this.readyState == 4 && this.status == 200) {
         var fido2_request = JSON.parse(this.responseText);
         var encoder = new TextEncoder()
@@ -85,6 +91,9 @@ function fido2RegistrationRequestCallback() {
 }
 
 function fido2AuthenticationRequestCallback() {
+    if (typeof activeFidoWindow === 'function') {
+        activeFidoWindow();
+    }
     if (this.readyState == 4 && this.status == 200) {
         var fido2_request = JSON.parse(this.responseText);
         var publicKey = fido2_request.publicKey
