@@ -1,5 +1,12 @@
 # Changelog #
 
+## 0.7 ##
+ * Add credential ID field.
+ * Drop `credential_data` field.
+ * Update error messages.
+ * Mark django-fido as typed.
+ * Add JS hooks.
+
 ## 0.6 ##
  * Use FIDO 2 instead of U2F.
  * Drop python 2.7.
