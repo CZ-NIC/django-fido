@@ -1,5 +1,9 @@
 # Changelog #
 
+## 0.8 ##
+ * Fix JS translation lazynes.
+ * For empty values, submit button reload page.
+
 ## 0.7 ##
  * Add credential ID field.
  * Drop `credential_data` field.

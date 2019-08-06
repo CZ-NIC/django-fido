@@ -12,14 +12,14 @@ if (typeof(gettext) === "undefined") {
 }
 
 ERROR_MESSAGES = {
-    'NotSupportedError': gettext("The security token (FIDO 2) does not support the requested operation."),
-    'SecurityError': gettext("The request is insecure."),
-    'AbortError': gettext("The request has been aborted."),
-    'ConstraintError': gettext("The security token (FIDO 2) does not meet required criteria."),
-    'NotAllowedError': gettext("The request has been refused either by you, your browser, or your operating system. "
-                               + "Or the request timed out.")
+    'NotSupportedError': "The security token (FIDO 2) does not support the requested operation.",
+    'SecurityError': "The request is insecure.",
+    'AbortError': "The request has been aborted.",
+    'ConstraintError': "The security token (FIDO 2) does not meet required criteria.",
+    'NotAllowedError': "The request has been refused either by you, your browser, or your operating system. "
+                               + "Or the request timed out."
 }
-GENERIC_ERROR_MESSAGE = gettext("An unknown error has occurred.")
+GENERIC_ERROR_MESSAGE = "An unknown error has occurred.";
 
 function addFido2Error(message) {
     var error_list = document.getElementById(DJANGO_FIDO_ERROR_LIST_ID);
@@ -71,9 +71,9 @@ function fido2SuccessAuthenticationCallback(assertion) {
 }
 
 function fido2ErrorResponseCallback(error) {
-    var message = GENERIC_ERROR_MESSAGE
+    var message = gettext(GENERIC_ERROR_MESSAGE);
     if (ERROR_MESSAGES.hasOwnProperty(error.name)) {
-        message = ERROR_MESSAGES[error.name]
+        message = gettext(ERROR_MESSAGES[error.name])
     }
     addFido2Error(message)
     if (typeof closeFidoWindow === 'function') {
@@ -134,6 +134,14 @@ function processFido2Request(url, callback) {
 
 function startFido2() {
     var form = document.getElementById(DJANGO_FIDO_FORM_ID);
+    var sb = document.getElementById('submit-button');
+    // If is empty values, submit button reload page
+    sb.addEventListener('click', function(e) {
+        if(form.client_data.value === '' || form.credential_id.value === '' || form.authenticator_data.value === '' || form.signature.value === '') {
+            e.preventDefault();
+            location.reload();
+        }
+    });
     if (!form) {
         // Silently skip if not on correct page.
         return
