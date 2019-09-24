@@ -101,3 +101,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore transpiled JS code
+django_fido/static/django_fido/js

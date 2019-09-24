@@ -6,6 +6,18 @@ python:
   - "3.6"
   - "3.7"
 
+# Add JS tests
+matrix:
+  include:
+    - name: "JS tests"
+      language: node_js
+      install: npm ci
+      node_js:
+        - 8
+      script:
+        - npm run check
+        - npm test
+
 install:
   # tox-travis automatically splits the jobs
   - pip install tox-travis

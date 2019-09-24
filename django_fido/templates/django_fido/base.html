@@ -4,6 +4,7 @@
     <head>
         <title>{% block title %}Django FIDO{% endblock %}</title>
         {% block extrastyle %}{% endblock %}
+        <script type="text/javascript" src="{% url 'django_fido:javascript_catalog' %}"></script>
         {% block extrahead %}{% endblock %}
     </head>
 

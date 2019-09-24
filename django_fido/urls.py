@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.conf.urls import url
 from django.views.generic import TemplateView
+from django.views.i18n import JavaScriptCatalog
 
 from .views import (Fido2AuthenticationRequestView, Fido2AuthenticationView, Fido2RegistrationRequestView,
                     Fido2RegistrationView)
@@ -15,4 +16,5 @@ urlpatterns = [
         name='registration_done'),
     url('^authentication/$', Fido2AuthenticationView.as_view(), name='authentication'),
     url('^authentication/request/$', Fido2AuthenticationRequestView.as_view(), name='authentication_request'),
+    url('^jsi18n/$', JavaScriptCatalog.as_view(), name='javascript_catalog'),
 ]
