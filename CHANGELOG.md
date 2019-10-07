@@ -1,5 +1,10 @@
 # Changelog #
 
+## 0.9 ##
+ * Refactor JS code.
+ * Update setup.
+ * Add bumpversion.
+
 ## 0.8 ##
  * Fix JS translation lazynes.
  * For empty values, submit button reload page.
