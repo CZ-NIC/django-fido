@@ -1,0 +1,37 @@
+{
+  "name": "@cz-nic/django-fido",
+  "version": "0.8.0",
+  "description": "Django application for FIDO protocol",
+  "scripts": {
+    "check": "eslint --ext .js django_fido/js-tests django_fido/js",
+    "build": "webpack --mode production",
+    "watch": "webpack --watch --mode development",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CZ-NIC/django-fido.git"
+  },
+  "author": "Vlastimil Zíma <vlastimil.zima@nic.cz>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/CZ-NIC/django-fido/issues"
+  },
+  "homepage": "https://github.com/CZ-NIC/django-fido#readme",
+  "devDependencies": {
+    "@babel/core": "^7.1.0",
+    "@babel/polyfill": "^7.6.0",
+    "@babel/preset-env": "^7.6.2",
+    "babel-jest": "^24.0.0",
+    "babel-loader": "^8.0.0",
+    "eslint": "^6.4.0",
+    "fetch-mock": "^7.3.9",
+    "jest": "^24.9.0",
+    "node-fetch": "^2.6.0"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    }
+  }
+}

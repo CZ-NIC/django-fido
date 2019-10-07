@@ -1,0 +1,78 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Fido 2 auth workflow 1`] = `
+Object {
+  "publicKey": Object {
+    "allowCredentials": Array [
+      Object {
+        "id": Uint8Array [
+          194,
+          232,
+          94,
+          122,
+          23,
+        ],
+        "type": "public-key",
+      },
+    ],
+    "challenge": Uint8Array [
+      194,
+      232,
+      112,
+      133,
+    ],
+    "excludeCredentials": Array [
+      Object {
+        "id": "wuheehe",
+        "type": "public-key",
+      },
+    ],
+    "rpId": "mojeid.cz",
+    "timeout": 30000,
+    "user": Object {
+      "id": "id",
+    },
+    "userVerification": "preferred",
+  },
+}
+`;
+
+exports[`Fido 2 registration workflow 1`] = `
+Object {
+  "publicKey": Object {
+    "allowCredentials": Array [
+      Object {
+        "id": "wuheehe",
+        "type": "public-key",
+      },
+    ],
+    "challenge": Uint8Array [
+      194,
+      232,
+      112,
+      133,
+    ],
+    "excludeCredentials": Array [
+      Object {
+        "id": Uint8Array [
+          194,
+          232,
+          94,
+          122,
+          23,
+        ],
+        "type": "public-key",
+      },
+    ],
+    "rpId": "mojeid.cz",
+    "timeout": 30000,
+    "user": Object {
+      "id": Uint8Array [
+        105,
+        100,
+      ],
+    },
+    "userVerification": "preferred",
+  },
+}
+`;
