@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """Setup script for django_fido."""
 from __future__ import unicode_literals
@@ -36,7 +36,7 @@ EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint']
 
 class custom_build(build):
 
-    sub_commands = [('compile_catalog', lambda x: True)] + build.sub_commands
+    sub_commands = [('compile_catalog', None), ('build_js', None)] + build.sub_commands
 
 
 class custom_sdist(sdist):
@@ -58,9 +58,10 @@ setup(name='django-fido',
       packages=find_packages(),
       include_package_data=True,
       python_requires='~=3.5',
-      setup_requires=['Babel >=2.3'],
+      setup_requires=['Babel >=2.3', 'setuptools_webpack'],
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       keywords=['django', 'fido', 'u2f', 'fido2'],
       classifiers=CLASSIFIERS,
+      webpack_output_path='django_fido/static/django_fido',
       cmdclass={'build': custom_build, 'sdist': custom_sdist})

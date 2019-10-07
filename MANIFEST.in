@@ -2,3 +2,7 @@ include *.md
 graft django_fido
 exclude django_fido/locale/C/**
 exclude django_fido/locale/*.pot
+include .babelrc
+include package.json
+include package-lock.json
+include webpack.config.js
