@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.11 ##
+ * Fix webpack output path.
+
 ## 0.10 ##
  * Fix dependencies (add webpack).
 
