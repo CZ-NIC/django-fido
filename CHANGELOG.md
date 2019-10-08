@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.10 ##
+ * Fix dependencies (add webpack).
+
 ## 0.9 ##
  * Refactor JS code.
  * Update setup.
