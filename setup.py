@@ -63,5 +63,5 @@ setup(name='django-fido',
       extras_require=EXTRAS_REQUIRE,
       keywords=['django', 'fido', 'u2f', 'fido2'],
       classifiers=CLASSIFIERS,
-      webpack_output_path='django_fido/static/django_fido',
+      webpack_output_path='django_fido/static/django_fido/js',
       cmdclass={'build': custom_build, 'sdist': custom_sdist})
