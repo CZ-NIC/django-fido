@@ -21,12 +21,17 @@ from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
 from fido2.ctap2 import AuthenticatorData
-from fido2.server import ATTESTATION, Fido2Server, RelyingParty
+from fido2.server import Fido2Server
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
 from .forms import Fido2AuthenticationForm, Fido2RegistrationForm
 from .models import Authenticator
+
+try:
+    from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity
+except ImportError:
+    from fido2.server import ATTESTATION as AttestationConveyancePreference, RelyingParty as PublicKeyCredentialRpEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,7 +47,7 @@ class Fido2ViewMixin(object):
     """
 
     rp_name = None  # type: Optional[str]
-    attestation = ATTESTATION.NONE
+    attestation = AttestationConveyancePreference.NONE
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     def get_rp_id(self) -> str:
@@ -53,7 +58,7 @@ class Fido2ViewMixin(object):
     @property
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
-        rp = RelyingParty(self.get_rp_id(), self.rp_name)
+        rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.rp_name)
         return Fido2Server(rp, attestation=self.attestation)
 
     @abstractmethod

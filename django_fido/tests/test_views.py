@@ -4,11 +4,11 @@ from __future__ import unicode_literals
 import base64
 import json
 
+import fido2
 from django.contrib.auth import get_user, get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
-from fido2.server import USER_VERIFICATION
 from fido2.utils import websafe_decode
 
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
@@ -18,6 +18,11 @@ from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_
                    CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE,
                    USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
+
+try:
+    from fido2.webauthn import UserVerificationRequirement
+except ImportError:
+    from fido2.server import USER_VERIFICATION as UserVerificationRequirement
 
 User = get_user_model()
 
@@ -40,14 +45,22 @@ class TestFido2RegistrationRequestView(TestCase):
     def _get_fido2_request(self, challenge, credentials):
         credential_params = [{'alg': -7, 'type': 'public-key'}, {'alg': -8, 'type': 'public-key'},
                              {'alg': -37, 'type': 'public-key'}, {'alg': -257, 'type': 'public-key'}]
-        return {'publicKey': {'rp': {'id': HOSTNAME, 'name': HOSTNAME},
-                              'user': {'displayName': USER_FULL_NAME, 'id': USERNAME, 'name': USERNAME},
-                              'timeout': 30000,
-                              'authenticatorSelection': {'requireResidentKey': False, 'userVerification': 'preferred'},
-                              'challenge': base64.b64encode(challenge).decode('utf-8'),
-                              'pubKeyCredParams': credential_params,
-                              'attestation': 'none',
-                              'excludeCredentials': credentials}}
+        rp_data = {'id': HOSTNAME}
+        if fido2.__version__ < '0.8':
+            rp_data['name'] = HOSTNAME
+        fido2_request = {'publicKey': {
+            'rp': rp_data,
+            'user': {'displayName': USER_FULL_NAME, 'id': USERNAME, 'name': USERNAME},
+            'timeout': 30000,
+            'challenge': base64.b64encode(challenge).decode('utf-8'),
+            'pubKeyCredParams': credential_params,
+            'attestation': 'none',
+            'excludeCredentials': credentials,
+        }}
+        if fido2.__version__ < '0.8':
+            fido2_request['publicKey']['authenticatorSelection'] = {'requireResidentKey': False,
+                                                                    'userVerification': 'preferred'}
+        return fido2_request
 
     def test_get(self):
         self.client.force_login(self.user)
@@ -79,7 +92,7 @@ class TestFido2RegistrationView(TestCase):
     """Test `Fido2RegistrationView` class."""
 
     url = reverse_lazy('django_fido:registration')
-    state = {'challenge': REGISTRATION_CHALLENGE, 'user_verification': USER_VERIFICATION.PREFERRED}
+    state = {'challenge': REGISTRATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
@@ -167,8 +180,9 @@ class TestFido2AuthenticationRequestView(TestCase):
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
                           'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
-                          'timeout': 30000,
-                          'userVerification': 'preferred'}}
+                          'timeout': 30000}}
+        if fido2.__version__ < '0.8':
+            fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
 
     def test_get_no_keys(self):
@@ -189,7 +203,7 @@ class TestFido2AuthenticationView(TestCase):
     """Test `Fido2AuthenticationView` class."""
 
     url = reverse_lazy('django_fido:authentication')
-    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': USER_VERIFICATION.PREFERRED}
+    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)

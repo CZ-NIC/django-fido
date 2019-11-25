@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
 from fido2.client import ClientData
 from fido2.ctap2 import AuthenticatorData
-from fido2.server import USER_VERIFICATION, Fido2Server, RelyingParty
+from fido2.server import Fido2Server
 from mock import sentinel
 
 from django_fido.backends import Fido2AuthenticationBackend
@@ -17,6 +17,12 @@ from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
                    CREDENTIAL_ID, HOSTNAME, SIGNATURE, USERNAME)
+
+try:
+    from fido2.webauthn import PublicKeyCredentialRpEntity, UserVerificationRequirement
+except ImportError:
+    from fido2.server import (USER_VERIFICATION as UserVerificationRequirement,
+                              RelyingParty as PublicKeyCredentialRpEntity)
 
 User = get_user_model()
 
@@ -26,9 +32,9 @@ class TestFido2AuthenticationBackend(TestCase):
 
     backend = Fido2AuthenticationBackend()
 
-    server = Fido2Server(RelyingParty(HOSTNAME))
+    server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
-    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': USER_VERIFICATION.PREFERRED}
+    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
     fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
