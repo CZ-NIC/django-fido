@@ -205,7 +205,7 @@ class Fido2AuthenticationViewMixin(Fido2ViewMixin):
     Ensure user to be authenticated exists.
     """
 
-    def get_user(self):
+    def get_user(self: View):
         """
         Return user which is to be authenticated.
 
