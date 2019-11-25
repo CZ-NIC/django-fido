@@ -1,5 +1,13 @@
 # Changelog #
 
+## 0.13 ##
+ * Support fido2 0.6-0.8.
+ * Add support for python 3.8.
+ * Fixup annotations.
+
+## 0.12 ##
+ * Fix dependencies (add webpack-cli).
+
 ## 0.11 ##
  * Fix webpack output path.
 
