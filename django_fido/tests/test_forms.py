@@ -20,7 +20,19 @@ class TestFido2RegistrationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
-                        'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT))}
+                        'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
+                        'label': ''}
+        self.assertEqual(form.cleaned_data, cleaned_data)
+
+    def test_valid_label(self):
+        # Test form with valid client data and attestation
+        form = Fido2RegistrationForm({'client_data': 'eyJjaGFsbGVuZ2UiOiAiR2F6cGFjaG8hIn0=',
+                                      'attestation': ATTESTATION_OBJECT, 'label': 'My label'})
+
+        self.assertTrue(form.is_valid())
+        cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
+                        'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
+                        'label': 'My label'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_clean_client_data_empty(self):

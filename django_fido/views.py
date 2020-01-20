@@ -194,7 +194,8 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
             form.add_error(None, error)
             return self.form_invalid(form)
 
-        Authenticator.objects.create(user=self.request.user, attestation=form.cleaned_data['attestation'])
+        Authenticator.objects.create(user=self.request.user, attestation=form.cleaned_data['attestation'],
+                                     label=form.cleaned_data.get('label'))
         return super().form_valid(form)
 
     def form_invalid(self, form: Form) -> HttpResponse:
