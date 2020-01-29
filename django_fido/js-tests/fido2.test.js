@@ -35,7 +35,7 @@ describe('Fido 2', () => {
         },
     })
 
-    async function testWorkflow(mode) {
+    async function testWorkflow(mode, done) {
         const form = document.createElement('form')
         form.id = 'django-fido-form'
         form.dataset.mode = mode
@@ -54,21 +54,24 @@ describe('Fido 2', () => {
         document.getElementsByTagName('body')[0].appendChild(submit_button)
 
         await startFido2()
-
-        if (mode === 'registration') {
-            expect(navigator.credentials.create).toHaveBeenCalledTimes(1)
-        } else if (mode === 'authentication'){
-            expect(navigator.credentials.get).toHaveBeenCalledTimes(1)
-        }
-        expect(form.submit).toHaveBeenCalledTimes(1)
+        await submit_button.click()
+        setTimeout(async() => {
+            if (mode === 'registration') {
+                await expect(navigator.credentials.create).toHaveBeenCalledTimes(1)
+            } else if (mode === 'authentication'){
+                await expect(navigator.credentials.get).toHaveBeenCalledTimes(1)
+            }
+            await expect(form.submit).toHaveBeenCalledTimes(1)
+            done()
+        }, 1)
     }
 
-    test('auth workflow', async() => {
-        await testWorkflow('authentication')
+    test('auth workflow', done => {
+        testWorkflow('authentication', done)
     })
 
-    test('registration workflow', async() => {
-        await testWorkflow('registration')
+    test('registration workflow', done => {
+        testWorkflow('registration', done)
     })
 
 })

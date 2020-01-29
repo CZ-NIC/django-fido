@@ -125,26 +125,22 @@ async function startFido2() {
         return // Silently skip if not on correct page.
 
     const submit_button = document.getElementById('submit-button')
-    // If is empty values, submit button reload page
-    submit_button.addEventListener('click', e => {
-        if (form.client_data.value === '' || form.credential_id.value === '' ||
-            form.authenticator_data.value === '' || form.signature.value === '')
-        {
+    if (submit_button) {
+        submit_button.addEventListener('click', async e => {
             e.preventDefault()
-            location.reload()
-        }
-    })
 
-    if (!isFido2Availabile()) {
-        addFido2Error(TRANSLATIONS.FIDO2_NOT_AVAILABLE)
-        return
-    }
-    if (form.dataset.mode === FIDO2_AUTHENTICATION_REQUEST) {
-        await sendFido2AuthenticationRequest(form.dataset.url)
-    } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
-        await sendFido2RegistrationRequest(form.dataset.url)
-    } else {
-        addFido2Error(TRANSLATIONS.UKNOWN_FIDO_REQUEST)
+            if (!isFido2Availabile()) {
+                addFido2Error(TRANSLATIONS.FIDO2_NOT_AVAILABLE)
+                return
+            }
+            if (form.dataset.mode === FIDO2_AUTHENTICATION_REQUEST) {
+                await sendFido2AuthenticationRequest(form.dataset.url)
+            } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
+                await sendFido2RegistrationRequest(form.dataset.url)
+            } else {
+                addFido2Error(TRANSLATIONS.UKNOWN_FIDO_REQUEST)
+            }
+        })
     }
 }
 
