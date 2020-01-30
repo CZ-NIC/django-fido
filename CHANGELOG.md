@@ -1,5 +1,10 @@
 # Changelog #
 
+## 0.14 ##
+ * Add label to Authenticator model.
+ * Remove autosubmit on registration view.
+ * Update JS dependencies.
+
 ## 0.13 ##
  * Support fido2 0.6-0.8.
  * Add support for python 3.8.
