@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * Add ``DJANGO_FIDO_RP_NAME`` setting.
+
 ## 0.14 ##
  * Add label to Authenticator model.
  * Remove autosubmit on registration view.

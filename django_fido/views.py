@@ -27,6 +27,7 @@ from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_RE
                         FIDO2_REQUEST_SESSION_KEY)
 from .forms import Fido2AuthenticationForm, Fido2RegistrationForm
 from .models import Authenticator
+from .settings import SETTINGS
 
 try:
     from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity
@@ -40,15 +41,18 @@ class Fido2ViewMixin(object):
     """
     Mixin with common methods for all FIDO 2 views.
 
-    @cvar rp_name: Name of the relying party. If None, the RP ID is used instead.
     @cvar attestation: Attestation conveyance preference,
                        see https://www.w3.org/TR/webauthn/#enumdef-attestationconveyancepreference
     @cvar session_key: Session key where the FIDO 2 state is stored.
     """
 
-    rp_name = None  # type: Optional[str]
     attestation = AttestationConveyancePreference.NONE
     session_key = FIDO2_REQUEST_SESSION_KEY
+
+    @property
+    def rp_name(self) -> Optional[str]:
+        """Return relying party name set in django settings."""
+        return SETTINGS.rp_name
 
     def get_rp_id(self) -> str:
         """Return RP id - only a hostname for web services."""

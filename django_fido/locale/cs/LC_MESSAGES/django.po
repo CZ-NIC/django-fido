@@ -32,6 +32,9 @@ msgstr ""
 "FIDO 2 zařízení vrátilo nižší hodnotu počítadla přihlášení. Zařízení mohlo "
 "být zduplikováno."
 
+msgid "Django application for FIDO protocol"
+msgstr "Django aplikace k protokolu FIDO"
+
 msgid "FIDO 2 response is malformed."
 msgstr "Chybná odpověd z FIDO 2 zařízení."
 
