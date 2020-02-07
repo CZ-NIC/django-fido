@@ -1,0 +1,25 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+<form
+    method="post"
+    id="django-fido-form"
+    data-mode="{{ view.fido2_request_type }}"
+    data-url="{{ view.fido2_request_url }}"
+>
+    <ul id="django-fido-errors">
+    </ul>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="submit-block">
+        <input type="submit" value="{% block submit_label %}{% trans "Add authenticator" %}{% endblock %}" id="submit-button" />
+    </div>
+</form>
+{% endblock %}
