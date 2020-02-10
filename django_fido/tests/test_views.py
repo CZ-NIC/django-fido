@@ -45,9 +45,10 @@ class TestFido2RegistrationRequestView(TestCase):
     def _get_fido2_request(self, challenge, credentials):
         credential_params = [{'alg': -7, 'type': 'public-key'}, {'alg': -8, 'type': 'public-key'},
                              {'alg': -37, 'type': 'public-key'}, {'alg': -257, 'type': 'public-key'}]
-        rp_data = {'id': HOSTNAME}
-        if fido2.__version__ < '0.8':
-            rp_data['name'] = HOSTNAME
+        rp_data = {
+            'id': HOSTNAME,
+            'name': HOSTNAME,
+        }
         fido2_request = {'publicKey': {
             'rp': rp_data,
             'user': {'displayName': USER_FULL_NAME, 'id': USERNAME, 'name': USERNAME},

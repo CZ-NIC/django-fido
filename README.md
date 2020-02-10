@@ -29,7 +29,6 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
        ]
 
 4. If you wish, set string variable `DJANGO_FIDO_RP_NAME`.
-   This is only required if you use `python-fido >= 0.15`.
 
 ## Changes ##
 See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).

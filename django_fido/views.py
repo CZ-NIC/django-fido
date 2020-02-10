@@ -41,6 +41,9 @@ class Fido2ViewMixin(object):
     """
     Mixin with common methods for all FIDO 2 views.
 
+    @cvar rp_name: Name of the relying party.
+        If None, the value of setting ``DJANGO_FIDO_RP_NAME`` is used instead.
+        If None, the RP ID is used instead.
     @cvar attestation: Attestation conveyance preference,
                        see https://www.w3.org/TR/webauthn/#enumdef-attestationconveyancepreference
     @cvar session_key: Session key where the FIDO 2 state is stored.
@@ -49,10 +52,11 @@ class Fido2ViewMixin(object):
     attestation = AttestationConveyancePreference.NONE
     session_key = FIDO2_REQUEST_SESSION_KEY
 
-    @property
-    def rp_name(self) -> Optional[str]:
-        """Return relying party name set in django settings."""
-        return SETTINGS.rp_name
+    rp_name = None  # type: Optional[str]
+
+    def get_rp_name(self) -> Optional[str]:
+        """Return relying party name."""
+        return self.rp_name or SETTINGS.rp_name or self.get_rp_id()
 
     def get_rp_id(self) -> str:
         """Return RP id - only a hostname for web services."""
@@ -62,7 +66,7 @@ class Fido2ViewMixin(object):
     @property
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
-        rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.rp_name)
+        rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.get_rp_name())
         return Fido2Server(rp, attestation=self.attestation)
 
     @abstractmethod
