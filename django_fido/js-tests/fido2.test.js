@@ -1,4 +1,4 @@
-import startFido2 from '../js/fido2'
+import { startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST } from '../js/fido2'
 import fetchMock from 'fetch-mock'
 import '@babel/polyfill'
 import {TextEncoder} from 'util'
@@ -54,11 +54,12 @@ describe('Fido 2', () => {
         document.getElementsByTagName('body')[0].appendChild(submit_button)
 
         await startFido2()
-        await submit_button.click()
+        if (mode !== FIDO2_AUTHENTICATION_REQUEST) // because there is autosubmit
+            await submit_button.click()
         setTimeout(async() => {
-            if (mode === 'registration') {
+            if (mode === FIDO2_REGISTRATION_REQUEST) {
                 await expect(navigator.credentials.create).toHaveBeenCalledTimes(1)
-            } else if (mode === 'authentication'){
+            } else if (mode === FIDO2_AUTHENTICATION_REQUEST){
                 await expect(navigator.credentials.get).toHaveBeenCalledTimes(1)
             }
             await expect(form.submit).toHaveBeenCalledTimes(1)
@@ -67,11 +68,11 @@ describe('Fido 2', () => {
     }
 
     test('auth workflow', done => {
-        testWorkflow('authentication', done)
+        testWorkflow(FIDO2_AUTHENTICATION_REQUEST, done)
     })
 
     test('registration workflow', done => {
-        testWorkflow('registration', done)
+        testWorkflow(FIDO2_REGISTRATION_REQUEST, done)
     })
 
 })
