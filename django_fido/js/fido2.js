@@ -124,23 +124,23 @@ async function startFido2() {
     if (!form)
         return // Silently skip if not on correct page.
 
-    const submit_button = document.getElementById('submit-button')
-    if (submit_button) {
-        submit_button.addEventListener('click', async e => {
-            e.preventDefault()
+    if (!isFido2Availabile()) {
+        addFido2Error(TRANSLATIONS.FIDO2_NOT_AVAILABLE)
+        return
+    }
 
-            if (!isFido2Availabile()) {
-                addFido2Error(TRANSLATIONS.FIDO2_NOT_AVAILABLE)
-                return
-            }
-            if (form.dataset.mode === FIDO2_AUTHENTICATION_REQUEST) {
-                await sendFido2AuthenticationRequest(form.dataset.url)
-            } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
+    if (form.dataset.mode === FIDO2_AUTHENTICATION_REQUEST) {
+        await sendFido2AuthenticationRequest(form.dataset.url)
+    } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
+        const submit_button = document.getElementById('submit-button')
+        if (submit_button) {
+            submit_button.addEventListener('click', async e => {
+                e.preventDefault()
                 await sendFido2RegistrationRequest(form.dataset.url)
-            } else {
-                addFido2Error(TRANSLATIONS.UKNOWN_FIDO_REQUEST)
-            }
-        })
+            })
+        }
+    } else {
+        addFido2Error(TRANSLATIONS.UKNOWN_FIDO_REQUEST)
     }
 }
 
@@ -149,4 +149,4 @@ document.addEventListener('DOMContentLoaded', () => {
     startFido2()
 }, false)
 
-export default startFido2
+export {startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST}
