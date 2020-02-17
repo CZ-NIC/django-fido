@@ -1,7 +1,11 @@
 # Changelog #
 
 ## Unreleased ##
+
+## 0.15 ##
  * Add ``DJANGO_FIDO_RP_NAME`` setting.
+ * Add back autosubmit on login view.
+ * Display error in login view on server request error.
 
 ## 0.14 ##
  * Add label to Authenticator model.
