@@ -69,7 +69,7 @@ function fido2SuccessAuthenticationCallback(assertion) {
 
 function fido2ErrorResponseCallback(error) {
     let message = TRANSLATIONS.GENERIC_ERROR_MESSAGE
-    if (TRANSLATIONS.ERROR_MESSAGES[error.name]) {
+    if (error && TRANSLATIONS.ERROR_MESSAGES[error.name]) {
         message = TRANSLATIONS.ERROR_MESSAGES[error.name]
     }
     addFido2Error(message)
@@ -108,6 +108,8 @@ async function sendFido2Request(url, is_registration, credenetials_name) {
         } catch (error) {
             fido2ErrorResponseCallback(error)
         }
+    } else {
+        fido2ErrorResponseCallback(null)
     }
 }
 
