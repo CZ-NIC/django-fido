@@ -15,7 +15,7 @@ from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
-                   CREDENTIAL_ID, HOSTNAME, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE,
+                   CREDENTIAL_ID, HOSTNAME, PASSWORD, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE,
                    USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
 
@@ -165,6 +165,7 @@ class TestFido2AuthenticationRequestView(TestCase):
 
         self.assertRedirects(response, '/login/', fetch_redirect_response=False)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_get(self):
         Authenticator.objects.create(user=self.user, attestation_data=ATTESTATION_OBJECT)
         session = self.client.session
@@ -186,6 +187,7 @@ class TestFido2AuthenticationRequestView(TestCase):
             fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_get_no_keys(self):
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
@@ -197,6 +199,25 @@ class TestFido2AuthenticationRequestView(TestCase):
         self.assertEqual(response.json(), {'error': "Can't create FIDO 2 authentication request, no authenticators."})
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=False)
+    def test_get_by_username(self):
+        Authenticator.objects.create(user=self.user, attestation_data=ATTESTATION_OBJECT)
+
+        response = self.client.get(self.url, data={'username': self.user.username})
+
+        self.assertEqual(response.status_code, 200)
+        # Check response
+        state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
+        challenge = websafe_decode(state['challenge'])
+        fido2_request = {
+            'publicKey': {'rpId': 'testserver',
+                          'challenge': base64.b64encode(challenge).decode('utf-8'),
+                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
+                          'timeout': 30000}}
+        if fido2.__version__ < '0.8':
+            fido2_request['publicKey']['userVerification'] = 'preferred'
+        self.assertEqual(response.json(), fido2_request)
+
 
 @override_settings(ROOT_URLCONF='django_fido.tests.urls', TEMPLATES=TEMPLATES,
                    AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2AuthenticationBackend'])
@@ -207,16 +228,23 @@ class TestFido2AuthenticationView(TestCase):
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
 
     def setUp(self):
-        self.user = User.objects.create_user(USERNAME)
+        self.user = User.objects.create_user(USERNAME, password=PASSWORD)
         self.device = Authenticator.objects.create(user=self.user, credential_id_data=CREDENTIAL_ID,
                                                    attestation_data=ATTESTATION_OBJECT)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_no_user(self):
         with self.settings(LOGIN_URL='/login/'):
             response = self.client.get(self.url)
 
         self.assertRedirects(response, '/login/', fetch_redirect_response=False)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=False)
+    def test_no_user_one_step(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_get(self):
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
@@ -226,6 +254,7 @@ class TestFido2AuthenticationView(TestCase):
 
         self.assertContains(response, 'Authenticate a FIDO 2 authenticator')
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_post(self):
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
@@ -244,6 +273,7 @@ class TestFido2AuthenticationView(TestCase):
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_post_no_session(self):
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
@@ -258,6 +288,7 @@ class TestFido2AuthenticationView(TestCase):
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], self.user.pk)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_post_invalid_response(self):
         session = self.client.session
         session[AUTHENTICATION_USER_SESSION_KEY] = self.user.pk
@@ -272,3 +303,60 @@ class TestFido2AuthenticationView(TestCase):
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Authentication failed.']})
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertEqual(self.client.session[AUTHENTICATION_USER_SESSION_KEY], self.user.pk)
+
+    @override_settings(
+        DJANGO_FIDO_TWO_STEP_AUTH=False,
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+    )
+    def test_post_one_step(self):
+        session = self.client.session
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
+        session.save()
+
+        post = {'username': USERNAME, 'password': PASSWORD, 'client_data': AUTHENTICATION_CLIENT_DATA,
+                'credential_id': CREDENTIAL_ID, 'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
+        with self.settings(LOGIN_REDIRECT_URL='/redirect/'):
+            response = self.client.post(self.url, post)
+
+        self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
+        self.assertEqual(get_user(self.client), self.user)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+                                 transform=tuple)
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+        self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
+
+    @override_settings(
+        DJANGO_FIDO_TWO_STEP_AUTH=False,
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+    )
+    def test_post_one_step_error(self):
+        session = self.client.session
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
+        session.save()
+
+        post = {'username': USERNAME, 'password': 'wrong_password', 'client_data': AUTHENTICATION_CLIENT_DATA,
+                'credential_id': CREDENTIAL_ID, 'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
+        response = self.client.post(self.url, post)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].errors, {
+            '__all__': ['Please enter a correct username and password and use valid FIDO2 security key.'],
+        })
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+        self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
+
+    @override_settings(
+        DJANGO_FIDO_TWO_STEP_AUTH=False,
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+    )
+    def test_post_one_step_no_request(self):
+        post = {'username': USERNAME, 'password': PASSWORD, 'client_data': AUTHENTICATION_CLIENT_DATA,
+                'credential_id': CREDENTIAL_ID, 'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
+        response = self.client.post(self.url, post)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].errors, {
+            '__all__': ['Authentication request not found.'],
+        })
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+        self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)

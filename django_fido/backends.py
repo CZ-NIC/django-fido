@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
@@ -61,3 +62,27 @@ class Fido2AuthenticationBackend(object):
             return get_user_model().objects.get(pk=user_id)
         except get_user_model().DoesNotExist:
             return None
+
+
+class Fido2ModelAuthenticationBackend(ModelBackend):
+    """Authenticated user using ModelBackend and Fido2AuthenticationBackend."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize backend."""
+        super().__init__(*args, **kwargs)
+        self.fido_backend = Fido2AuthenticationBackend()
+
+    def authenticate(
+        self,
+        request: HttpRequest,
+        username: str,
+        password: str,
+        fido2_server: Fido2Server,
+        fido2_state: Dict[str, bytes],
+        fido2_response: Dict[str, Any]
+    ) -> Optional[AbstractBaseUser]:
+        """Authenticate using username, password and FIDO 2 token."""
+        user = super().authenticate(request, username, password)
+        if user is not None:
+            user = self.fido_backend.authenticate(request, user, fido2_server, fido2_state, fido2_response)
+        return user

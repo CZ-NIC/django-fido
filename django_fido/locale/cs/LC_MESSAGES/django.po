@@ -53,6 +53,12 @@ msgstr "Neodstanitelné USB zařízení"
 msgid "Operation wasn't completed."
 msgstr "Operace nebyla dokončena."
 
+#, python-format
+msgid ""
+"Please enter a correct %(username)s and password and use valid FIDO2 security key."
+msgstr ""
+"Zadejte správnou hodnotu pole %(username)s, heslo a použijte validní FIDO2 klíč."
+
 msgid "Register a new FIDO 2 authenticator"
 msgstr "Zaregistrovat nový FIDO 2 klíč"
 

@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 # Generated using examples/credential.py from python-fido2
 HOSTNAME = 'testserver'
 USERNAME = 'kryten'
+PASSWORD = 'passwd'
 USER_FIRST_NAME = 'Kryten'
 USER_LAST_NAME = '2X4B-523P'
 USER_FULL_NAME = USER_FIRST_NAME + ' ' + USER_LAST_NAME

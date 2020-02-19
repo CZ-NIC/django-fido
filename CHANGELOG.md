@@ -2,6 +2,7 @@
 
 ## Unreleased ##
  * **BREAKING** Authenticator `label` has to be unique for user. This can potentialy break if you have multiple tokens for user.
+ * Add one step authentication.
 
 ## 0.15 ##
  * Add ``DJANGO_FIDO_RP_NAME`` setting.
