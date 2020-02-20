@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-fido\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-07 14:50+0200\n"
+"POT-Creation-Date: 2020-02-20 11:22+0100\n"
 "Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -37,6 +37,9 @@ msgstr "Django aplikace k protokolu FIDO"
 
 msgid "FIDO 2 response is malformed."
 msgstr "Chybná odpověd z FIDO 2 zařízení."
+
+msgid "Label"
+msgstr "Popisek"
 
 msgid "Near-Field Communications"
 msgstr "Bezkontaktní komunikace (NFC)"
