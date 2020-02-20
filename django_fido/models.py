@@ -67,7 +67,10 @@ class Authenticator(models.Model):
     credential_id_data = models.TextField(unique=True)
     attestation_data = models.TextField()
     counter = models.PositiveIntegerField(default=0)
-    label = models.TextField(max_length=255, blank=True, null=True)
+    label = models.TextField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = [['user', 'label']]
 
     @property
     def credential_id(self) -> bytes:
