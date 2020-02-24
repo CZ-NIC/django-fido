@@ -77,8 +77,8 @@ function fido2ErrorResponseCallback(error) {
     window.dispatchEvent(new Event('on-close-fido-window'))
 }
 
-async function sendFido2Request(url, is_registration, credenetials_name) {
-    const response = await fetch(url)
+async function sendFido2Request(url, is_registration, credenetials_name, form_data = '') {
+    const response = await fetch(`${url}?${form_data}`)
 
     window.dispatchEvent(new Event('on-activatation-fido-window'))
 
@@ -113,8 +113,8 @@ async function sendFido2Request(url, is_registration, credenetials_name) {
     }
 }
 
-async function sendFido2RegistrationRequest(url) {
-    await sendFido2Request(url, true, 'excludeCredentials')
+async function sendFido2RegistrationRequest(url, form_data) {
+    await sendFido2Request(url, true, 'excludeCredentials', form_data)
 }
 
 async function sendFido2AuthenticationRequest(url) {
@@ -138,7 +138,13 @@ async function startFido2() {
         if (submit_button) {
             submit_button.addEventListener('click', async e => {
                 e.preventDefault()
-                await sendFido2RegistrationRequest(form.dataset.url)
+
+                let form_data = ''
+                const user_field = form.querySelector('[name=user]')
+                if (user_field)
+                    form_data = `user=${user_field.value}`
+
+                await sendFido2RegistrationRequest(form.dataset.url, form_data)
             })
         }
     } else {
