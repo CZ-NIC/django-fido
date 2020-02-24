@@ -1,7 +1,8 @@
 # Changelog #
 
-## Unreleased ##
+## 0.16 ##
  * **BREAKING** Authenticator `label` has to be unique for user. This can potentialy break if you have multiple tokens for user.
+ * Add authenticator admin.
  * Add one step authentication.
 
 ## 0.15 ##
