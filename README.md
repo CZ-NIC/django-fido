@@ -30,6 +30,19 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
 
 4. If you wish, set string variable `DJANGO_FIDO_RP_NAME`.
 
+## One step authentication
+
+You can also decide to use one step authentication.
+In this case, you will use just one authentication form, that will collect username, password and FIDO2 credentials.
+In addition to the configuration above, you also need to:
+
+1. Set `DJANGO_FIDO_TWO_STEP_AUTH` to `False`.
+2. Replace `django_fido.backends.Fido2AuthenticationBackend` with
+   `django_fido.backends.Fido2ModelAuthenticationBackend` in `AUTHENTICATION_BACKENDS`.
+3. Set `data-autosubmit-off` attribute on the form element of your login page.
+
+Please note that your login form must have a field named `username`, even if your `USERNAME_FIELD` is not `username`.
+
 ## Changes ##
 See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).
 

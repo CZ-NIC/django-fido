@@ -25,7 +25,7 @@ from fido2.server import Fido2Server
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
-from .forms import Fido2AuthenticationForm, Fido2RegistrationForm
+from .forms import Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2RegistrationForm
 from .models import Authenticator
 from .settings import SETTINGS
 
@@ -219,22 +219,27 @@ class Fido2AuthenticationViewMixin(Fido2ViewMixin):
     Ensure user to be authenticated exists.
     """
 
-    def get_user(self: View):
+    def get_user(self: View) -> Optional[AbstractBaseUser]:
         """
         Return user which is to be authenticated.
 
         Return None, if no user could be found.
         """
         user_pk = self.request.session.get(AUTHENTICATION_USER_SESSION_KEY)
-        if user_pk is None:
-            return None
-        return get_user_model().objects.get(pk=user_pk)
+        username = self.request.GET.get('username')
+
+        if SETTINGS.two_step_auth and user_pk is not None:
+            return get_user_model().objects.get(pk=user_pk)
+        if not SETTINGS.two_step_auth and username is not None:
+            return get_user_model().objects.get_by_natural_key(username)
+        return None
 
     def dispatch(self, request, *args, **kwargs):
-        """Redirect to login, if user couldn't be found."""
-        user = self.get_user()
-        if user is None or not user.is_authenticated:
-            return redirect(settings.LOGIN_URL)
+        """For two step authentication redirect to login, if user couldn't be found."""
+        if SETTINGS.two_step_auth:
+            user = self.get_user()
+            if user is None or not user.is_authenticated:
+                return redirect(settings.LOGIN_URL)
         return super().dispatch(request, *args, **kwargs)  # type: ignore
 
 
@@ -247,7 +252,7 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
         @raise ValueError: If request can't be created.
         """
         user = self.get_user()
-        assert user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
+        assert user and user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
         if not credentials:
             raise ValueError("Can't create FIDO 2 authentication request, no authenticators.")
@@ -264,18 +269,28 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
     @cvar fido2_request_type: FIDO 2 request type
     """
 
-    form_class = Fido2AuthenticationForm
     template_name = 'django_fido/fido2_form.html'
 
     title = _("Authenticate a FIDO 2 authenticator")
     fido2_request_url = reverse_lazy('django_fido:authentication_request')
     fido2_request_type = FIDO2_AUTHENTICATION_REQUEST
 
+    def get_form_class(self):
+        """Get form class for one step or two step authentication."""
+        if SETTINGS.two_step_auth:
+            return Fido2AuthenticationForm
+        else:
+            return Fido2ModelAuthenticationForm
+
     def get_form_kwargs(self):
-        """Return form arguments - exclude request."""
+        """Return form arguments depending on type of form (different for one and two step authentication)."""
         kwargs = super().get_form_kwargs()
-        # Fido2AuthenticationForm doesn't accept request.
-        kwargs.pop('request', None)
+        if SETTINGS.two_step_auth:
+            # Fido2AuthenticationForm doesn't accept request.
+            kwargs.pop('request', None)
+        else:
+            kwargs['fido2_server'] = self.server
+            kwargs['session_key'] = self.session_key
         return kwargs
 
     def complete_authentication(self, form: Form) -> AbstractBaseUser:
@@ -288,25 +303,36 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
         if state is None:
             raise ValidationError(_('Authentication request not found.'), code='missing')
 
-        user = authenticate(request=self.request, user=self.get_user(), fido2_server=self.server, fido2_state=state,
-                            fido2_response=form.cleaned_data)
+        fido_kwargs = dict(
+            fido2_server=self.server,
+            fido2_state=state,
+            fido2_response=form.cleaned_data,
+        )
+
+        user = authenticate(request=self.request, user=self.get_user(), **fido_kwargs)
+
         if user is None:
             raise ValidationError(_('Authentication failed.'), code='invalid')
         return user
 
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the authentication and return response."""
-        try:
-            user = self.complete_authentication(form)
-        except ValidationError as error:
-            form.add_error(None, error)
+        user = None
+        if SETTINGS.two_step_auth:
+            try:
+                user = self.complete_authentication(form)
+            except ValidationError as error:
+                form.add_error(None, error)
+        else:
+            user = form.get_user()
+
+        if user is not None:
+            login(self.request, user)
+            # Ensure user is deleted from session.
+            self.request.session.pop(AUTHENTICATION_USER_SESSION_KEY, None)
+            return redirect(self.get_success_url())
+        else:
             return self.form_invalid(form)
-
-        login(self.request, user)
-        # Ensure user is deleted from session.
-        self.request.session.pop(AUTHENTICATION_USER_SESSION_KEY, None)
-
-        return redirect(self.get_success_url())
 
     def form_invalid(self, form: Form) -> HttpResponse:
         """Clean the FIDO 2 request from session."""

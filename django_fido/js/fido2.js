@@ -117,8 +117,8 @@ async function sendFido2RegistrationRequest(url, form_data) {
     await sendFido2Request(url, true, 'excludeCredentials', form_data)
 }
 
-async function sendFido2AuthenticationRequest(url) {
-    await sendFido2Request(url, false, 'allowCredentials')
+async function sendFido2AuthenticationRequest(url, form_data) {
+    await sendFido2Request(url, false, 'allowCredentials', form_data)
 }
 
 async function startFido2() {
@@ -132,7 +132,23 @@ async function startFido2() {
     }
 
     if (form.dataset.mode === FIDO2_AUTHENTICATION_REQUEST) {
-        await sendFido2AuthenticationRequest(form.dataset.url)
+        const submit_button = document.getElementById('submit-button')
+        if (submit_button) {
+            submit_button.addEventListener('click', async e => {
+                e.preventDefault()
+
+                let form_data = ''
+                const username_field = form.querySelector('[name=username]')
+                if (username_field)
+                    form_data = `username=${username_field.value}`
+
+                await sendFido2AuthenticationRequest(form.dataset.url, form_data)
+            })
+        }
+        if (form.dataset.autosubmitOff === undefined) {
+            // autosubmit the authentication request unless form defines `data-autosubmit-off` attribute
+            await sendFido2AuthenticationRequest(form.dataset.url)
+        }
     } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
         const submit_button = document.getElementById('submit-button')
         if (submit_button) {
