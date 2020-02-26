@@ -306,7 +306,8 @@ class TestFido2AuthenticationView(TestCase):
 
     @override_settings(
         DJANGO_FIDO_TWO_STEP_AUTH=False,
-        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2GeneralAuthenticationBackend'],
+        DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],
     )
     def test_post_one_step(self):
         session = self.client.session
@@ -327,7 +328,8 @@ class TestFido2AuthenticationView(TestCase):
 
     @override_settings(
         DJANGO_FIDO_TWO_STEP_AUTH=False,
-        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2GeneralAuthenticationBackend'],
+        DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],
     )
     def test_post_one_step_error(self):
         session = self.client.session
@@ -347,7 +349,8 @@ class TestFido2AuthenticationView(TestCase):
 
     @override_settings(
         DJANGO_FIDO_TWO_STEP_AUTH=False,
-        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2ModelAuthenticationBackend']
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2GeneralAuthenticationBackend'],
+        DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],
     )
     def test_post_one_step_no_request(self):
         post = {'username': USERNAME, 'password': PASSWORD, 'client_data': AUTHENTICATION_CLIENT_DATA,

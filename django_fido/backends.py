@@ -6,7 +6,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_backends, get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import PermissionDenied
@@ -14,7 +14,18 @@ from django.http import HttpRequest
 from django.utils.translation import ugettext_lazy as _
 from fido2.server import Fido2Server
 
+from .settings import SETTINGS
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def is_fido_backend_used() -> bool:
+    """Detect whether FIDO2 authentication backend is used."""
+    for auth_backend in get_backends():
+        if isinstance(auth_backend, (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend)):
+            return True
+
+    return False
 
 
 class Fido2AuthenticationBackend(object):
@@ -64,8 +75,8 @@ class Fido2AuthenticationBackend(object):
             return None
 
 
-class Fido2ModelAuthenticationBackend(ModelBackend):
-    """Authenticated user using ModelBackend and Fido2AuthenticationBackend."""
+class Fido2GeneralAuthenticationBackend(ModelBackend):
+    """Authenticated user using any username-password backend and Fido2AuthenticationBackend."""
 
     def __init__(self, *args, **kwargs):
         """Initialize backend."""
@@ -79,10 +90,13 @@ class Fido2ModelAuthenticationBackend(ModelBackend):
         password: str,
         fido2_server: Fido2Server,
         fido2_state: Dict[str, bytes],
-        fido2_response: Dict[str, Any]
+        fido2_response: Dict[str, Any],
+        **kwargs
     ) -> Optional[AbstractBaseUser]:
         """Authenticate using username, password and FIDO 2 token."""
-        user = super().authenticate(request, username, password)
-        if user is not None:
-            user = self.fido_backend.authenticate(request, user, fido2_server, fido2_state, fido2_response)
-        return user
+        for auth_backend in SETTINGS.authentication_backends:
+            user = auth_backend().authenticate(request=request, username=username, password=password, **kwargs)
+            if user is not None:
+                return self.fido_backend.authenticate(request, user, fido2_server, fido2_state, fido2_response)
+
+        return None

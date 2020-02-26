@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * **BREAKING** Replace `Fido2ModelAuthenticationBackend` with more general `Fido2GeneralAuthenticationBackend`.
+
 ## 0.16 ##
  * **BREAKING** Authenticator `label` has to be unique for user. This can potentialy break if you have multiple tokens for user.
  * Add authenticator admin.

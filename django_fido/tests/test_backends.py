@@ -6,13 +6,13 @@ import base64
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.cookie import CookieStorage
 from django.core.exceptions import PermissionDenied
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from fido2.client import ClientData
 from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 from mock import sentinel
 
-from django_fido.backends import Fido2AuthenticationBackend, Fido2ModelAuthenticationBackend
+from django_fido.backends import Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend, is_fido_backend_used
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
@@ -108,10 +108,11 @@ class TestFido2AuthenticationBackend(TestCase):
         self.assertIsNone(self.backend.get_user(42))
 
 
-class TestFido2ModelAuthenticationBackend(TestCase):
-    """Test `Fido2ModelAuthenticationBackend` class."""
+@override_settings(DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'])
+class TestFido2GeneralAuthenticationBackend(TestCase):
+    """Test `Fido2GeneralAuthenticationBackend` class."""
 
-    backend = Fido2ModelAuthenticationBackend()
+    backend = Fido2GeneralAuthenticationBackend()
 
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
@@ -140,3 +141,14 @@ class TestFido2ModelAuthenticationBackend(TestCase):
         self.assertEqual(authenticated_user, None)
         self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
                                  transform=tuple)
+
+
+class TestIsFidoBackendUsed(SimpleTestCase):
+
+    @override_settings(AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2AuthenticationBackend'])
+    def test_is_used(self):
+        self.assertTrue(is_fido_backend_used())
+
+    @override_settings(AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'])
+    def test_is_not_used(self):
+        self.assertFalse(is_fido_backend_used())
