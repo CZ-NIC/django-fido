@@ -1,6 +1,6 @@
 # Changelog #
 
-## Unreleased ##
+## 0.17 ##
  * **BREAKING** Replace `Fido2ModelAuthenticationBackend` with more general `Fido2GeneralAuthenticationBackend`.
 
 ## 0.16 ##
