@@ -38,8 +38,10 @@ In addition to the configuration above, you also need to:
 
 1. Set `DJANGO_FIDO_TWO_STEP_AUTH` to `False`.
 2. Replace `django_fido.backends.Fido2AuthenticationBackend` with
-   `django_fido.backends.Fido2ModelAuthenticationBackend` in `AUTHENTICATION_BACKENDS`.
-3. Set `data-autosubmit-off` attribute on the form element of your login page.
+   `django_fido.backends.Fido2GeneralAuthenticationBackend` in `AUTHENTICATION_BACKENDS`.
+3. Set `DJANGO_FIDO_AUTHENTICATION_BACKENDS` to the list of your additional authentication backends, if you use others
+   than `django.contrib.auth.backends.ModelBackend`.
+4. Set `data-autosubmit-off` attribute on the form element of your login page.
 
 Please note that your login form must have a field named `username`, even if your `USERNAME_FIELD` is not `username`.
 
