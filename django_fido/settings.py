@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from appsettings import AppSettings, BooleanSetting, CallablePathSetting, NestedListSetting, StringSetting
-from django.contrib.auth.backends import ModelBackend
 
 
 class DjangoFidoSettings(AppSettings):
@@ -10,7 +9,7 @@ class DjangoFidoSettings(AppSettings):
 
     authentication_backends = NestedListSetting(
         inner_setting=CallablePathSetting(),
-        default=(ModelBackend,),
+        default=(),
     )
     rp_name = StringSetting(default=None)
     two_step_auth = BooleanSetting(default=True)
