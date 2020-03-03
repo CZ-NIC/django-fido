@@ -1,6 +1,6 @@
 # Changelog #
 
-## Unreleased ##
+## 0.18 ##
  * Fix issue caused by default value of `DJANGO_FIDO_AUTHENTICATION_BACKENDS`. It is now empty list.
 
 ## 0.17 ##
