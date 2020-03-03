@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * Fix issue caused by default value of `DJANGO_FIDO_AUTHENTICATION_BACKENDS`. It is now empty list.
+
 ## 0.17 ##
  * **BREAKING** Replace `Fido2ModelAuthenticationBackend` with more general `Fido2GeneralAuthenticationBackend`.
 
