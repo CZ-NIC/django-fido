@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * Added class attribute `attestation_types` to `Fido2ViewMixin` to specify allowed attestation types during registration.
+
 ## 0.18 ##
  * Fix issue caused by default value of `DJANGO_FIDO_AUTHENTICATION_BACKENDS`. It is now empty list.
 

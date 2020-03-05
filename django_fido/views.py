@@ -5,7 +5,7 @@ import base64
 import logging
 from abc import ABCMeta, abstractmethod
 from http.client import BAD_REQUEST
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
@@ -20,6 +20,7 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
+from fido2.attestation import Attestation
 from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 
@@ -46,10 +47,13 @@ class Fido2ViewMixin(object):
         If None, the RP ID is used instead.
     @cvar attestation: Attestation conveyance preference,
                        see https://www.w3.org/TR/webauthn/#enumdef-attestationconveyancepreference
+    @cvar attestation_types: Allowed attestation format types.
+        If None, all attestation formats except `none` are allowed.
     @cvar session_key: Session key where the FIDO 2 state is stored.
     """
 
     attestation = AttestationConveyancePreference.NONE
+    attestation_types = None  # type: Optional[List[Attestation]]
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     rp_name = None  # type: Optional[str]
@@ -67,7 +71,7 @@ class Fido2ViewMixin(object):
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
         rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.get_rp_name())
-        return Fido2Server(rp, attestation=self.attestation)
+        return Fido2Server(rp, attestation=self.attestation, attestation_types=self.attestation_types)
 
     @abstractmethod
     def get_user(self) -> AbstractBaseUser:
