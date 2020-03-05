@@ -1,7 +1,8 @@
 # Changelog #
 
-## Unreleased ##
+## 0.19 ##
  * Added class attribute `attestation_types` to `Fido2ViewMixin` to specify allowed attestation types during registration.
+ * Set default value of setting `DJANGO_FIDO_AUTHENTICATION_BACKENDS` to list containing `django.contrib.auth.backends.ModelBackend`
 
 ## 0.18 ##
  * Fix issue caused by default value of `DJANGO_FIDO_AUTHENTICATION_BACKENDS`. It is now empty list.
