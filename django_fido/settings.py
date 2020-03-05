@@ -9,7 +9,8 @@ class DjangoFidoSettings(AppSettings):
 
     authentication_backends = NestedListSetting(
         inner_setting=CallablePathSetting(),
-        default=(),
+        default=('django.contrib.auth.backends.ModelBackend',),
+        transform_default=True,
     )
     rp_name = StringSetting(default=None)
     two_step_auth = BooleanSetting(default=True)
