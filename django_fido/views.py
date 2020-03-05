@@ -5,7 +5,7 @@ import base64
 import logging
 from abc import ABCMeta, abstractmethod
 from http.client import BAD_REQUEST
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
@@ -53,7 +53,7 @@ class Fido2ViewMixin(object):
     """
 
     attestation = AttestationConveyancePreference.NONE
-    attestation_types = None  # type: Optional[Attestation]
+    attestation_types = None  # type: Optional[List[Attestation]]
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     rp_name = None  # type: Optional[str]
