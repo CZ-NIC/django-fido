@@ -5,7 +5,7 @@ import base64
 import logging
 from abc import ABCMeta, abstractmethod
 from http.client import BAD_REQUEST
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
