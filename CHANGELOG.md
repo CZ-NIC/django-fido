@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.20 ##
+ * Fix Django 3.0 compatibility issues in templates
+
 ## 0.19 ##
  * Added class attribute `attestation_types` to `Fido2ViewMixin` to specify allowed attestation types during registration.
  * Set default value of setting `DJANGO_FIDO_AUTHENTICATION_BACKENDS` to list containing `django.contrib.auth.backends.ModelBackend`
