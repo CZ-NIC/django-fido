@@ -22,10 +22,25 @@ function createTranslations() {
 }
 
 function addFido2Error(message) {
-    const error_list = document.getElementById(DJANGO_FIDO_ERROR_LIST_ID)
+    let error_list = document.getElementById(DJANGO_FIDO_ERROR_LIST_ID)
+    if (!error_list) {
+        const form = document.getElementById(DJANGO_FIDO_FORM_ID)
+        error_list = document.createElement('ul')
+        error_list.id = DJANGO_FIDO_ERROR_LIST_ID
+        form.appendChild(error_list)
+    }
     const new_item = document.createElement('li')
     new_item.appendChild(document.createTextNode(message))
     error_list.appendChild(new_item)
+}
+
+function clearFido2Errors() {
+    const error_list = document.getElementById(DJANGO_FIDO_ERROR_LIST_ID)
+    if (error_list) {
+        while (error_list.firstChild) {
+            error_list.removeChild(error_list.lastChild)
+        }
+    }
 }
 
 function isFido2Availabile() {
@@ -78,6 +93,7 @@ function fido2ErrorResponseCallback(error) {
 }
 
 async function sendFido2Request(url, is_registration, credenetials_name, form_data = '') {
+    clearFido2Errors()
     const response = await fetch(`${url}?${form_data}`)
 
     window.dispatchEvent(new Event('on-activatation-fido-window'))
@@ -173,4 +189,4 @@ document.addEventListener('DOMContentLoaded', () => {
     startFido2()
 }, false)
 
-export {startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST}
+export {startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST, addFido2Error, clearFido2Errors}

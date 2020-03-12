@@ -1,5 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Fido 2 addFido2Error 1`] = `
+<ul
+  id="django-fido-errors"
+>
+  <li>
+    first error message
+  </li>
+</ul>
+`;
+
+exports[`Fido 2 addFido2Error 2`] = `
+<ul
+  id="django-fido-errors"
+>
+  <li>
+    first error message
+  </li>
+  <li>
+    second error message
+  </li>
+</ul>
+`;
+
 exports[`Fido 2 auth workflow 1`] = `
 Object {
   "publicKey": Object {
@@ -35,6 +58,25 @@ Object {
     "userVerification": "preferred",
   },
 }
+`;
+
+exports[`Fido 2 clearFido2Errors 1`] = `
+<ul
+  id="django-fido-errors"
+>
+  <li>
+    first error message
+  </li>
+  <li>
+    second error message
+  </li>
+</ul>
+`;
+
+exports[`Fido 2 clearFido2Errors 2`] = `
+<ul
+  id="django-fido-errors"
+/>
 `;
 
 exports[`Fido 2 registration workflow 1`] = `
