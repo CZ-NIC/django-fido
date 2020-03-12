@@ -1,4 +1,10 @@
-import { startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST } from '../js/fido2'
+import {
+    startFido2,
+    FIDO2_REGISTRATION_REQUEST,
+    FIDO2_AUTHENTICATION_REQUEST,
+    addFido2Error,
+    clearFido2Errors,
+} from '../js/fido2'
 import fetchMock from 'fetch-mock'
 import '@babel/polyfill'
 import {TextEncoder} from 'util'
@@ -75,4 +81,36 @@ describe('Fido 2', () => {
         testWorkflow(FIDO2_REGISTRATION_REQUEST, done)
     })
 
+    test('addFido2Error', () => {
+        const form = document.createElement('form')
+        form.id = 'django-fido-form'
+        document.getElementsByTagName('body')[0].appendChild(form)
+
+        let error_list = document.getElementById('django-fido-errors')
+        expect(error_list).toBe(null)
+
+        addFido2Error('first error message')
+        error_list = document.getElementById('django-fido-errors')
+        expect(error_list).toMatchSnapshot()
+
+        addFido2Error('second error message')
+        expect(error_list).toMatchSnapshot()
+    })
+
+    test('clearFido2Errors', () => {
+        let error_list = document.createElement('ul')
+        error_list.id = 'django-fido-errors'
+        const li = document.createElement('li')
+        li.appendChild(document.createTextNode('first error message'))
+        error_list.appendChild(li)
+        const li2 = document.createElement('li')
+        li2.appendChild(document.createTextNode('second error message'))
+        error_list.appendChild(li2)
+        document.getElementsByTagName('body')[0].appendChild(error_list)
+
+        error_list = document.getElementById('django-fido-errors')
+        expect(error_list).toMatchSnapshot()
+        clearFido2Errors()
+        expect(error_list).toMatchSnapshot()
+    })
 })

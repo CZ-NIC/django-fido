@@ -1,5 +1,9 @@
 # Changelog #
 
+## Unreleased ##
+ * Create FIDO errors list when needed unless it already exists
+ * Clear FIDO errors list before each registration or authentication request
+
 ## 0.20 ##
  * Fix Django 3.0 compatibility issues in templates
 
