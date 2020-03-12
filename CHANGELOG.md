@@ -1,6 +1,6 @@
 # Changelog #
 
-## Unreleased ##
+## 0.21 ##
  * Create FIDO errors list when needed unless it already exists
  * Clear FIDO errors list before each registration or authentication request
 
