@@ -149,7 +149,11 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
 
     def get_user_data(self, user: AbstractBaseUser) -> Dict[str, str]:
         """Convert user instance to user data for registration."""
-        return {'id': self.get_user_id(user), 'name': user.username, 'displayName': user.get_full_name()}
+        return {
+            'id': self.get_user_id(user),
+            'name': user.username,
+            'displayName': user.get_full_name() or user.username,
+        }
 
     def create_fido2_request(self) -> Tuple[Dict, Dict]:
         """Create and return FIDO 2 registration request.
