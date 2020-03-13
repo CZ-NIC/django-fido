@@ -1,6 +1,6 @@
 # Changelog #
 
-## Unreleased ##
+## 0.22 ##
  * Use username as a backup `displayName`
 
 ## 0.21 ##
