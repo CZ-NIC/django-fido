@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 from http.client import BAD_REQUEST
 from typing import Dict, List, Optional, Tuple
 
+import fido2
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -31,9 +32,12 @@ from .models import Authenticator
 from .settings import SETTINGS
 
 try:
-    from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity
+    from fido2.webauthn import (AttestationConveyancePreference, PublicKeyCredentialRpEntity,
+                                UserVerificationRequirement)
 except ImportError:
-    from fido2.server import ATTESTATION as AttestationConveyancePreference, RelyingParty as PublicKeyCredentialRpEntity
+    from fido2.server import (ATTESTATION as AttestationConveyancePreference,
+                              RelyingParty as PublicKeyCredentialRpEntity,
+                              USER_VERIFICATION as UserVerificationRequirement)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,11 +53,14 @@ class Fido2ViewMixin(object):
                        see https://www.w3.org/TR/webauthn/#enumdef-attestationconveyancepreference
     @cvar attestation_types: Allowed attestation format types.
         If None, all attestation formats except `none` are allowed.
+    @cvar user_verification: Requirement of user verification,
+        see https://www.w3.org/TR/webauthn/#userVerificationRequirement
     @cvar session_key: Session key where the FIDO 2 state is stored.
     """
 
     attestation = AttestationConveyancePreference.NONE
     attestation_types = None  # type: Optional[List[Attestation]]
+    user_verification = UserVerificationRequirement.PREFERRED if fido2.__version__ < '0.8' else None
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     rp_name = None  # type: Optional[str]
@@ -163,7 +170,8 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         user = self.get_user()
         assert user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
-        return self.server.register_begin(self.get_user_data(user), credentials)
+        return self.server.register_begin(self.get_user_data(user), credentials,
+                                          user_verification=self.user_verification)
 
 
 class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
@@ -265,7 +273,8 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
         if not credentials:
             raise ValueError("Can't create FIDO 2 authentication request, no authenticators.")
 
-        return self.server.authenticate_begin(credentials)
+        return self.server.authenticate_begin(credentials,
+                                              user_verification=self.user_verification)
 
 
 class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
