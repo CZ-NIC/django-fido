@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import base64
 import warnings
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -11,6 +12,8 @@ from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from fido2.ctap2 import AttestationObject, AttestedCredentialData
+
+from django_fido.constants import AuthLevel
 
 # Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
@@ -91,3 +94,18 @@ class Authenticator(models.Model):
     def attestation(self, value: AttestationObject):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
         self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')
+
+    @property
+    def level(self) -> Optional[AuthLevel]:
+        """Return certification level."""
+        pass
+
+
+class AuthenticatorMetadata(models.Model):
+    """Stores information from metadata service."""
+
+    url = models.URLField()
+    identification = models.TextField()
+    key_identifier = models.TextField()
+    metadata_entry = models.TextField()
+    detailed_metadata_entry = models.TextField()
