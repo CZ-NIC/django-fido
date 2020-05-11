@@ -41,7 +41,7 @@ INSTALL_REQUIRES = [
     'cryptography',
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
-                  'test': ['mock']}
+                  'test': ['mock', 'responses']}
 
 
 class custom_build(build):

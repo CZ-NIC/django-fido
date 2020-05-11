@@ -2,15 +2,18 @@
 from __future__ import unicode_literals
 
 import base64
+import json
 
 from django.core.exceptions import ValidationError
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fido2.cose import ES256
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 
-from django_fido.models import Authenticator, TransportsValidator
+from django_fido.constants import AuthLevel, AuthVulnerability
+from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
 
-from .data import ATTESTATION_OBJECT, CREDENTIAL_ID
+from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT,
+                   CREDENTIAL_ID)
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -96,3 +99,108 @@ class TestAuthenticator(SimpleTestCase):
 
         self.assertEqual(authenticator.attestation_data, ATTESTATION_OBJECT)
         self.assertEqual(authenticator.credential_id_data, CREDENTIAL_ID)
+
+
+class TestAuthenticatorDatabase(TestCase):
+    """Unittests for Authenticator methods that need database."""
+
+    def test_metadata_no_identification(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)
+        self.assertIsNone(authenticator.metadata)
+
+    def test_metadata_aaguid(self):
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e')
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        self.assertEqual(authenticator.metadata, metadata)
+
+    def test_metadata_aaguid_no_match(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        self.assertIsNone(authenticator.metadata)
+
+    def test_metadata_u2f_no_extension(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F_NO_EXT)
+        self.assertIsNone(authenticator.metadata)
+
+    def test_metadata_attestation_keys(self):
+        metadata = AuthenticatorMetadata.objects.create(identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']")
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
+        self.assertEqual(authenticator.metadata, metadata)
+
+    def test_metadata_attestation_keys_no_match(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
+        self.assertIsNone(authenticator.metadata)
+
+
+class TestAuthenticatorMetadata(TestCase):
+    """Unittests for AuthenticatorMetadata model."""
+
+    def test_level_single(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L0)
+
+    def test_level_revoked(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}, {'status': 'REVOKED'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.NONE)
+
+    def test_level_empty(self):
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps({'statusReports': []}))
+        self.assertEqual(metadata.level, AuthLevel.NONE)
+
+    def test_level_breach_fixed(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'},
+                                    {'status': 'UPDATE_AVAILABLE'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L0)
+
+    def test_level_breach_unfixed(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L1)
+
+    def test_vulnerabilities_none(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.vulnerabilities, [])
+
+    def test_vulnerabilities_single(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.vulnerabilities, [AuthVulnerability.USER_BYPASS])
+
+    def test_vulnerabilities_multiple(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+                                    {'status': 'ATTESTATION_KEY_COMPROMISE'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.vulnerabilities, [AuthVulnerability.USER_BYPASS,
+                                                    AuthVulnerability.ATTESTATION_COMPROMISE])
+
+    def test_is_update_available_none(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+                                    {'status': 'ATTESTATION_KEY_COMPROMISE'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertFalse(metadata.is_update_available)
+
+    def test_is_update_available_available(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+                                    {'status': 'ATTESTATION_KEY_COMPROMISE'},
+                                    {'status': 'UPDATE_AVAILABLE'},
+                                    {'status': 'USER_VERIFICATION_BYPASS'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertTrue(metadata.is_update_available)

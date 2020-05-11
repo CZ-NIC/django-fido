@@ -2,18 +2,25 @@
 from __future__ import unicode_literals
 
 import base64
+import json
 import warnings
-from typing import Optional
+from binascii import b2a_hex
+from typing import List, Optional, cast
+from uuid import UUID
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.x509 import ExtensionNotFound, SubjectKeyIdentifier, load_der_x509_certificate
+from cryptography.x509.oid import ExtensionOID
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from fido2.ctap2 import AttestationObject, AttestedCredentialData
 
-from django_fido.constants import AuthLevel
+from django_fido.constants import NULL_AAGUID, AuthLevel, AuthVulnerability
 
 # Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
@@ -95,17 +102,70 @@ class Authenticator(models.Model):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
         self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')
 
-    @property
-    def level(self) -> Optional[AuthLevel]:
-        """Return certification level."""
-        pass
+    @cached_property
+    def metadata(self) -> Optional['AuthenticatorMetadata']:
+        """Return the appropriate metada for this authenticator."""
+        # First test the presence of aaguid - FIDO 2
+        if self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID:
+            identifier = str(UUID(b2a_hex(self.credential.aaguid).decode()))
+            try:
+                return AuthenticatorMetadata.objects.get(identifier=identifier)
+            except AuthenticatorMetadata.DoesNotExist:
+                return None
+        else:
+            # FIXME: Add handling for UAF devices with AAID
+            # Get the certificate FIDO U2F
+            if 'x5c' in self.attestation.att_statement:
+                cert = self.attestation.att_statement['x5c'][0]
+                certificate = load_der_x509_certificate(cert, default_backend())
+            else:
+                # ECDSAA attestation or self attestation?
+                return None
+            try:
+                subject_identifier = cast(SubjectKeyIdentifier,
+                                          certificate.extensions.get_extension_for_oid(
+                                              ExtensionOID.SUBJECT_KEY_IDENTIFIER))
+            except ExtensionNotFound:
+                return None
+            identifier = b2a_hex(subject_identifier.value.digest).decode()
+            # Key identifiers are stored as lists...
+            try:
+                return AuthenticatorMetadata.objects.get(identifier__contains=identifier)
+            except AuthenticatorMetadata.DoesNotExist:
+                return None
 
 
 class AuthenticatorMetadata(models.Model):
     """Stores information from metadata service."""
 
     url = models.URLField()
-    identification = models.TextField()
-    key_identifier = models.TextField()
+    identifier = models.TextField(unique=True)
     metadata_entry = models.TextField()
     detailed_metadata_entry = models.TextField()
+
+    @cached_property
+    def level(self) -> AuthLevel:
+        """Return last valid certification level."""
+        decoded = json.loads(self.metadata_entry)
+        # The last status should be valid
+        for status in reversed(decoded['statusReports']):
+            # Is it directly a level?
+            if status['status'] in tuple(AuthLevel):
+                return AuthLevel(status['status'])
+            elif status['status'] == 'REVOKED':
+                return AuthLevel.NONE
+        return AuthLevel.NONE
+
+    @cached_property
+    def vulnerabilities(self) -> List[AuthVulnerability]:
+        """Return a list of reported vulnerabilities."""
+        decoded = json.loads(self.metadata_entry)
+        vulnerabilities = tuple(AuthVulnerability)
+        return [AuthVulnerability(s['status']) for s in reversed(decoded['statusReports'])
+                if s['status'] in vulnerabilities]
+
+    @cached_property
+    def is_update_available(self) -> bool:
+        """Return whether an update is available."""
+        decoded = json.loads(self.metadata_entry)
+        return 'UPDATE_AVAILABLE' in [status['status'] for status in decoded['statusReports']]

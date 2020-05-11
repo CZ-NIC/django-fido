@@ -17,8 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('url', models.URLField()),
-                ('identification', models.TextField()),
-                ('key_identifier', models.TextField()),
+                ('identifier', models.TextField(unique=True)),
                 ('metadata_entry', models.TextField()),
                 ('detailed_metadata_entry', models.TextField()),
             ],
