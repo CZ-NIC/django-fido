@@ -22,6 +22,8 @@ AUTHENTICATION_USER_SESSION_KEY = 'django_fido_user'
 FIDO2_REGISTRATION_REQUEST = 'registration'
 FIDO2_AUTHENTICATION_REQUEST = 'authentication'
 
+PEM_CERT_TEMPLATE = '-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n'
+
 
 @unique
 class AuthLevel(str, Enum):

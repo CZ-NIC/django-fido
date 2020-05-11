@@ -3,7 +3,19 @@ from __future__ import unicode_literals
 
 from typing import List, Optional, cast
 
-from appsettings import AppSettings, BooleanSetting, CallablePathSetting, NestedListSetting, StringSetting
+from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, NestedDictSetting, NestedListSetting,
+                         Setting, StringSetting)
+from django.core.exceptions import ValidationError
+
+
+def timeout_validator(value):
+    """Validate timeouts - must contain a number or tuple with two numbers."""
+    if isinstance(value, (float, int)):
+        return
+    if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, (float, int)) for v in value):
+        return
+    raise ValidationError('Value %(value)s must be a float, int or a tuple with 2 float or int items.',
+                          params={'value': value})
 
 
 class DjangoFidoSettings(AppSettings):
@@ -16,6 +28,12 @@ class DjangoFidoSettings(AppSettings):
     ))
     rp_name = cast(Optional[str], StringSetting(default=None))
     two_step_auth = BooleanSetting(default=True)
+    metadata_service = cast(dict, NestedDictSetting(settings=dict(
+        access_token=StringSetting(required=True),
+        url=StringSetting(default='https://mds2.fidoalliance.org/'),
+        timeout=Setting(default=3, validators=[timeout_validator]),
+
+    ), default=None))
 
     class Meta:
         """Meta class."""
