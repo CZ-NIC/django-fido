@@ -1,18 +1,20 @@
 """Django settings specific for django_fido."""
 from __future__ import unicode_literals
 
+from typing import List, Optional, cast
+
 from appsettings import AppSettings, BooleanSetting, CallablePathSetting, NestedListSetting, StringSetting
 
 
 class DjangoFidoSettings(AppSettings):
     """Application specific settings."""
 
-    authentication_backends = NestedListSetting(
+    authentication_backends = cast(List, NestedListSetting(
         inner_setting=CallablePathSetting(),
         default=('django.contrib.auth.backends.ModelBackend',),
         transform_default=True,
-    )
-    rp_name = StringSetting(default=None)
+    ))
+    rp_name = cast(Optional[str], StringSetting(default=None))
     two_step_auth = BooleanSetting(default=True)
 
     class Meta:
