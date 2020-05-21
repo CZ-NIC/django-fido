@@ -45,6 +45,14 @@ In addition to the configuration above, you also need to:
 
 Please note that your login form must have a field named `username`, even if your `USERNAME_FIELD` is not `username`.
 
+## Metadata download
+
+If you want to be able to download authenticator metadata, you need to set `DJANGO_FIDO_METADATA_SERVICE` setting.
+It is a dictionary, with an `ACCESS_TOKEN` as the only mandatory key.
+Then you can periodically run the `download_authenticator_metadata` management command.
+If metadata are available for the given `Authenticator`, its `metadata` property will be an object.
+The `level`, `vulnerabilities` and `is_update_available` methods on `metadata` can be used to determine the trust and certification level.
+
 ## Changes ##
 See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).
 
