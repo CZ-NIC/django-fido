@@ -3,6 +3,7 @@
 ## Unreleased ##
  * Display no authenticator error
  * `error` key in repsponse of `BaseFido2RequestView` is now deprecated and will be removed in the future
+ * Added metadata download and reporting
 
 ## 0.22 ##
  * Use username as a backup `displayName`

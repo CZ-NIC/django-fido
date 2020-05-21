@@ -36,9 +36,12 @@ INSTALL_REQUIRES = [
     'fido2',
     'sqlparse',  # sqlparse is required for Django < 2.2
     'django-app-settings>=0.6.1',
+    'jwcrypto',
+    'requests',
+    'cryptography',
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
-                  'test': ['mock']}
+                  'test': ['mock', 'responses']}
 
 
 class custom_build(build):
