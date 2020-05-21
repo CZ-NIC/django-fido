@@ -196,7 +196,11 @@ class TestFido2AuthenticationRequestView(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {'error': "Can't create FIDO 2 authentication request, no authenticators."})
+        self.assertEqual(response.json(), {
+            'error_code': 'NoAuthenticatorsError',
+            'message': "Can't create FIDO 2 authentication request, no authenticators found.",
+            'error': "Can't create FIDO 2 authentication request, no authenticators found.",
+        })
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
     @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=False)

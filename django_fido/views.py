@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import base64
 import logging
 from abc import ABCMeta, abstractmethod
+from enum import Enum, unique
 from http.client import BAD_REQUEST
 from typing import Dict, List, Optional, Tuple
 
@@ -40,6 +41,23 @@ except ImportError:
                               USER_VERIFICATION as UserVerificationRequirement)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@unique
+class Fido2ServerError(str, Enum):
+    """FIDO 2 server error types."""
+
+    DEFAULT = 'Fido2ServerError'
+    NO_AUTHENTICATORS = 'NoAuthenticatorsError'
+
+
+class Fido2Error(ValueError):
+    """FIDO 2 error."""
+
+    def __init__(self, *args, error_code: Fido2ServerError):
+        """Set error code."""
+        super().__init__(*args)
+        self.error_code = error_code
 
 
 class Fido2ViewMixin(object):
@@ -106,7 +124,11 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
         try:
             request_data, state = self.create_fido2_request()
         except ValueError as error:
-            return JsonResponse({'error': force_text(error)}, status=BAD_REQUEST)
+            return JsonResponse({
+                'error_code': getattr(error, 'error_code', Fido2ServerError.DEFAULT),
+                'message': force_text(error),
+                'error': force_text(error),  # error key is deprecated and will be removed in the future
+            }, status=BAD_REQUEST)
 
         # Encode challenge into base64 encoding
         challenge = request_data['publicKey']['challenge']
@@ -271,7 +293,8 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
         assert user and user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
         if not credentials:
-            raise ValueError("Can't create FIDO 2 authentication request, no authenticators.")
+            raise Fido2Error("Can't create FIDO 2 authentication request, no authenticators found.",
+                             error_code=Fido2ServerError.NO_AUTHENTICATORS)
 
         return self.server.authenticate_begin(credentials,
                                               user_verification=self.user_verification)
