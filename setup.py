@@ -39,6 +39,7 @@ INSTALL_REQUIRES = [
     'jwcrypto',
     'requests',
     'cryptography',
+    'pyopenssl',
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock', 'responses']}

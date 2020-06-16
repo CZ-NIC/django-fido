@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from typing import List, Optional, cast
 
-from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, NestedDictSetting, NestedListSetting,
-                         Setting, StringSetting)
+from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,
+                         NestedListSetting, Setting, StringSetting)
 from django.core.exceptions import ValidationError
 
 
@@ -32,7 +32,8 @@ class DjangoFidoSettings(AppSettings):
         access_token=StringSetting(required=True),
         url=StringSetting(default='https://mds2.fidoalliance.org/'),
         timeout=Setting(default=3, validators=[timeout_validator]),
-
+        certificate=FileSetting(),
+        crl_list=cast(list, NestedListSetting(inner_setting=FileSetting(), default=[])),
     ), default=None))
 
     class Meta:

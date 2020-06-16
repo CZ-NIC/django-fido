@@ -6,14 +6,58 @@ from base64 import urlsafe_b64decode
 from typing import Any, Dict
 
 import requests
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from django.core.management.base import BaseCommand, CommandError
 from jwcrypto.jwk import JWK
 from jwcrypto.jws import InvalidJWSSignature
 from jwcrypto.jwt import JWT
+from OpenSSL import crypto
 
 from django_fido.constants import PEM_CERT_TEMPLATE
 from django_fido.models import AuthenticatorMetadata
 from django_fido.settings import SETTINGS
+
+
+class InvalidCert(Exception):
+    """Raised when certificate validation fails."""
+
+
+def verify_certificate(jwt: JWT) -> JWK:
+    """Get (and verify) the signing key from JWT."""
+    # First element in the header is our actual key
+    try:
+        decoding_key = JWK.from_pem(PEM_CERT_TEMPLATE.format(jwt.token.jose_header['x5c'][0]).encode())
+    except ValueError:
+        raise InvalidCert('Cannot decode key.')
+    if SETTINGS.metadata_service['certificate'] is None:
+        return decoding_key
+    # Create crypto context
+    store = crypto.X509Store()
+    for key in jwt.token.jose_header['x5c'][1:]:
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(key).encode())
+        store.add_cert(cert)
+    with open(str(SETTINGS.metadata_service['certificate'])) as root_file:
+        root_cert = crypto.load_certificate(crypto.FILETYPE_PEM, root_file.read())
+    store.add_cert(root_cert)
+    # CRL handling
+    # FIXME: This part is not tested in unittests (intentionally) as it might be more suited for integration testing
+    for crl_file in SETTINGS.metadata_service['crl_list']:
+        with open(str(crl_file), 'rb') as file:
+            crl_list = x509.load_pem_x509_crl(file.read(), default_backend())
+        store.add_crl(crypto.CRL.from_cryptography(crl_list))
+    if SETTINGS.metadata_service['crl_list']:
+        store.set_flags(crypto.X509StoreFlags.CRL_CHECK)
+    # Create context and verify
+    decoding_cert = crypto.load_certificate(crypto.FILETYPE_PEM,
+                                            PEM_CERT_TEMPLATE.format(jwt.token.jose_header['x5c'][0]).encode())
+    store_ctx = crypto.X509StoreContext(store, decoding_cert)
+    try:
+        store_ctx.verify_certificate()
+    except crypto.X509StoreContextError:
+        raise InvalidCert('Key could not be verified.')
+    else:
+        return decoding_key
 
 
 def _get_metadata() -> Dict[str, Any]:
@@ -32,8 +76,8 @@ def _get_metadata() -> Dict[str, Any]:
     # x5c element in header contains the signing certificate and possibly intermediate certificates
     # Use the first one to verify signature, the others can be used to verify the first one
     try:
-        decoding_key = JWK.from_pem(PEM_CERT_TEMPLATE.format(decoded_jwt.token.jose_header['x5c'][0]).encode())
-    except ValueError:
+        decoding_key = verify_certificate(decoded_jwt)
+    except InvalidCert:
         raise CommandError('Could not read the key.')
     try:
         decoded_jwt.deserialize(metadata.content.decode(), key=decoding_key)

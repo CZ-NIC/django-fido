@@ -10,23 +10,74 @@ from unittest.mock import patch
 import responses
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
+from jwcrypto.jwk import JWK
+from jwcrypto.jwt import JWT
 from requests.exceptions import RequestException
 
-from django_fido.management.commands.download_authenticator_metadata import _get_metadata
+from django_fido.management.commands.download_authenticator_metadata import (InvalidCert, _get_metadata,
+                                                                             verify_certificate)
 from django_fido.models import AuthenticatorMetadata
 
 DIR_PATH = os.path.join(os.path.dirname(__file__), 'data', 'mds')
 
 
-@override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
-class TestGetMetadata(SimpleTestCase):
-    """Unittests for get_metadata command."""
+class FileMixin:
+    """Mixin for tests using files."""
 
     def get_file_content(self, path):
         """Return file content."""
         with open(path) as f:
             content = f.read()
         return content.strip().encode()
+
+
+class TestVerifyCertificate(FileMixin, SimpleTestCase):
+    """Unittests for verify_certificate.
+
+    These tests use a real world certificate that expires in 2045.
+    This seems quite far in the future for now, but beware!
+    """
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
+    def test_no_certificate(self):
+        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        key = verify_certificate(jwt)
+        self.assertIsInstance(key, JWK)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'Root.cer')})
+    def test_correct_root_cert(self):
+        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        key = verify_certificate(jwt)
+        self.assertIsInstance(key, JWK)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')})
+    def test_bad_root_cert(self):
+        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        with self.assertRaises(InvalidCert):
+            verify_certificate(jwt)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'NotRoot.cer')})
+    def test_not_a_root_cert(self):
+        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        with self.assertRaises(InvalidCert):
+            verify_certificate(jwt)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
+    def test_malformed_key(self):
+        token = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6WyJhYWFhYWFhIl19.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikp' \
+                'vaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.Dvmv1EMeu-pAqJdJAIXKef6M_Kx2Dn2qCLZyBF63f3RcI1ddDCXADlLmwvMjCX7u' \
+                'V1R5AbLMf_rLxUlGZZnXvg'
+        jwt = JWT(jwt=token)
+        with self.assertRaises(InvalidCert):
+            verify_certificate(jwt)
+
+
+@override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
+class TestGetMetadata(FileMixin, SimpleTestCase):
+    """Unittests for get_metadata command."""
 
     def test_error_response(self):
         with responses.RequestsMock() as rsps:
@@ -68,14 +119,14 @@ class TestGetMetadata(SimpleTestCase):
                 rsps.add(responses.GET, 'https://example.com', body=content)
                 _get_metadata()
 
-    def test_malformed_key(self):
-        token = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6WyJhYWFhYWFhIl19.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikp' \
-                'vaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.Dvmv1EMeu-pAqJdJAIXKef6M_Kx2Dn2qCLZyBF63f3RcI1ddDCXADlLmwvMjCX7u' \
-                'V1R5AbLMf_rLxUlGZZnXvg'.encode()
-        with responses.RequestsMock() as rsps:
-            rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=token)
-            with self.assertRaisesMessage(CommandError, 'Could not read the key.'):
-                _get_metadata()
+    def test_bad_cert(self):
+        content = self.get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
+        with override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                             'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')}):
+            with responses.RequestsMock() as rsps:
+                rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
+                with self.assertRaises(CommandError):
+                    _get_metadata()
 
 
 @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
