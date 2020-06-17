@@ -1,9 +1,10 @@
 """Command to download metadata for authenticators."""
 from __future__ import unicode_literals
 
+import base64
+import hashlib
 import json
-from base64 import urlsafe_b64decode
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import requests
 from cryptography import x509
@@ -14,13 +15,23 @@ from jwcrypto.jws import InvalidJWSSignature
 from jwcrypto.jwt import JWT
 from OpenSSL import crypto
 
-from django_fido.constants import PEM_CERT_TEMPLATE
+from django_fido.constants import HASH_ALG_MAPPING, PEM_CERT_TEMPLATE
 from django_fido.models import AuthenticatorMetadata
 from django_fido.settings import SETTINGS
 
 
 class InvalidCert(Exception):
     """Raised when certificate validation fails."""
+
+
+def urlsafe_b64decode(decodable: bytes) -> bytes:
+    """Alternative implementation to fill the necessary padding."""
+    m = len(decodable) % 4
+    if m == 2:
+        decodable += b'=='
+    elif m == 3:
+        decodable += b'='
+    return base64.urlsafe_b64decode(decodable)
 
 
 def _prepare_crypto_store(jwt: JWT) -> crypto.X509Store:
@@ -70,7 +81,7 @@ def verify_certificate(jwt: JWT) -> JWK:
         return decoding_key
 
 
-def _get_metadata() -> Dict[str, Any]:
+def _get_metadata() -> Tuple[Dict[str, Any], str]:
     """Download the metadata TOC."""
     try:
         metadata = requests.get(SETTINGS.metadata_service['url'],
@@ -93,7 +104,8 @@ def _get_metadata() -> Dict[str, Any]:
         decoded_jwt.deserialize(metadata.content.decode(), key=decoding_key)
     except InvalidJWSSignature:
         raise CommandError('Could not verify MDS signature.')
-    return json.loads(decoded_jwt.claims)
+    # Return parsed metadata and the algorith for signing
+    return json.loads(decoded_jwt.claims), json.loads(decoded_jwt.header)['alg']
 
 
 class Command(BaseCommand):
@@ -111,7 +123,11 @@ class Command(BaseCommand):
         except TypeError:
             raise CommandError('access_token setting must be specified for this command to work.')
 
-        metadata = _get_metadata()
+        metadata, alg = _get_metadata()
+        # Convert alg name to corresponding hashing algorithm
+        hash_alg = HASH_ALG_MAPPING.get(alg)
+        if hash_alg is None or hash_alg.lower() not in hashlib.algorithms_available:
+            raise CommandError('Unsupported hash algorithm {}.'.format(alg))
         for authenticator_data in metadata['entries']:
             if 'aaid' in authenticator_data:
                 identifier = authenticator_data['aaid']
@@ -127,5 +143,9 @@ class Command(BaseCommand):
             authenticator.metadata_entry = json.dumps(authenticator_data)
             auth_metadata = requests.get(url, params={'token': SETTINGS.metadata_service['access_token']},
                                          timeout=SETTINGS.metadata_service['timeout'])
-            authenticator.detailed_metadata_entry = urlsafe_b64decode(auth_metadata.content).decode()
+            hash = hashlib.new(hash_alg, auth_metadata.content)
+            if hash.digest() != urlsafe_b64decode(authenticator_data['hash'].encode()):
+                self.stderr.write('Hash invalid for authenticator {}.'.format(identifier))
+            else:
+                authenticator.detailed_metadata_entry = urlsafe_b64decode(auth_metadata.content).decode()
             authenticator.save()

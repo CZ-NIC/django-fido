@@ -25,6 +25,19 @@ FIDO2_AUTHENTICATION_REQUEST = 'authentication'
 PEM_CERT_TEMPLATE = '-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n'
 NULL_AAGUID = b'\x00' * 16
 
+# According to RFC 7518
+HASH_ALG_MAPPING = {
+    'HS256': 'SHA256',
+    'HS384': 'SHA384',
+    'HS512': 'SHA512',
+    'ES256': 'SHA256',
+    'ES384': 'SHA384',
+    'ES512': 'SHA512',
+    'RS256': 'SHA256',
+    'RS384': 'SHA384',
+    'RS512': 'SHA512',
+}
+
 
 @unique
 class AuthLevel(str, Enum):
