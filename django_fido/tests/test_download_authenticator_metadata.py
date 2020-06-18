@@ -21,17 +21,14 @@ from django_fido.models import AuthenticatorMetadata
 DIR_PATH = os.path.join(os.path.dirname(__file__), 'data', 'mds')
 
 
-class FileMixin:
-    """Mixin for tests using files."""
-
-    def get_file_content(self, path):
-        """Return file content."""
-        with open(path) as f:
-            content = f.read()
-        return content.strip().encode()
+def get_file_content(path):
+    """Return file content."""
+    with open(path) as f:
+        content = f.read()
+    return content.strip().encode()
 
 
-class TestVerifyCertificate(FileMixin, SimpleTestCase):
+class TestVerifyCertificate(SimpleTestCase):
     """Unittests for verify_certificate.
 
     These tests use a real world certificate that expires in 2045.
@@ -40,28 +37,28 @@ class TestVerifyCertificate(FileMixin, SimpleTestCase):
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
     def test_no_certificate(self):
-        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         key = verify_certificate(jwt)
         self.assertIsInstance(key, JWK)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                      'CERTIFICATE': os.path.join(DIR_PATH, 'Root.cer')})
     def test_correct_root_cert(self):
-        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         key = verify_certificate(jwt)
         self.assertIsInstance(key, JWK)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                      'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')})
     def test_bad_root_cert(self):
-        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         with self.assertRaises(InvalidCert):
             verify_certificate(jwt)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                      'CERTIFICATE': os.path.join(DIR_PATH, 'NotRoot.cer')})
     def test_not_a_root_cert(self):
-        jwt = JWT(jwt=self.get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         with self.assertRaises(InvalidCert):
             verify_certificate(jwt)
 
@@ -76,7 +73,7 @@ class TestVerifyCertificate(FileMixin, SimpleTestCase):
 
 
 @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
-class TestGetMetadata(FileMixin, SimpleTestCase):
+class TestGetMetadata(SimpleTestCase):
     """Unittests for get_metadata command."""
 
     def test_error_response(self):
@@ -92,27 +89,27 @@ class TestGetMetadata(FileMixin, SimpleTestCase):
                 _get_metadata()
 
     def test_ok_response(self):
-        content = self.get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
+        content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
             metadata = _get_metadata()
         self.assertEqual(set(metadata.keys()), {'entries', 'nextUpdate', 'no', 'legalHeader'})
 
     def test_bad_signature_response(self):
-        content = self.get_file_content(os.path.join(DIR_PATH, 'bad.txt'))
+        content = get_file_content(os.path.join(DIR_PATH, 'bad.txt'))
         with responses.RequestsMock() as rsps:
             with self.assertRaisesMessage(CommandError, 'Could not verify MDS signature.'):
                 rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
                 _get_metadata()
 
     def test_default_url(self):
-        content = self.get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
+        content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
             _get_metadata()
 
     def test_custom_url(self):
-        content = self.get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
+        content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                              'URL': 'https://example.com'}):
             with responses.RequestsMock() as rsps:
@@ -120,7 +117,7 @@ class TestGetMetadata(FileMixin, SimpleTestCase):
                 _get_metadata()
 
     def test_bad_cert(self):
-        content = self.get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
+        content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                              'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')}):
             with responses.RequestsMock() as rsps:
