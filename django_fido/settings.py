@@ -32,8 +32,9 @@ class DjangoFidoSettings(AppSettings):
         access_token=StringSetting(required=True),
         url=StringSetting(default='https://mds2.fidoalliance.org/'),
         timeout=Setting(default=3, validators=[timeout_validator]),
-        certificate=FileSetting(),
-        crl_list=cast(list, NestedListSetting(inner_setting=FileSetting(), default=[])),
+        disable_cert_verification=BooleanSetting(default=False),
+        certificate=NestedListSetting(inner_setting=FileSetting(), default=[]),
+        crl_list=NestedListSetting(inner_setting=FileSetting(), default=[]),
     ), default=None)
 
     class Meta:

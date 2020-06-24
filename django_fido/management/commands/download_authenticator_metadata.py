@@ -23,22 +23,16 @@ class InvalidCert(Exception):
     """Raised when certificate validation fails."""
 
 
-def verify_certificate(jwt: JWT) -> JWK:
-    """Get (and verify) the signing key from JWT."""
-    # First element in the header is our actual key
-    try:
-        decoding_key = JWK.from_pem(PEM_CERT_TEMPLATE.format(jwt.token.jose_header['x5c'][0]).encode())
-    except ValueError:
-        raise InvalidCert('Cannot decode key.')
-    if SETTINGS.metadata_service['certificate'] is None:
-        return decoding_key
+def _prepare_crypto_store(jwt: JWT) -> crypto.X509Store:
+    """Prepare crytpographic store for verification."""
     # Create crypto context
     store = crypto.X509Store()
     for key in jwt.token.jose_header['x5c'][1:]:
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(key).encode())
         store.add_cert(cert)
-    with open(str(SETTINGS.metadata_service['certificate'])) as root_file:
-        root_cert = crypto.load_certificate(crypto.FILETYPE_PEM, root_file.read())
+    for root_cert_file in SETTINGS.metadata_service['certificate']:
+        with open(str(root_cert_file)) as root_file:
+            root_cert = crypto.load_certificate(crypto.FILETYPE_PEM, root_file.read())
     store.add_cert(root_cert)
     # CRL handling
     # FIXME: This part is not tested in unittests (intentionally) as it might be more suited for integration testing
@@ -48,7 +42,23 @@ def verify_certificate(jwt: JWT) -> JWK:
         store.add_crl(crypto.CRL.from_cryptography(crl_list))
     if SETTINGS.metadata_service['crl_list']:
         store.set_flags(crypto.X509StoreFlags.CRL_CHECK)
+    return store
+
+
+def verify_certificate(jwt: JWT) -> JWK:
+    """Get (and verify) the signing key from JWT."""
+    # First element in the header is our actual key
+    try:
+        decoding_key = JWK.from_pem(PEM_CERT_TEMPLATE.format(jwt.token.jose_header['x5c'][0]).encode())
+    except ValueError:
+        raise InvalidCert('Cannot decode key.')
+    if SETTINGS.metadata_service['disable_cert_verification']:
+        return decoding_key
+    if not SETTINGS.metadata_service['certificate']:
+        raise CommandError("Certificate verification enabled, but no certificate set. "
+                           "Please set certificate or disable validation.")
     # Create context and verify
+    store = _prepare_crypto_store(jwt)
     decoding_cert = crypto.load_certificate(crypto.FILETYPE_PEM,
                                             PEM_CERT_TEMPLATE.format(jwt.token.jose_header['x5c'][0]).encode())
     store_ctx = crypto.X509StoreContext(store, decoding_cert)

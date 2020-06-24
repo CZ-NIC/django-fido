@@ -35,28 +35,43 @@ class TestVerifyCertificate(SimpleTestCase):
     This seems quite far in the future for now, but beware!
     """
 
-    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
-    def test_no_certificate(self):
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token', 'DISABLE_CERT_VERIFICATION': True})
+    def test_disabled_verification(self):
         jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         key = verify_certificate(jwt)
         self.assertIsInstance(key, JWK)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
-                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'Root.cer')})
+                                                     'DISABLE_CERT_VERIFICATION': False})
+    def test_no_certificate(self):
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        with self.assertRaises(CommandError):
+            verify_certificate(jwt)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                     'CERTIFICATE': [os.path.join(DIR_PATH, 'Root.cer')]})
     def test_correct_root_cert(self):
         jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         key = verify_certificate(jwt)
         self.assertIsInstance(key, JWK)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
-                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')})
+                                                     'CERTIFICATE': [os.path.join(DIR_PATH, 'Root_bad.cer')]})
     def test_bad_root_cert(self):
         jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         with self.assertRaises(InvalidCert):
             verify_certificate(jwt)
 
     @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
-                                                     'CERTIFICATE': os.path.join(DIR_PATH, 'NotRoot.cer')})
+                                                     'CERTIFICATE': [os.path.join(DIR_PATH, 'Root_bad.cer'),
+                                                                     os.path.join(DIR_PATH, 'Root.cer')]})
+    def test_multiple_root_cert(self):
+        jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
+        key = verify_certificate(jwt)
+        self.assertIsInstance(key, JWK)
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                     'CERTIFICATE': [os.path.join(DIR_PATH, 'NotRoot.cer')]})
     def test_not_a_root_cert(self):
         jwt = JWT(jwt=get_file_content(os.path.join(DIR_PATH, 'correct.txt')).decode())
         with self.assertRaises(InvalidCert):
@@ -72,7 +87,8 @@ class TestVerifyCertificate(SimpleTestCase):
             verify_certificate(jwt)
 
 
-@override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token'})
+@override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
+                                                 'CERTIFICATE': [os.path.join(DIR_PATH, 'Root.cer')]})
 class TestGetMetadata(SimpleTestCase):
     """Unittests for get_metadata command."""
 
@@ -111,7 +127,8 @@ class TestGetMetadata(SimpleTestCase):
     def test_custom_url(self):
         content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
-                                                             'URL': 'https://example.com'}):
+                                                             'URL': 'https://example.com',
+                                                             'CERTIFICATE': [os.path.join(DIR_PATH, 'Root.cer')]}):
             with responses.RequestsMock() as rsps:
                 rsps.add(responses.GET, 'https://example.com', body=content)
                 _get_metadata()
@@ -119,7 +136,7 @@ class TestGetMetadata(SimpleTestCase):
     def test_bad_cert(self):
         content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
-                                                             'CERTIFICATE': os.path.join(DIR_PATH, 'Root_bad.cer')}):
+                                                             'CERTIFICATE': [os.path.join(DIR_PATH, 'Root_bad.cer')]}):
             with responses.RequestsMock() as rsps:
                 rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
                 with self.assertRaises(CommandError):
