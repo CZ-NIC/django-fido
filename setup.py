@@ -35,10 +35,11 @@ INSTALL_REQUIRES = [
     'Django>=1.11',
     'fido2',
     'sqlparse',  # sqlparse is required for Django < 2.2
-    'django-app-settings>=0.6.1',
+    'django-app-settings>=0.7.1',
     'jwcrypto',
     'requests',
     'cryptography',
+    'pyopenssl',
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock', 'responses']}

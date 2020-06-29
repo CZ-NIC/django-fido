@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from typing import List, Optional, cast
 
-from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, NestedDictSetting, NestedListSetting,
-                         Setting, StringSetting)
+from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,
+                         NestedListSetting, Setting, StringSetting)
 from django.core.exceptions import ValidationError
 
 
@@ -28,12 +28,14 @@ class DjangoFidoSettings(AppSettings):
     ))
     rp_name = cast(Optional[str], StringSetting(default=None))
     two_step_auth = BooleanSetting(default=True)
-    metadata_service = cast(dict, NestedDictSetting(settings=dict(
+    metadata_service = NestedDictSetting(settings=dict(
         access_token=StringSetting(required=True),
         url=StringSetting(default='https://mds2.fidoalliance.org/'),
         timeout=Setting(default=3, validators=[timeout_validator]),
-
-    ), default=None))
+        disable_cert_verification=BooleanSetting(default=False),
+        certificate=NestedListSetting(inner_setting=FileSetting(), default=[]),
+        crl_list=NestedListSetting(inner_setting=FileSetting(), default=[]),
+    ), default=None)
 
     class Meta:
         """Meta class."""
