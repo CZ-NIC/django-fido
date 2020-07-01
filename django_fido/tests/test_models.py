@@ -13,7 +13,7 @@ from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
 
 from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT,
-                   CREDENTIAL_ID)
+                   CREDENTIAL_ID, DETAILED_METADATA, DETAILED_METADATA_ATTESTATION_KEYS, DETAILED_METADATA_WRONG_CERT)
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -109,9 +109,17 @@ class TestAuthenticatorDatabase(TestCase):
         self.assertIsNone(authenticator.metadata)
 
     def test_metadata_aaguid(self):
-        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e')
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        detailed_metadata_entry=json.dumps(DETAILED_METADATA))
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
         self.assertEqual(authenticator.metadata, metadata)
+
+    def test_metadata_aaguid_wrong_cert(self):
+        AuthenticatorMetadata.objects.create(
+            identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+            detailed_metadata_entry=json.dumps(DETAILED_METADATA_WRONG_CERT))
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        self.assertIsNone(authenticator.metadata)
 
     def test_metadata_aaguid_no_match(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
@@ -122,7 +130,9 @@ class TestAuthenticatorDatabase(TestCase):
         self.assertIsNone(authenticator.metadata)
 
     def test_metadata_attestation_keys(self):
-        metadata = AuthenticatorMetadata.objects.create(identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']")
+        metadata = AuthenticatorMetadata.objects.create(
+            identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']",
+            detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS))
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
         self.assertEqual(authenticator.metadata, metadata)
 

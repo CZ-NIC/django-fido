@@ -19,8 +19,9 @@ from django.utils.encoding import force_text
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from fido2.ctap2 import AttestationObject, AttestedCredentialData
+from OpenSSL import crypto
 
-from django_fido.constants import NULL_AAGUID, AuthLevel, AuthVulnerability
+from django_fido.constants import NULL_AAGUID, PEM_CERT_TEMPLATE, AuthLevel, AuthVulnerability
 
 # Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
@@ -102,9 +103,8 @@ class Authenticator(models.Model):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
         self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')
 
-    @cached_property
-    def metadata(self) -> Optional['AuthenticatorMetadata']:
-        """Return the appropriate metada for this authenticator."""
+    def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
+        """Get the appropriate metadata."""
         # First test the presence of aaguid - FIDO 2
         if self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID:
             identifier = str(UUID(b2a_hex(self.credential.aaguid).decode()))
@@ -133,6 +133,26 @@ class Authenticator(models.Model):
                 return AuthenticatorMetadata.objects.get(identifier__contains=identifier)
             except AuthenticatorMetadata.DoesNotExist:
                 return None
+
+    @cached_property
+    def metadata(self) -> Optional['AuthenticatorMetadata']:
+        """Verify and return the appropriate metada for this authenticator."""
+        metadata = self._get_metadata()
+        if metadata is not None and 'x5c' in self.attestation.att_statement:
+            # Take the device certificate and try to validate against all certs in MDS
+            device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
+            root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
+            store = crypto.X509Store()
+            for root_cert in root_certs:
+                cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert))
+                store.add_cert(cert)
+            store_ctx = crypto.X509StoreContext(store, device_cert)
+            try:
+                store_ctx.verify_certificate()
+            except crypto.X509StoreContextError:
+                # The device certificate cannot be verified using the MDS certificate, do not trust the metadata
+                return None
+        return metadata
 
 
 class AuthenticatorMetadata(models.Model):
