@@ -108,8 +108,9 @@ class TestGetMetadata(SimpleTestCase):
         content = get_file_content(os.path.join(DIR_PATH, 'correct.txt'))
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://mds2.fidoalliance.org/', body=content)
-            metadata = _get_metadata()
+            metadata, alg = _get_metadata()
         self.assertEqual(set(metadata.keys()), {'entries', 'nextUpdate', 'no', 'legalHeader'})
+        self.assertEqual(alg, 'ES256')
 
     def test_bad_signature_response(self):
         content = get_file_content(os.path.join(DIR_PATH, 'bad.txt'))
@@ -154,14 +155,15 @@ class TestDownloadAuthenticatorMetadata(TestCase):
 
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_empty_list(self, get_metada_patch):
-        get_metada_patch.return_value = {'entries': []}
+        get_metada_patch.return_value = ({'entries': []}, 'ES256')
         call_command('download_authenticator_metadata')
         self.assertFalse(AuthenticatorMetadata.objects.all().exists())
 
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_aaid(self, get_metada_patch):
-        entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd'}
-        get_metada_patch.return_value = {'entries': [entry]}
+        entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd',
+                 'hash': 'YXIP-OAlWmYNiw2TQHhPJtdWmNRIm78aitlsxhreXJA'}
+        get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')
         payload = {
             "description": "FIDO Alliance Sample UAF Authenticator",
             "aaid": "1234#5678",
@@ -221,7 +223,7 @@ class TestDownloadAuthenticatorMetadata(TestCase):
         }
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://example.com/1234abcd',
-                     body=urlsafe_b64encode(json.dumps(payload).encode()))
+                     body=urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()))
             call_command('download_authenticator_metadata')
         metadata = AuthenticatorMetadata.objects.get(identifier='1234#5678')
         self.assertJSONEqual(metadata.metadata_entry, entry)
@@ -230,8 +232,9 @@ class TestDownloadAuthenticatorMetadata(TestCase):
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_aaid_update(self, get_metada_patch):
         AuthenticatorMetadata.objects.create(identifier='1234#5678')
-        entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd'}
-        get_metada_patch.return_value = {'entries': [entry]}
+        entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd',
+                 'hash': 'YXIP-OAlWmYNiw2TQHhPJtdWmNRIm78aitlsxhreXJA'}
+        get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')
         payload = {
             "description": "FIDO Alliance Sample UAF Authenticator",
             "aaid": "1234#5678",
@@ -291,7 +294,7 @@ class TestDownloadAuthenticatorMetadata(TestCase):
         }
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://example.com/1234abcd',
-                     body=urlsafe_b64encode(json.dumps(payload).encode()))
+                     body=urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()))
             call_command('download_authenticator_metadata')
         metadata = AuthenticatorMetadata.objects.get(identifier='1234#5678')
         self.assertJSONEqual(metadata.metadata_entry, entry)
@@ -300,8 +303,8 @@ class TestDownloadAuthenticatorMetadata(TestCase):
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_aaguid(self, get_metada_patch):
         entry = {'attestationCertificateKeyIdentifiers': ['7c0903708b87115b0b422def3138c3c864e44573'],
-                 'url': 'https://example.com/abcd'}
-        get_metada_patch.return_value = {'entries': [entry]}
+                 'url': 'https://example.com/abcd', 'hash': 'fz8OLQ8NusYLf8XopH39Hibg3wCcqFVlu_vRA-IK074'}
+        get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')
         payload = {
             "description": "FIDO Alliance Sample U2F Authenticator",
             "attestationCertificateKeyIdentifiers": ["7c0903708b87115b0b422def3138c3c864e44573"],
@@ -338,7 +341,7 @@ class TestDownloadAuthenticatorMetadata(TestCase):
             }
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://example.com/abcd',
-                     body=urlsafe_b64encode(json.dumps(payload).encode()))
+                     body=urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()))
             call_command('download_authenticator_metadata')
         metadata = AuthenticatorMetadata.objects.get(identifier__contains='7c0903708b87115b0b422def3138c3c864e44573')
         self.assertJSONEqual(metadata.metadata_entry, entry)
@@ -347,8 +350,58 @@ class TestDownloadAuthenticatorMetadata(TestCase):
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_key_identifiers(self, get_metada_patch):
         entry = {'aaguid': '7c0903708b87115b0b422def3138c3c864e44573',
-                 'url': 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573'}
-        get_metada_patch.return_value = {'entries': [entry]}
+                 'url': 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573',
+                 'hash': 'fz8OLQ8NusYLf8XopH39Hibg3wCcqFVlu_vRA-IK074'}
+        get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')
+        payload = {
+            "description": "FIDO Alliance Sample U2F Authenticator",
+            "attestationCertificateKeyIdentifiers": ["7c0903708b87115b0b422def3138c3c864e44573"],
+            "protocolFamily": "u2f",
+            "authenticatorVersion": 2,
+            "upv": [{"major": 1, "minor": 0}],
+            "assertionScheme": "U2FV1BIN",
+            "authenticationAlgorithm": 1,
+            "publicKeyAlgAndEncoding": 256,
+            "attestationTypes": [15879],
+            "userVerificationDetails": [[{"userVerification": 1}]],
+            "keyProtection": 10,
+            "matcherProtection": 4,
+            "cryptoStrength": 128,
+            "operatingEnv": "Secure Element (SE)",
+            "attachmentHint": 2,
+            "isSecondFactorOnly": True,
+            "tcDisplay": 0,
+            "attestationRootCertificates": [
+                "MIICPTCCAeOgAwIBAgIJAOuexvU3Oy2wMAoGCCqGSM49BAMCMHsxIDAeBgNVBAMM"
+                "F1NhbXBsZSBBdHRlc3RhdGlvbiBSb290MRYwFAYDVQQKDA1GSURPIEFsbGlhbmNl"
+                "MREwDwYDVQQLDAhVQUYgVFdHLDESMBAGA1UEBwwJUGFsbyBBbHRvMQswCQYDVQQI"
+                "DAJDQTELMAkGA1UEBhMCVVMwHhcNMTQwNjE4MTMzMzMyWhcNNDExMTAzMTMzMzMy"
+                "WjB7MSAwHgYDVQQDDBdTYW1wbGUgQXR0ZXN0YXRpb24gUm9vdDEWMBQGA1UECgwN"
+                "RklETyBBbGxpYW5jZTERMA8GA1UECwwIVUFGIFRXRywxEjAQBgNVBAcMCVBhbG8g"
+                "QWx0bzELMAkGA1UECAwCQ0ExCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZI"
+                "zj0DAQcDQgAEH8hv2D0HXa59/BmpQ7RZehL/FMGzFd1QBg9vAUpOZ3ajnuQ94PR7"
+                "aMzH33nUSBr8fHYDrqOBb58pxGqHJRyX/6NQME4wHQYDVR0OBBYEFPoHA3CLhxFb"
+                "C0It7zE4w8hk5EJ/MB8GA1UdIwQYMBaAFPoHA3CLhxFbC0It7zE4w8hk5EJ/MAwG"
+                "A1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIhAJ06QSXt9ihIbEKYKIjsPkri"
+                "VdLIgtfsbDSu7ErJfzr4AiBqoYCZf0+zI55aQeAHjIzA9Xm63rruAxBZ9ps9z2XN"
+                "lQ=="
+            ],
+        }
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573',
+                     body=urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()))
+            call_command('download_authenticator_metadata')
+        metadata = AuthenticatorMetadata.objects.get(identifier='7c0903708b87115b0b422def3138c3c864e44573')
+        self.assertJSONEqual(metadata.metadata_entry, entry)
+        self.assertJSONEqual(metadata.detailed_metadata_entry, payload)
+
+    @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
+    def test_hash_mismatch(self, get_metada_patch):
+        output = StringIO()
+        entry = {'aaguid': '7c0903708b87115b0b422def3138c3c864e44573',
+                 'url': 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573',
+                 'hash': 'XXXXXXXXXX'}
+        get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')
         payload = {
             "description": "FIDO Alliance Sample U2F Authenticator",
             "attestationCertificateKeyIdentifiers": ["7c0903708b87115b0b422def3138c3c864e44573"],
@@ -386,15 +439,26 @@ class TestDownloadAuthenticatorMetadata(TestCase):
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573',
                      body=urlsafe_b64encode(json.dumps(payload).encode()))
-            call_command('download_authenticator_metadata')
+            call_command('download_authenticator_metadata', stderr=output)
         metadata = AuthenticatorMetadata.objects.get(identifier='7c0903708b87115b0b422def3138c3c864e44573')
+        self.assertEqual('Hash invalid for authenticator 7c0903708b87115b0b422def3138c3c864e44573.\n',
+                         output.getvalue())
         self.assertJSONEqual(metadata.metadata_entry, entry)
-        self.assertJSONEqual(metadata.detailed_metadata_entry, payload)
+        self.assertEqual(metadata.detailed_metadata_entry, '')
+
+    @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
+    def test_unknown_alg(self, get_metadata_patch):
+        entry = {'aaguid': '7c0903708b87115b0b422def3138c3c864e44573',
+                 'url': 'https://example.com/7c0903708b87115b0b422def3138c3c864e44573',
+                 'hash': 'XXXXXXXXXX'}
+        get_metadata_patch.return_value = ({'entries': [entry]}, 'none')
+        with self.assertRaisesRegex(CommandError, 'Unsupported hash algorithm none.'):
+            call_command('download_authenticator_metadata')
 
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_key_unknown(self, get_metada_patch):
         output = StringIO()
-        get_metada_patch.return_value = {'entries': [{}]}
+        get_metada_patch.return_value = ({'entries': [{}]}, 'ES256')
         call_command('download_authenticator_metadata', stderr=output)
         self.assertEqual('Cannot determine the identificator from metadata response.\n',
                          output.getvalue())
