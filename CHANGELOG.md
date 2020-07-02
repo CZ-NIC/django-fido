@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.24 ##
+ * Metadata validation
+
 ## 0.23 ##
  * Display no authenticator error
  * `error` key in repsponse of `BaseFido2RequestView` is now deprecated and will be removed in the future
