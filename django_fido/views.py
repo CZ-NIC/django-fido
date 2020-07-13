@@ -33,12 +33,11 @@ from .models import Authenticator
 from .settings import SETTINGS
 
 try:
-    from fido2.webauthn import (AttestationConveyancePreference, PublicKeyCredentialRpEntity,
-                                UserVerificationRequirement)
+    from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity, UserVerificationRequirement
 except ImportError:
     from fido2.server import (ATTESTATION as AttestationConveyancePreference,
-                              RelyingParty as PublicKeyCredentialRpEntity,
-                              USER_VERIFICATION as UserVerificationRequirement)
+                              USER_VERIFICATION as UserVerificationRequirement,
+                              RelyingParty as PublicKeyCredentialRpEntity)
 
 _LOGGER = logging.getLogger(__name__)
 
