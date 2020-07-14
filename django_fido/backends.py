@@ -1,6 +1,4 @@
 """Authentication backends for Django FIDO."""
-from __future__ import unicode_literals
-
 import base64
 import logging
 from typing import Any, Dict, Optional

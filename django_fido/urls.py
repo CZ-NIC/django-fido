@@ -1,6 +1,4 @@
 """URLs for django_fido application."""
-from __future__ import unicode_literals
-
 from django.conf.urls import url
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog

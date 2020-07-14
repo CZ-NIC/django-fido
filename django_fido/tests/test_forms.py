@@ -1,6 +1,4 @@
 """Test `django_fido.forms` module."""
-from __future__ import unicode_literals
-
 import base64
 
 from django.test import SimpleTestCase

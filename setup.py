@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """Setup script for django_fido."""
-from __future__ import unicode_literals
-
 from distutils.command.build import build
 
 from setuptools import find_packages, setup

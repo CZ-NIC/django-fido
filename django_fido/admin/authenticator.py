@@ -1,6 +1,4 @@
 """Admin for django_fido authenticator."""
-from __future__ import unicode_literals
-
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin

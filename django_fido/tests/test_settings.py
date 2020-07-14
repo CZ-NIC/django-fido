@@ -1,6 +1,4 @@
 """Unittests for setting utilities."""
-from __future__ import unicode_literals
-
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
