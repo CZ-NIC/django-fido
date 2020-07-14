@@ -1,6 +1,4 @@
 """Valid FIDO 2 test data."""
-from __future__ import unicode_literals
-
 # Generated using examples/credential.py from python-fido2
 HOSTNAME = 'testserver'
 USERNAME = 'kryten'

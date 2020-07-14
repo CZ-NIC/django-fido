@@ -1,6 +1,4 @@
 """Test `django_fido.backends` module."""
-from __future__ import unicode_literals
-
 import base64
 
 from django.contrib.auth import get_user_model

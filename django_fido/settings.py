@@ -1,6 +1,4 @@
 """Django settings specific for django_fido."""
-from __future__ import unicode_literals
-
 from typing import List, Optional, cast
 
 from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,

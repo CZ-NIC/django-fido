@@ -1,6 +1,4 @@
 """Unittests for download_authenticator_metadata."""
-from __future__ import unicode_literals
-
 import json
 import os
 from base64 import urlsafe_b64encode

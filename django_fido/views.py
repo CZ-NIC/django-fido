@@ -1,6 +1,4 @@
 """Views for FIDO 2 registration and login."""
-from __future__ import unicode_literals
-
 import base64
 import logging
 from abc import ABCMeta, abstractmethod

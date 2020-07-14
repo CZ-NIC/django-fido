@@ -11,8 +11,6 @@ FIDO 2 request type identifiers:
  * FIDO2_AUTHENTICATION_REQUEST
 These are shared between code and JS.
 """
-from __future__ import unicode_literals
-
 from enum import Enum, unique
 
 FIDO2_REQUEST_SESSION_KEY = 'fido2_request'

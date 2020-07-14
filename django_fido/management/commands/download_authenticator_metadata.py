@@ -1,6 +1,4 @@
 """Command to download metadata for authenticators."""
-from __future__ import unicode_literals
-
 import base64
 import hashlib
 import json
