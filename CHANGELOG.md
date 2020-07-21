@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * **BREAKING** - AuthenticatorMetadata are now looked up by URL and not by an identifier. If you are downloading metadata, you need to clear them all and re-download to prevent multiple objects for each authenticator.
+
 ## 0.24 ##
  * Metadata validation
 
