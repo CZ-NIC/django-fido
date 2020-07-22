@@ -159,7 +159,7 @@ class Authenticator(models.Model):
 class AuthenticatorMetadata(models.Model):
     """Stores information from metadata service."""
 
-    url = models.URLField()
+    url = models.URLField(unique=True)
     identifier = models.TextField(unique=True)
     metadata_entry = models.TextField()
     detailed_metadata_entry = models.TextField()

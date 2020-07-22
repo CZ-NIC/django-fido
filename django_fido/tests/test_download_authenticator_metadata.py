@@ -229,7 +229,7 @@ class TestDownloadAuthenticatorMetadata(TestCase):
 
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_aaid_update(self, get_metada_patch):
-        AuthenticatorMetadata.objects.create(identifier='1234#5678')
+        AuthenticatorMetadata.objects.create(identifier='1234#5678', url='https://example.com/1234abcd')
         entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd',
                  'hash': 'YXIP-OAlWmYNiw2TQHhPJtdWmNRIm78aitlsxhreXJA'}
         get_metada_patch.return_value = ({'entries': [entry]}, 'ES256')

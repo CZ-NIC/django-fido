@@ -137,7 +137,8 @@ class Command(BaseCommand):
                 self.stderr.write('Cannot determine the identificator from metadata response.')
                 continue
             url = authenticator_data['url']
-            authenticator, _ = AuthenticatorMetadata.objects.get_or_create(identifier=identifier)
+            authenticator, _ = AuthenticatorMetadata.objects.get_or_create(url=url)
+            authenticator.identifier = identifier
             authenticator.metadata_entry = json.dumps(authenticator_data)
             auth_metadata = requests.get(url, params={'token': SETTINGS.metadata_service['access_token']},
                                          timeout=SETTINGS.metadata_service['timeout'])
