@@ -144,6 +144,9 @@ class Authenticator(models.Model):
             for root_cert in root_certs:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert))
                 store.add_cert(cert)
+            if len(self.attestation.att_statement['x5c']) > 1:
+                for interm_cert in self.attestation.att_statement['x5c'][1:]:
+                    store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
             store_ctx = crypto.X509StoreContext(store, device_cert)
             try:
                 store_ctx.verify_certificate()
