@@ -120,12 +120,11 @@ class Authenticator(models.Model):
                 # ECDSAA attestation or self attestation?
                 return None
             try:
-                subject_identifier = cast(SubjectKeyIdentifier,
-                                          certificate.extensions.get_extension_for_oid(
-                                              ExtensionOID.SUBJECT_KEY_IDENTIFIER))
+                extension = certificate.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
+                subject_identifier = cast(SubjectKeyIdentifier, extension.value)
             except ExtensionNotFound:
-                return None
-            identifier = b2a_hex(subject_identifier.value.digest).decode()
+                subject_identifier = SubjectKeyIdentifier.from_public_key(certificate.public_key())
+            identifier = b2a_hex(subject_identifier.digest).decode()
             # Key identifiers are stored as lists...
             try:
                 return AuthenticatorMetadata.objects.get(identifier__contains=identifier)

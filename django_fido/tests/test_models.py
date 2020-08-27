@@ -11,7 +11,8 @@ from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
 
 from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT,
-                   CREDENTIAL_ID, DETAILED_METADATA, DETAILED_METADATA_ATTESTATION_KEYS, DETAILED_METADATA_WRONG_CERT)
+                   CREDENTIAL_ID, DETAILED_METADATA, DETAILED_METADATA_ATTESTATION_KEYS,
+                   DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT, DETAILED_METADATA_WRONG_CERT)
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -124,8 +125,11 @@ class TestAuthenticatorDatabase(TestCase):
         self.assertIsNone(authenticator.metadata)
 
     def test_metadata_u2f_no_extension(self):
+        metadata = AuthenticatorMetadata.objects.create(
+            identifier="['ed5bdb96011e3d457d858af39e30ac57c5ac95e6']",
+            detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT))
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F_NO_EXT)
-        self.assertIsNone(authenticator.metadata)
+        self.assertEqual(authenticator.metadata, metadata)
 
     def test_metadata_attestation_keys(self):
         metadata = AuthenticatorMetadata.objects.create(
