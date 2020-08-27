@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.26 ##
+ * Improve metadata matching for U2F authenticators.
+
 ## 0.25 ##
  * **BREAKING** - AuthenticatorMetadata are now looked up by URL and not by an identifier. If you are downloading metadata, you need to clear them all and re-download to prevent multiple objects for each authenticator.
  * Update JS dependencies
