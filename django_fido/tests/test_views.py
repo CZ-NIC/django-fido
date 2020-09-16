@@ -12,9 +12,9 @@ from fido2.utils import websafe_decode
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
 from django_fido.models import Authenticator
 
-from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
-                   CREDENTIAL_ID, HOSTNAME, PASSWORD, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE,
-                   USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
+from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_BOGUS, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA,
+                   AUTHENTICATOR_DATA, CREDENTIAL_ID, HOSTNAME, PASSWORD, REGISTRATION_CHALLENGE,
+                   REGISTRATION_CLIENT_DATA, SIGNATURE, USER_FIRST_NAME, USER_FULL_NAME, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
 
 try:
@@ -145,6 +145,20 @@ class TestFido2RegistrationView(TestCase):
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration failed.']})
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+
+    def test_post_invalid_format(self):
+        self.client.force_login(self.user)
+        session = self.client.session
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
+        session.save()
+
+        url = reverse_lazy('registration_direct')
+        response = self.client.post(url, {'client_data': REGISTRATION_CLIENT_DATA,
+                                          'attestation': ATTESTATION_OBJECT_BOGUS})
+
+        self.assertContains(response, 'Register a new FIDO 2 authenticator')
+        self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Token format is not supported.']})
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
 
