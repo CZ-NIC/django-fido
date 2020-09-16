@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-fido\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-20 11:22+0100\n"
+"POT-Creation-Date: 2020-09-16 17:11+0200\n"
 "Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -55,9 +55,11 @@ msgstr "Operace nebyla dokončena."
 
 #, python-format
 msgid ""
-"Please enter a correct %(username)s and password and use valid FIDO2 security key."
+"Please enter a correct %(username)s and password and use valid FIDO2 "
+"security key."
 msgstr ""
-"Zadejte správnou hodnotu pole %(username)s, heslo a použijte validní FIDO2 klíč."
+"Zadejte správnou hodnotu pole %(username)s, heslo a použijte validní FIDO2 "
+"klíč."
 
 msgid "Register a new FIDO 2 authenticator"
 msgstr "Zaregistrovat nový FIDO 2 klíč"
@@ -74,6 +76,9 @@ msgstr "Registrační požadavek nenalezen."
 #, python-format
 msgid "Select a valid choice. %(value)s is not one of the available choices."
 msgstr "Vyberte platnou možnost, \"%(value)s\" není k dispozici."
+
+msgid "Token format is not supported."
+msgstr "Formát tokenu není podporován."
 
 msgid "USB HID"
 msgstr "USB zařízení"
