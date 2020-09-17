@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.27 ##
+ * Throw form error on unknown attestation format instead of a server error.
+
 ## 0.26 ##
  * Improve metadata matching for U2F authenticators.
 
