@@ -12,9 +12,8 @@ function createTranslations() {
         'SecurityError': gettext('The request is insecure.'),
         'AbortError': gettext('The request has been aborted.'),
         'ConstraintError': gettext('The security token (FIDO 2) does not meet required criteria.'),
-        'NotAllowedError': gettext('The request has been refused either by you, your browser, or your'
-                                   + ' operating system. Or the request timed out.'),
-        'NoAuthenticatorsError': gettext('Can\'t create FIDO 2 authentication request, no authenticators found.'),
+        'NotAllowedError': gettext('Something went wrong, or the time limit was reached. Please, try it again.'),
+        'NoAuthenticatorsError': gettext('No compatible security keys are registered in your account.'),
     }
     TRANSLATIONS.GENERIC_ERROR_MESSAGE = gettext('An unknown error has occurred.')
     TRANSLATIONS.FIDO2_NOT_AVAILABLE = gettext('FIDO 2 is not available. Your browser may not support it'

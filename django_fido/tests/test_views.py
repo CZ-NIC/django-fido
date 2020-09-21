@@ -158,7 +158,8 @@ class TestFido2RegistrationView(TestCase):
                                           'attestation': ATTESTATION_OBJECT_BOGUS})
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
-        self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Token format is not supported.']})
+        self.assertEqual(response.context['form'].errors,
+                         {NON_FIELD_ERRORS: ['Security key is not supported because it cannot be identified.']})
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
 
