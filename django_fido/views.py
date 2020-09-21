@@ -229,7 +229,7 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
             raise ValidationError(_('Registration failed.'), code='invalid')
         except UnsupportedType as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
-            raise ValidationError(_('Token format is not supported.'), code='invalid')
+            raise ValidationError(_('Security key is not supported because it cannot be identified.'), code='invalid')
 
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the registration and return response."""
