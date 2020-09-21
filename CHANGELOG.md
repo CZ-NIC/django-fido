@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.28 ##
+ * Updated error strings to be more informative.
+
 ## 0.27 ##
  * Throw form error on unknown attestation format instead of a server error.
 
