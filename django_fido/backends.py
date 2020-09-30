@@ -9,7 +9,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from fido2.server import Fido2Server
 
 from .settings import SETTINGS
