@@ -20,7 +20,7 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
-from fido2.attestation import Attestation, UnsupportedType
+from fido2.attestation import Attestation, InvalidAttestation, UnsupportedType
 from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 
@@ -230,6 +230,9 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
         except UnsupportedType as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
             raise ValidationError(_('Security key is not supported because it cannot be identified.'), code='invalid')
+        except InvalidAttestation as error:
+            _LOGGER.info("FIDO2 registration failed with error: %r", error)
+            raise ValidationError(_('Registration failed, incorrect data from security key.'), code='invalid')
 
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the registration and return response."""

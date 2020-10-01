@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-fido\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-21 13:44+0200\n"
+"POT-Creation-Date: 2020-10-05 10:43+0200\n"
 "Last-Translator: Vlastimil Zíma <vlastimil.zima@nic.cz>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -67,6 +67,9 @@ msgstr "Zaregistrovat nový FIDO 2 klíč"
 msgid "Registration done"
 msgstr "Registrace dokončena"
 
+msgid "Registration failed, incorrect data from security key."
+msgstr "Registrace selhala, bezpečnostní klíč zaslal neplatná data."
+
 msgid "Registration failed."
 msgstr "Registrace selhala."
 
@@ -74,7 +77,8 @@ msgid "Registration request not found."
 msgstr "Registrační požadavek nenalezen."
 
 msgid "Security key is not supported because it cannot be identified."
-msgstr "Bezpečnostní klíč není podporován z důvodu nemožnosti jeho identifikace."
+msgstr ""
+"Bezpečnostní klíč není podporován z důvodu nemožnosti jeho identifikace."
 
 #, python-format
 msgid "Select a valid choice. %(value)s is not one of the available choices."
