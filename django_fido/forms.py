@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from fido2.client import ClientData
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 from fido2.server import Fido2Server

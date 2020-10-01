@@ -18,7 +18,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_text
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
 from fido2.attestation import Attestation, UnsupportedType
 from fido2.ctap2 import AuthenticatorData
