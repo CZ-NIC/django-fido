@@ -1,5 +1,8 @@
 # Changelog #
 
+## 0.29 ##
+ * Catch `InvalidAttestation` error in registration view.
+
 ## 0.28 ##
  * Updated error strings to be more informative.
 
