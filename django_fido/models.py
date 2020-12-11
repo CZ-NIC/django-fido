@@ -75,7 +75,7 @@ class Authenticator(models.Model):
 
     credential_id_data = models.TextField(unique=True)
     attestation_data = models.TextField()
-    counter = models.PositiveIntegerField(default=0)
+    counter = models.BigIntegerField(default=0)
     label = models.TextField(max_length=255, blank=True)
 
     class Meta:

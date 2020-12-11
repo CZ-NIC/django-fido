@@ -1,5 +1,8 @@
 # Changelog #
 
+## Unreleased ##
+ * Counter is now stored as BigInteger.
+
 ## 0.29 ##
  * Catch `InvalidAttestation` error in registration view.
 
