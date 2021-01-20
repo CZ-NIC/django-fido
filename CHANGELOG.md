@@ -2,6 +2,7 @@
 
 ## Unreleased ##
  * Counter is now stored as BigInteger.
+ * Restrict version of `fido2` library to `<0.9.0`.
 
 ## 0.29 ##
  * Catch `InvalidAttestation` error in registration view.
