@@ -1,6 +1,8 @@
 # Changelog #
 
 ## Unreleased ##
+
+## 0.30 ##
  * Counter is now stored as BigInteger.
  * Restrict version of `fido2` library to `<0.9.0`.
 
