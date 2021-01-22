@@ -210,8 +210,9 @@ class TestFido2AuthenticationRequestView(TestCase):
         fido2_request = {
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
-                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
-                          'timeout': 30000}}
+                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
+        if fido2.__version__ < '0.9':
+            fido2_request['publickKey']['timeout'] = 30000
         if fido2.__version__ < '0.8':
             fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
