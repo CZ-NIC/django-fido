@@ -1,6 +1,7 @@
 """Views for FIDO 2 registration and login."""
 import base64
 import logging
+import warnings
 from abc import ABCMeta, abstractmethod
 from enum import Enum, unique
 from http.client import BAD_REQUEST
@@ -34,6 +35,8 @@ try:
     from fido2.server import AttestationVerifier
 except ImportError:
     AttestationVerifier = None
+else:
+    from fido2.attestation.base import AttestationResult
 try:
     from fido2.attestation.base import InvalidAttestation
 except ImportError:
@@ -46,6 +49,17 @@ except ImportError:
                               RelyingParty as PublicKeyCredentialRpEntity)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+if AttestationVerifier is not None:
+    class BaseAttestationVerifier(AttestationVerifier):
+        """Verify the attestation, but not the trust chain."""
+
+        def ca_lookup(self,
+                      attestation_result: AttestationResult,
+                      client_data_hash: AuthenticatorData) -> Optional[List[bytes]]:
+            """Return empty CA lookup to disable trust path verification."""
+            return []
 
 
 @unique
@@ -83,7 +97,7 @@ class Fido2ViewMixin(object):
 
     attestation = AttestationConveyancePreference.NONE
     attestation_types = None  # type: Optional[List[Attestation]]
-    verify_attestation = None  # type: Optional[AttestationVerifier]
+    verify_attestation = BaseAttestationVerifier if fido2.__version__ >= '0.9' else None
     user_verification = UserVerificationRequirement.PREFERRED if fido2.__version__ < '0.8' else None
     session_key = FIDO2_REQUEST_SESSION_KEY
 
@@ -106,8 +120,8 @@ class Fido2ViewMixin(object):
             return Fido2Server(rp, attestation=self.attestation, attestation_types=self.attestation_types)
         elif self.verify_attestation is None:
             if self.attestation_types is not None:
-                # FIXME: Warn?
-                pass
+                warnings.warn('You have defined `attestation_types` but not `verify_attestation`, this means that the '
+                              '`attestation_types` setting is being iognored.', DeprecationWarning)
             return Fido2Server(rp, attestation=self.attestation)
         else:
             return Fido2Server(rp, attestation=self.attestation,
