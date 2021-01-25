@@ -139,10 +139,10 @@ class TestAuthenticatorDatabase(TestCase):
         self.assertEqual(authenticator.metadata, metadata)
 
     def test_metadata_multiple(self):
-        metadata = AuthenticatorMetadata.objects.create(
+        AuthenticatorMetadata.objects.create(
             identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']",
             detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS))
-        metadata = AuthenticatorMetadata.objects.create(
+        AuthenticatorMetadata.objects.create(
             identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8', 'blabla']",
             detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS),
             url='example_url')
