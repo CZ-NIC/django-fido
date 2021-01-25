@@ -138,6 +138,17 @@ class TestAuthenticatorDatabase(TestCase):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
         self.assertEqual(authenticator.metadata, metadata)
 
+    def test_metadata_multiple(self):
+        AuthenticatorMetadata.objects.create(
+            identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']",
+            detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS))
+        AuthenticatorMetadata.objects.create(
+            identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8', 'blabla']",
+            detailed_metadata_entry=json.dumps(DETAILED_METADATA_ATTESTATION_KEYS),
+            url='example_url')
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
+        self.assertIsNone(authenticator.metadata)
+
     def test_metadata_attestation_keys_no_match(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
         self.assertIsNone(authenticator.metadata)
