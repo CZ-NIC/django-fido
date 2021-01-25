@@ -10,7 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import ExtensionNotFound, SubjectKeyIdentifier, load_der_x509_certificate
 from cryptography.x509.oid import ExtensionOID
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.db import models
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_text
@@ -134,7 +134,10 @@ class Authenticator(models.Model):
     @cached_property
     def metadata(self) -> Optional['AuthenticatorMetadata']:
         """Verify and return the appropriate metada for this authenticator."""
-        metadata = self._get_metadata()
+        try:
+            metadata = self._get_metadata()
+        except MultipleObjectsReturned:
+            metadata = None
         if metadata is not None and 'x5c' in self.attestation.att_statement:
             # Take the device certificate and try to validate against all certs in MDS
             device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
