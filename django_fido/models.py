@@ -145,7 +145,12 @@ class Authenticator(models.Model):
                 store.add_cert(cert)
             if len(self.attestation.att_statement['x5c']) > 1:
                 for interm_cert in self.attestation.att_statement['x5c'][1:]:
-                    store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
+                    try:
+                        store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
+                    except crypto.Error:
+                        # The certificate failed to load, ignore as if it is a missing link, the verification will fail
+                        # It is possible that it is defined here as well as in metadata
+                        pass
             store_ctx = crypto.X509StoreContext(store, device_cert)
             try:
                 store_ctx.verify_certificate()
