@@ -1,6 +1,6 @@
 language: python
 sudo: false
-dist: xenial  # Avoid https://code.djangoproject.com/ticket/30055#comment:12
+dist: focal
 python:
   - "3.5"
   - "3.6"
