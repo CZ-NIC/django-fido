@@ -51,12 +51,13 @@ class TestFido2RegistrationRequestView(TestCase):
         fido2_request = {'publicKey': {
             'rp': rp_data,
             'user': {'displayName': USER_FULL_NAME, 'id': USERNAME, 'name': USERNAME},
-            'timeout': 30000,
             'challenge': base64.b64encode(challenge).decode('utf-8'),
             'pubKeyCredParams': credential_params,
             'attestation': 'none',
             'excludeCredentials': credentials,
         }}
+        if fido2.__version__ < '0.9':
+            fido2_request['publicKey']['timeout'] = 30000
         if fido2.__version__ < '0.8':
             fido2_request['publicKey']['authenticatorSelection'] = {'requireResidentKey': False,
                                                                     'userVerification': 'preferred'}
@@ -117,6 +118,22 @@ class TestFido2RegistrationView(TestCase):
         session.save()
 
         response = self.client.post(self.url,
+                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
+
+        self.assertRedirects(response, reverse('django_fido:registration_done'))
+        queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
+        key_data = (self.user.pk, CREDENTIAL_ID, ATTESTATION_OBJECT, 0)
+        self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
+        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
+
+    def test_post_verifier(self):
+        self.client.force_login(self.user)
+        session = self.client.session
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
+        session.save()
+
+        url = reverse_lazy('registration_direct')
+        response = self.client.post(url,
                                     {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
@@ -210,8 +227,9 @@ class TestFido2AuthenticationRequestView(TestCase):
         fido2_request = {
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
-                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
-                          'timeout': 30000}}
+                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
+        if fido2.__version__ < '0.9':
+            fido2_request['publicKey']['timeout'] = 30000
         if fido2.__version__ < '0.8':
             fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
@@ -245,8 +263,9 @@ class TestFido2AuthenticationRequestView(TestCase):
         fido2_request = {
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
-                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}],
-                          'timeout': 30000}}
+                          'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
+        if fido2.__version__ < '0.9':
+            fido2_request['publicKey']['timeout'] = 30000
         if fido2.__version__ < '0.8':
             fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)

@@ -1,6 +1,7 @@
 """Views for FIDO 2 registration and login."""
 import base64
 import logging
+import warnings
 from abc import ABCMeta, abstractmethod
 from enum import Enum, unique
 from http.client import BAD_REQUEST
@@ -20,7 +21,7 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
-from fido2.attestation import Attestation, InvalidAttestation, UnsupportedType
+from fido2.attestation import Attestation, UnsupportedType
 from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 
@@ -31,6 +32,18 @@ from .models import Authenticator
 from .settings import SETTINGS
 
 try:
+    from fido2.server import AttestationVerifier
+except ImportError:
+    AttestationVerifier = None
+else:
+    from fido2.attestation.base import AttestationResult
+
+try:
+    from fido2.attestation.base import InvalidAttestation
+except ImportError:
+    from fido2.attestation import InvalidAttestation
+
+try:
     from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity, UserVerificationRequirement
 except ImportError:
     from fido2.server import (ATTESTATION as AttestationConveyancePreference,
@@ -38,6 +51,17 @@ except ImportError:
                               RelyingParty as PublicKeyCredentialRpEntity)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+if AttestationVerifier is not None:
+    class BaseAttestationVerifier(AttestationVerifier):
+        """Verify the attestation, but not the trust chain."""
+
+        def ca_lookup(self,
+                      attestation_result: AttestationResult,
+                      client_data_hash: AuthenticatorData) -> Optional[List[bytes]]:
+            """Return empty CA lookup to disable trust path verification."""
+            return []
 
 
 @unique
@@ -75,6 +99,7 @@ class Fido2ViewMixin(object):
 
     attestation = AttestationConveyancePreference.NONE
     attestation_types = None  # type: Optional[List[Attestation]]
+    verify_attestation = BaseAttestationVerifier if fido2.__version__ >= '0.9' else None
     user_verification = UserVerificationRequirement.PREFERRED if fido2.__version__ < '0.8' else None
     session_key = FIDO2_REQUEST_SESSION_KEY
 
@@ -93,7 +118,16 @@ class Fido2ViewMixin(object):
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
         rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.get_rp_name())
-        return Fido2Server(rp, attestation=self.attestation, attestation_types=self.attestation_types)
+        if AttestationVerifier is None:
+            return Fido2Server(rp, attestation=self.attestation, attestation_types=self.attestation_types)
+        elif self.verify_attestation is None:
+            if self.attestation_types is not None:
+                warnings.warn('You have defined `attestation_types` but not `verify_attestation`, this means that the '
+                              '`attestation_types` setting is being iognored.', DeprecationWarning)
+            return Fido2Server(rp, attestation=self.attestation)
+        else:
+            return Fido2Server(rp, attestation=self.attestation,
+                               verify_attestation=self.verify_attestation(self.attestation_types))
 
     @abstractmethod
     def get_user(self) -> AbstractBaseUser:
