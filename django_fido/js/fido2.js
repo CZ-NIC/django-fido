@@ -1,3 +1,6 @@
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
+
 const DJANGO_FIDO_FORM_ID = 'django-fido-form'
 const DJANGO_FIDO_ERROR_LIST_ID = 'django-fido-errors'
 // FIDO 2 request identifiers - shared between code and JS
