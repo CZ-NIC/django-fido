@@ -2,6 +2,12 @@
 
 ## Unreleased ##
 
+## 0.31 ##
+ * Support for `fido2` library  `>0.9.0`
+ * Add tests under django 3.1
+ * Handle when multiple device metadata are returned
+ * JS fixes and updates
+
 ## 0.30 ##
  * Counter is now stored as BigInteger.
  * Restrict version of `fido2` library to `<0.9.0`.
