@@ -18,6 +18,7 @@ matrix:
       script:
         - npm run check
         - npm test
+        - npm run build
 
 install:
   # tox-travis automatically splits the jobs

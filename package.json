@@ -20,14 +20,15 @@
   "homepage": "https://github.com/CZ-NIC/django-fido#readme",
   "devDependencies": {
     "@babel/core": "^7.10.5",
-    "@babel/polyfill": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
     "babel-jest": "^26.1.0",
     "babel-loader": "^8.1.0",
+    "core-js": "^3.10.1",
     "eslint": "^7.5.0",
     "fetch-mock": "^9.10.4",
     "jest": "^26.1.0",
     "node-fetch": "^2.6.0",
+    "regenerator-runtime": "^0.13.7",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.12"
   },

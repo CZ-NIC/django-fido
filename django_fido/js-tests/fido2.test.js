@@ -1,3 +1,5 @@
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
 import {
     startFido2,
     FIDO2_REGISTRATION_REQUEST,
@@ -6,7 +8,6 @@ import {
     clearFido2Errors,
 } from '../js/fido2'
 import fetchMock from 'fetch-mock'
-import '@babel/polyfill'
 import {TextEncoder} from 'util'
 
 describe('Fido 2', () => {

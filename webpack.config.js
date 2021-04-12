@@ -3,7 +3,6 @@ const path = require('path')
 module.exports = {
     entry: {
         fido2: [
-            'babel-polyfill',
             path.resolve(__dirname, 'django_fido/js/fido2.js'),
         ],
     },
