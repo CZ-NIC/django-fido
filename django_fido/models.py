@@ -131,6 +131,22 @@ class Authenticator(models.Model):
             except AuthenticatorMetadata.DoesNotExist:
                 return None
 
+    def _prepare_store(self, root_certs: List[str]) -> crypto.X509Store:
+        """Prepare crypto store for verification."""
+        store = crypto.X509Store()
+        for root_cert in root_certs:
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert))
+            store.add_cert(cert)
+        if len(self.attestation.att_statement['x5c']) > 1:
+            for interm_cert in self.attestation.att_statement['x5c'][1:]:
+                try:
+                    store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
+                except crypto.Error:
+                    # The certificate failed to load, ignore as if it is a missing link, the verification will fail
+                    # It is possible that it is defined here as well as in metadata
+                    pass
+        return store
+
     @cached_property
     def metadata(self) -> Optional['AuthenticatorMetadata']:
         """Verify and return the appropriate metada for this authenticator."""
@@ -138,23 +154,18 @@ class Authenticator(models.Model):
             metadata = self._get_metadata()
         except MultipleObjectsReturned:
             metadata = None
-        if metadata is not None and 'x5c' in self.attestation.att_statement:
-            # Take the device certificate and try to validate against all certs in MDS
-            device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
-            root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
-            store = crypto.X509Store()
-            for root_cert in root_certs:
-                cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert))
-                store.add_cert(cert)
-            if len(self.attestation.att_statement['x5c']) > 1:
-                for interm_cert in self.attestation.att_statement['x5c'][1:]:
-                    store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
-            store_ctx = crypto.X509StoreContext(store, device_cert)
-            try:
-                store_ctx.verify_certificate()
-            except crypto.X509StoreContextError:
-                # The device certificate cannot be verified using the MDS certificate, do not trust the metadata
-                return None
+        if metadata is None or 'x5c' not in self.attestation.att_statement:
+            return metadata
+        # Take the device certificate and try to validate against all certs in MDS
+        device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
+        root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
+        store = self._prepare_store(root_certs)
+        store_ctx = crypto.X509StoreContext(store, device_cert)
+        try:
+            store_ctx.verify_certificate()
+        except crypto.X509StoreContextError:
+            # The device certificate cannot be verified using the MDS certificate, do not trust the metadata
+            return None
         return metadata
 
 
