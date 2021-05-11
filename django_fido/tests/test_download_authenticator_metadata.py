@@ -2,6 +2,7 @@
 import json
 import os
 from base64 import urlsafe_b64encode
+from datetime import datetime
 from io import StringIO
 from unittest.mock import patch
 
@@ -13,7 +14,7 @@ from jwcrypto.jwt import JWT
 from requests.exceptions import RequestException
 
 from django_fido.management.commands.download_authenticator_metadata import (InvalidCert, _get_metadata,
-                                                                             verify_certificate)
+                                                                             _prepare_crypto_store, verify_certificate)
 from django_fido.models import AuthenticatorMetadata
 
 DIR_PATH = os.path.join(os.path.dirname(__file__), 'data', 'mds')
@@ -26,6 +27,14 @@ def get_file_content(path):
     return content.strip().encode()
 
 
+def prepare_timed_context(jwt):
+    """Return crypto context frozen in time."""
+    store = _prepare_crypto_store(jwt)
+    store.set_time(datetime(2020, 12, 12, 12, 0, 0))
+    return store
+
+
+@patch('django_fido.management.commands.download_authenticator_metadata._prepare_crypto_store', prepare_timed_context)
 class TestVerifyCertificate(SimpleTestCase):
     """Unittests for verify_certificate.
 
@@ -87,6 +96,7 @@ class TestVerifyCertificate(SimpleTestCase):
 
 @override_settings(DJANGO_FIDO_METADATA_SERVICE={'ACCESS_TOKEN': 'secret_token',
                                                  'CERTIFICATE': [os.path.join(DIR_PATH, 'Root.cer')]})
+@patch('django_fido.management.commands.download_authenticator_metadata._prepare_crypto_store', prepare_timed_context)
 class TestGetMetadata(SimpleTestCase):
     """Unittests for get_metadata command."""
 
