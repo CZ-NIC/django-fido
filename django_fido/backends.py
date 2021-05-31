@@ -58,6 +58,9 @@ class Fido2AuthenticationBackend(object):
 
     def mark_device_used(self, device, counter):
         """Update FIDO 2 device usage information."""
+        if counter == 0 and device.counter == 0:
+            # Counter is unsupported by the device, bail out early
+            return
         if counter <= device.counter:
             _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
             raise ValueError("Counter didn't increase.")

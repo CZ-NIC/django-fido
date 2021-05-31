@@ -1,6 +1,7 @@
 # Changelog #
 
 ## Unreleased ##
+ * Fix authentication for devices without counter support
 
 ## 0.31 ##
  * Support for `fido2` library  `>0.9.0`

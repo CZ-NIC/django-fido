@@ -89,6 +89,16 @@ class TestFido2AuthenticationBackend(TestCase):
         self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
+    def test_mark_device_used_unsupported(self):
+        # Test device is allowed if counter is unsupported
+        self.device.counter = 0
+        self.device.save()
+
+        self.backend.mark_device_used(self.device, 0)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
+                                 transform=tuple)
+
     def test_mark_device_used_decrease(self):
         # Test device returned lower counter.
         self.device.counter = 42
