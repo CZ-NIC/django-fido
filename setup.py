@@ -40,7 +40,8 @@ INSTALL_REQUIRES = [
     'pyopenssl',
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
-                  'test': ['mock', 'responses']}
+                  'test': ['mock', 'responses'],
+                  'types': ['types-requests', 'types-mock']}
 
 
 class custom_build(build):
