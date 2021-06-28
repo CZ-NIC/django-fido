@@ -47,8 +47,10 @@ Please note that your login form must have a field named `username`, even if you
 
 ## Metadata download
 
-If you want to be able to download authenticator metadata, you need to set `DJANGO_FIDO_METADATA_SERVICE` setting.
-It is a dictionary, with an `ACCESS_TOKEN` as the only mandatory key.
+If you want to be able to download authenticator metadata, you need to set `DJANGO_FIDO_METADATA_SERVICE` setting which is a dictionary.
+The MDS is available in two versions v2 (deprecated) and v3 (current).
+If you want to use MDSv2, you have to set a valid `ACCESS_TOKEN`.
+If you want to use MDSv3, you have to set `MDS_FORMAT` to `3` and set a valid `URL` providing the MDSv3 data.
 Then you can periodically run the `download_authenticator_metadata` management command.
 If metadata are available for the given `Authenticator`, its `metadata` property will be an object.
 The `level`, `vulnerabilities` and `is_update_available` methods on `metadata` can be used to determine the trust and certification level.
