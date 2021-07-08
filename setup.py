@@ -32,6 +32,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
 INSTALL_REQUIRES = [
     'Django>=1.11',
     'fido2',
+    'fido2 < 0.9 ; python_version=="3.5.*"',
     'sqlparse',  # sqlparse is required for Django < 2.2
     'django-app-settings>=0.7.1',
     'jwcrypto',
@@ -41,7 +42,7 @@ INSTALL_REQUIRES = [
 ]
 EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint'],
                   'test': ['mock', 'responses'],
-                  'types': ['types-requests', 'types-mock']}
+                  'types': ['types-requests', 'types-mock', 'types-pyOpenSSL']}
 
 
 class custom_build(build):
@@ -68,7 +69,7 @@ setup(name='django-fido',
       packages=find_packages(),
       include_package_data=True,
       python_requires='~=3.5',
-      setup_requires=['Babel >=2.3', 'setuptools_webpack'],
+      setup_requires=['Babel >=2.3', 'setuptools-webpack'],
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       keywords=['django', 'fido', 'u2f', 'fido2'],
