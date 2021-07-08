@@ -1,6 +1,6 @@
 # Changelog #
 
-## Unreleased ##
+## 0.33 ##
 * Support for MDSv3 AuthenticatorMetadata
 
 ## 0.32 ##

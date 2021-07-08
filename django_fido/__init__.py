@@ -1,2 +1,2 @@
 """Django application for FIDO protocol."""
-__version__ = '0.32'
+__version__ = '0.33'
