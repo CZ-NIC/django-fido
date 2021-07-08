@@ -1,8 +1,9 @@
 """django_fido app config."""
 from django.apps import AppConfig
+from django.test.signals import setting_changed
 from django.utils.translation import gettext_lazy as _
 
-from django_fido.settings import DjangoFidoSettings
+from django_fido.settings import SETTINGS
 
 
 class DjangoFidoConfig(AppConfig):
@@ -13,4 +14,5 @@ class DjangoFidoConfig(AppConfig):
 
     def ready(self):
         """Check configuration."""
-        DjangoFidoSettings.check()
+        SETTINGS.check()
+        setting_changed.connect(SETTINGS.invalidate_cache)

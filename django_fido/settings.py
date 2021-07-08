@@ -2,7 +2,7 @@
 from typing import List, Optional, cast
 
 from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,
-                         NestedListSetting, Setting, StringSetting)
+                         NestedListSetting, PositiveIntegerSetting, Setting, StringSetting)
 from django.core.exceptions import ValidationError
 
 
@@ -27,7 +27,8 @@ class DjangoFidoSettings(AppSettings):
     rp_name = cast(Optional[str], StringSetting(default=None))
     two_step_auth = BooleanSetting(default=True)
     metadata_service = NestedDictSetting(settings=dict(
-        access_token=StringSetting(required=True),
+        access_token=StringSetting(default=None),
+        mds_format=PositiveIntegerSetting(default=2),
         url=StringSetting(default='https://mds2.fidoalliance.org/'),
         timeout=Setting(default=3, validators=[timeout_validator]),
         disable_cert_verification=BooleanSetting(default=False),

@@ -2,12 +2,13 @@
 import base64
 import hashlib
 import json
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import requests
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from django.core.management.base import BaseCommand, CommandError
+from django.db.transaction import atomic
 from jwcrypto.jwk import JWK
 from jwcrypto.jws import InvalidJWSSignature
 from jwcrypto.jwt import JWT
@@ -114,13 +115,38 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         """Parse command arguments."""
 
-    def handle(self, **options):
-        """Donwload and parse metadata from metadata service."""
-        try:
-            SETTINGS.metadata_service
-        except TypeError:
-            raise CommandError('access_token setting must be specified for this command to work.')
+    def _update_auth(self, authenticator_data: Dict[str, Any], identifiers: List[str], hash_alg: str) -> List[str]:
+        """Update individual authenticators from MDS."""
+        downloaded_identifiers = []
+        mds3 = SETTINGS.metadata_service['mds_format'] == 3
+        if not mds3:
+            url = authenticator_data['url']
+            # Cleanup the old instances
+            authenticator = AuthenticatorMetadata.objects.filter(url=url).delete()
+            auth_metadata = requests.get(url, params={'token': SETTINGS.metadata_service['access_token']},
+                                         timeout=SETTINGS.metadata_service['timeout'])
+            hash = hashlib.new(hash_alg, auth_metadata.content)
+            if hash.digest() != urlsafe_b64decode(authenticator_data['hash'].encode()):
+                self.stderr.write('Hash invalid for authenticator {}.'.format(identifiers))
+                detailed_metadata_entry = ''
+            else:
+                detailed_metadata_entry = urlsafe_b64decode(auth_metadata.content).decode()
+        for ident in identifiers:
+            downloaded_identifiers += [ident]
+            authenticator, _ = AuthenticatorMetadata.objects.get_or_create(identifier=ident)
+            authenticator.metadata_entry = json.dumps(authenticator_data)
+            if not mds3:
+                authenticator.detailed_metadata_entry = detailed_metadata_entry
+            authenticator.save()
+        return downloaded_identifiers
 
+    def handle(self, **options):
+        """Download and parse metadata from metadata service."""
+        if SETTINGS.metadata_service is None or (
+                SETTINGS.metadata_service['access_token'] is None and SETTINGS.metadata_service['mds_format'] == 2):
+            raise CommandError('Access token must be specified for MDS2.')
+
+        downloaded_identifiers = []
         metadata, alg = _get_metadata()
         # Convert alg name to corresponding hashing algorithm
         hash_alg = HASH_ALG_MAPPING.get(alg)
@@ -128,23 +154,18 @@ class Command(BaseCommand):
             raise CommandError('Unsupported hash algorithm {}.'.format(alg))
         for authenticator_data in metadata['entries']:
             if 'aaid' in authenticator_data:
-                identifier = authenticator_data['aaid']
+                identifier = [authenticator_data['aaid']]
+                downloaded_identifiers += identifier
             elif 'aaguid' in authenticator_data:
-                identifier = authenticator_data['aaguid']
+                identifier = [authenticator_data['aaguid']]
+                downloaded_identifiers += identifier
             elif 'attestationCertificateKeyIdentifiers' in authenticator_data:
                 identifier = authenticator_data['attestationCertificateKeyIdentifiers']
+                downloaded_identifiers += identifier
             else:
                 self.stderr.write('Cannot determine the identificator from metadata response.')
                 continue
-            url = authenticator_data['url']
-            authenticator, _ = AuthenticatorMetadata.objects.get_or_create(url=url)
-            authenticator.identifier = identifier
-            authenticator.metadata_entry = json.dumps(authenticator_data)
-            auth_metadata = requests.get(url, params={'token': SETTINGS.metadata_service['access_token']},
-                                         timeout=SETTINGS.metadata_service['timeout'])
-            hash = hashlib.new(hash_alg, auth_metadata.content)
-            if hash.digest() != urlsafe_b64decode(authenticator_data['hash'].encode()):
-                self.stderr.write('Hash invalid for authenticator {}.'.format(identifier))
-            else:
-                authenticator.detailed_metadata_entry = urlsafe_b64decode(auth_metadata.content).decode()
-            authenticator.save()
+            with atomic():
+                downloaded_identifiers += self._update_auth(authenticator_data, identifier, hash_alg)
+        # Cleanup authenticators that were not present in the donwload
+        AuthenticatorMetadata.objects.exclude(identifier__in=downloaded_identifiers).delete()

@@ -7,6 +7,7 @@ from io import StringIO
 from unittest.mock import patch
 
 import responses
+from django.conf import settings
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
 from jwcrypto.jwk import JWK
@@ -16,6 +17,7 @@ from requests.exceptions import RequestException
 from django_fido.management.commands.download_authenticator_metadata import (InvalidCert, _get_metadata,
                                                                              _prepare_crypto_store, verify_certificate)
 from django_fido.models import AuthenticatorMetadata
+from django_fido.settings import SETTINGS
 
 DIR_PATH = os.path.join(os.path.dirname(__file__), 'data', 'mds')
 
@@ -156,10 +158,13 @@ class TestGetMetadata(SimpleTestCase):
 class TestDownloadAuthenticatorMetadata(TestCase):
     """Unittests for download_authenticator_metadata management command."""
 
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={})
     def test_not_configured(self):
-        with self.assertRaisesMessage(CommandError, 'access_token setting must be specified for this command to work.'):
-            with override_settings(DJANGO_FIDO_METADATA_SERVICE=None):
-                call_command('download_authenticator_metadata')
+        # Signal is not sent on manipulation with individual settings, invalidate manually
+        del settings.DJANGO_FIDO_METADATA_SERVICE
+        SETTINGS.invalidate_cache()
+        with self.assertRaisesMessage(CommandError, 'Access token must be specified for MDS2.'):
+            call_command('download_authenticator_metadata')
 
     @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
     def test_empty_list(self, get_metada_patch):
@@ -449,7 +454,7 @@ class TestDownloadAuthenticatorMetadata(TestCase):
                      body=urlsafe_b64encode(json.dumps(payload).encode()))
             call_command('download_authenticator_metadata', stderr=output)
         metadata = AuthenticatorMetadata.objects.get(identifier='7c0903708b87115b0b422def3138c3c864e44573')
-        self.assertEqual('Hash invalid for authenticator 7c0903708b87115b0b422def3138c3c864e44573.\n',
+        self.assertEqual("Hash invalid for authenticator ['7c0903708b87115b0b422def3138c3c864e44573'].\n",
                          output.getvalue())
         self.assertJSONEqual(metadata.metadata_entry, entry)
         self.assertEqual(metadata.detailed_metadata_entry, '')
@@ -470,3 +475,145 @@ class TestDownloadAuthenticatorMetadata(TestCase):
         call_command('download_authenticator_metadata', stderr=output)
         self.assertEqual('Cannot determine the identificator from metadata response.\n',
                          output.getvalue())
+
+    @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
+    def test_cleanup(self, get_metadata_patch):
+        AuthenticatorMetadata.objects.create(identifier='AAAA', url='https://example.com/aaaa')
+        AuthenticatorMetadata.objects.create(identifier='1234#5678', url='https://example.com/1234abcd')
+        entry = {'aaid': '1234#5678', 'url': 'https://example.com/1234abcd',
+                 'hash': 'YXIP-OAlWmYNiw2TQHhPJtdWmNRIm78aitlsxhreXJA'}
+        get_metadata_patch.return_value = ({'entries': [entry]}, 'ES256')
+        payload = {
+            "description": "FIDO Alliance Sample UAF Authenticator",
+            "aaid": "1234#5678",
+            "authenticatorVersion": 2,
+            "upv": [
+                {"major": 1, "minor": 0},
+                {"major": 1, "minor": 1}
+            ],
+            "assertionScheme": "UAFV1TLV",
+            "authenticationAlgorithm": 1,
+            "publicKeyAlgAndEncoding": 256,
+            "attestationTypes": [15879],
+            "userVerificationDetails": [
+                [{
+                    "userVerification": 2,
+                    "baDesc": {
+                        "FAR": 0.00002,
+                        "maxRetries": 5,
+                        "blockSlowdown": 30,
+                        "maxReferenceDataSets": 5
+                    }
+                }]
+            ],
+            "keyProtection": 6,
+            "isKeyRestricted": True,
+            "matcherProtection": 2,
+            "cryptoStrength": 128,
+            "operatingEnv": "TEEs based on ARM TrustZone HW",
+            "attachmentHint": 1,
+            "isSecondFactorOnly": False,
+            "tcDisplay": 5,
+            "tcDisplayContentType": "image/png",
+            "tcDisplayPNGCharacteristics": [{
+                "width": 320,
+                "height": 480,
+                "bitDepth": 16,
+                "colorType": 2,
+                "compression": 0,
+                "filter": 0,
+                "interlace": 0
+            }],
+            "attestationRootCertificates": [
+                "MIICPTCCAeOgAwIBAgIJAOuexvU3Oy2wMAoGCCqGSM49BAMCMHsxIDAeBgNVBAMM"
+                "F1NhbXBsZSBBdHRlc3RhdGlvbiBSb290MRYwFAYDVQQKDA1GSURPIEFsbGlhbmNl"
+                "MREwDwYDVQQLDAhVQUYgVFdHLDESMBAGA1UEBwwJUGFsbyBBbHRvMQswCQYDVQQI"
+                "DAJDQTELMAkGA1UEBhMCVVMwHhcNMTQwNjE4MTMzMzMyWhcNNDExMTAzMTMzMzMy"
+                "WjB7MSAwHgYDVQQDDBdTYW1wbGUgQXR0ZXN0YXRpb24gUm9vdDEWMBQGA1UECgwN"
+                "RklETyBBbGxpYW5jZTERMA8GA1UECwwIVUFGIFRXRywxEjAQBgNVBAcMCVBhbG8g"
+                "QWx0bzELMAkGA1UECAwCQ0ExCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZI"
+                "zj0DAQcDQgAEH8hv2D0HXa59/BmpQ7RZehL/FMGzFd1QBg9vAUpOZ3ajnuQ94PR7"
+                "aMzH33nUSBr8fHYDrqOBb58pxGqHJRyX/6NQME4wHQYDVR0OBBYEFPoHA3CLhxFb"
+                "C0It7zE4w8hk5EJ/MB8GA1UdIwQYMBaAFPoHA3CLhxFbC0It7zE4w8hk5EJ/MAwG"
+                "A1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIhAJ06QSXt9ihIbEKYKIjsPkri"
+                "VdLIgtfsbDSu7ErJfzr4AiBqoYCZf0+zI55aQeAHjIzA9Xm63rruAxBZ9ps9z2XN"
+                "lQ=="
+             ]
+        }
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, 'https://example.com/1234abcd',
+                     body=urlsafe_b64encode(json.dumps(payload, sort_keys=True).encode()))
+            call_command('download_authenticator_metadata')
+        metadata = AuthenticatorMetadata.objects.get(identifier='1234#5678')
+        self.assertJSONEqual(metadata.metadata_entry, entry)
+        self.assertJSONEqual(metadata.detailed_metadata_entry, payload)
+        self.assertFalse(AuthenticatorMetadata.objects.filter(identifier='AAAA').exists())
+
+    @override_settings(DJANGO_FIDO_METADATA_SERVICE={'MDS_FORMAT': 3})
+    @patch('django_fido.management.commands.download_authenticator_metadata._get_metadata')
+    def test_aaid_v3(self, get_metadata_patch):
+        payload = {
+            "description": "FIDO Alliance Sample UAF Authenticator",
+            "aaid": "1234#5678",
+            "authenticatorVersion": 2,
+            "upv": [
+                {"major": 1, "minor": 0},
+                {"major": 1, "minor": 1}
+            ],
+            "assertionScheme": "UAFV1TLV",
+            "authenticationAlgorithm": 1,
+            "publicKeyAlgAndEncoding": 256,
+            "attestationTypes": [15879],
+            "userVerificationDetails": [
+                [{
+                    "userVerification": 2,
+                    "baDesc": {
+                        "FAR": 0.00002,
+                        "maxRetries": 5,
+                        "blockSlowdown": 30,
+                        "maxReferenceDataSets": 5
+                    }
+                }]
+            ],
+            "keyProtection": 6,
+            "isKeyRestricted": True,
+            "matcherProtection": 2,
+            "cryptoStrength": 128,
+            "operatingEnv": "TEEs based on ARM TrustZone HW",
+            "attachmentHint": 1,
+            "isSecondFactorOnly": False,
+            "tcDisplay": 5,
+            "tcDisplayContentType": "image/png",
+            "tcDisplayPNGCharacteristics": [{
+                "width": 320,
+                "height": 480,
+                "bitDepth": 16,
+                "colorType": 2,
+                "compression": 0,
+                "filter": 0,
+                "interlace": 0
+            }],
+            "attestationRootCertificates": [
+                "MIICPTCCAeOgAwIBAgIJAOuexvU3Oy2wMAoGCCqGSM49BAMCMHsxIDAeBgNVBAMM"
+                "F1NhbXBsZSBBdHRlc3RhdGlvbiBSb290MRYwFAYDVQQKDA1GSURPIEFsbGlhbmNl"
+                "MREwDwYDVQQLDAhVQUYgVFdHLDESMBAGA1UEBwwJUGFsbyBBbHRvMQswCQYDVQQI"
+                "DAJDQTELMAkGA1UEBhMCVVMwHhcNMTQwNjE4MTMzMzMyWhcNNDExMTAzMTMzMzMy"
+                "WjB7MSAwHgYDVQQDDBdTYW1wbGUgQXR0ZXN0YXRpb24gUm9vdDEWMBQGA1UECgwN"
+                "RklETyBBbGxpYW5jZTERMA8GA1UECwwIVUFGIFRXRywxEjAQBgNVBAcMCVBhbG8g"
+                "QWx0bzELMAkGA1UECAwCQ0ExCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZI"
+                "zj0DAQcDQgAEH8hv2D0HXa59/BmpQ7RZehL/FMGzFd1QBg9vAUpOZ3ajnuQ94PR7"
+                "aMzH33nUSBr8fHYDrqOBb58pxGqHJRyX/6NQME4wHQYDVR0OBBYEFPoHA3CLhxFb"
+                "C0It7zE4w8hk5EJ/MB8GA1UdIwQYMBaAFPoHA3CLhxFbC0It7zE4w8hk5EJ/MAwG"
+                "A1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIhAJ06QSXt9ihIbEKYKIjsPkri"
+                "VdLIgtfsbDSu7ErJfzr4AiBqoYCZf0+zI55aQeAHjIzA9Xm63rruAxBZ9ps9z2XN"
+                "lQ=="
+             ]
+        }
+        entry = {'aaid': '1234#5678',
+                 'metadataStatement': payload,
+                 'hash': 'YXIP-OAlWmYNiw2TQHhPJtdWmNRIm78aitlsxhreXJA'}
+        get_metadata_patch.return_value = ({'entries': [entry]}, 'ES256')
+        call_command('download_authenticator_metadata')
+        metadata = AuthenticatorMetadata.objects.get(identifier='1234#5678')
+        self.assertJSONEqual(metadata.metadata_entry, entry)
+        self.assertEqual(metadata.detailed_metadata_entry, '')
