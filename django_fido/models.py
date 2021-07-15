@@ -158,10 +158,13 @@ class Authenticator(models.Model):
             return metadata
         # Take the device certificate and try to validate against all certs in MDS
         device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
-        try:
+        if metadata.detailed_metadata_entry != '':
             root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
-        except KeyError:
-            root_certs = json.loads(metadata.metadata_entry)['attestationRootCertificates']
+        else:
+            root_certs = json.loads(metadata.metadata_entry).get('metadataStatement',
+                                                                 {}).get('attestationRootCertificates', [])
+            if not root_certs:
+                return metadata
         store = self._prepare_store(root_certs)
         store_ctx = crypto.X509StoreContext(store, device_cert)
         try:
