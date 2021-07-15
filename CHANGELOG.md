@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.34 ##
  * Fix MDS3 metadata verification
 
 ## 0.33 ##
