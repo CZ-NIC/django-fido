@@ -1,7 +1,9 @@
 # Changelog #
+## Unreleased ##
+ * Fix MDS3 metadata verification
 
 ## 0.33 ##
-* Support for MDSv3 AuthenticatorMetadata
+ * Support for MDSv3 AuthenticatorMetadata
 
 ## 0.32 ##
  * Fix authentication for devices without counter support

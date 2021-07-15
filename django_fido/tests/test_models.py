@@ -153,6 +153,21 @@ class TestAuthenticatorDatabase(TestCase):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
         self.assertIsNone(authenticator.metadata)
 
+    def test_metadata_md3(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}],
+                  'metadataStatement': DETAILED_METADATA_ATTESTATION_KEYS}
+        metadata = AuthenticatorMetadata.objects.create(identifier="['3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8']",
+                                                        detailed_metadata_entry='', metadata_entry=json.dumps(status))
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
+        self.assertEqual(authenticator.metadata, metadata)
+
+    def test_metadata_missing(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        detailed_metadata_entry='', metadata_entry=json.dumps(status))
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        self.assertEqual(authenticator.metadata, metadata)
+
 
 class TestAuthenticatorMetadata(TestCase):
     """Unittests for AuthenticatorMetadata model."""
