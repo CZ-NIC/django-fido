@@ -135,7 +135,7 @@ class Authenticator(models.Model):
         """Prepare crypto store for verification."""
         store = crypto.X509Store()
         for root_cert in root_certs:
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert))
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert).encode())
             store.add_cert(cert)
         if len(self.attestation.att_statement['x5c']) > 1:
             for interm_cert in self.attestation.att_statement['x5c'][1:]:

@@ -41,7 +41,7 @@ def _prepare_crypto_store(jwt: JWT) -> crypto.X509Store:
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(key).encode())
         store.add_cert(cert)
     for root_cert_file in SETTINGS.metadata_service['certificate']:
-        with open(str(root_cert_file)) as root_file:
+        with open(str(root_cert_file), 'rb') as root_file:
             root_cert = crypto.load_certificate(crypto.FILETYPE_PEM, root_file.read())
     store.add_cert(root_cert)
     # CRL handling

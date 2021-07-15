@@ -1,6 +1,7 @@
 # django-fido #
 
-[![Build Status](https://travis-ci.org/CZ-NIC/django-fido.svg?branch=master)](https://travis-ci.org/CZ-NIC/django-fido)
+[![Python tests](https://github.com/CZ-NIC/django-fido/actions/workflows/python-test.yml/badge.svg)](https://github.com/CZ-NIC/django-fido/actions/workflows/python-test.yml)
+[![JS tests](https://github.com/CZ-NIC/django-fido/actions/workflows/js-test.yml/badge.svg)](https://github.com/CZ-NIC/django-fido/actions/workflows/js-test.yml)
 [![codecov](https://codecov.io/gh/CZ-NIC/django-fido/branch/master/graph/badge.svg)](https://codecov.io/gh/CZ-NIC/django-fido)
 
 > Django application for FIDO protocol

@@ -1,0 +1,30 @@
+name: Run JS tests and quality control
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python: [12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Node JS
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node}}
+    - name: Install dependencies
+      run: npm ci
+    - name: Run tests
+      run: |
+        npm run check
+        npm test
+        npm run build
