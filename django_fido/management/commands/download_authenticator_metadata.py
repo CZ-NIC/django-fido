@@ -137,6 +137,8 @@ class Command(BaseCommand):
             authenticator.metadata_entry = json.dumps(authenticator_data)
             if not mds3:
                 authenticator.detailed_metadata_entry = detailed_metadata_entry
+            else:
+                authenticator.detailed_metadata_entry = ''
             authenticator.save()
         return downloaded_identifiers
 
