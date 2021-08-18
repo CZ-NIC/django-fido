@@ -104,7 +104,9 @@ class Authenticator(models.Model):
     def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
         """Get the appropriate metadata."""
         # First test the presence of aaguid - FIDO 2
-        if self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID:
+        if hasattr(self.attestation.auth_data, 'credential_data') and \
+                self.attestation.auth_data.credential_data is not None and \
+                self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID:
             identifier = str(UUID(b2a_hex(self.credential.aaguid).decode()))
             try:
                 return AuthenticatorMetadata.objects.get(identifier=identifier)
