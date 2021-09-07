@@ -96,7 +96,7 @@ class Fido2GeneralAuthenticationBackend(ModelBackend):
     ) -> Optional[AbstractBaseUser]:
         """Authenticate using username, password and FIDO 2 token."""
         for auth_backend in SETTINGS.authentication_backends:
-            user = auth_backend().authenticate(request=request, username=username, password=password, **kwargs)
+            user = auth_backend().authenticate(request, username=username, password=password, **kwargs)
             if user is not None:
                 return self.fido_backend.authenticate(request, user, fido2_server, fido2_state, fido2_response)
 
