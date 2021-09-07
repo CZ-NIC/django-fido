@@ -1,6 +1,12 @@
 # Changelog #
 ## Unreleased ##
 
+## 0.35
+ * Change authenticate request arg to positional
+ * Fix metadata for empty credential_data
+ * Bump path-parse from 1.0.6 to 1.0.7
+ * Proper cleanup of database model under MDS3
+
 ## 0.34 ##
  * Fix MDS3 metadata verification
 
