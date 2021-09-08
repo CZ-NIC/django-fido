@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Sort users in admin Authenticator add form by username
 
 ## 0.35
  * Change authenticate request arg to positional

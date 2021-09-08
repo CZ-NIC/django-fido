@@ -17,7 +17,7 @@ from django_fido.views import Fido2RegistrationRequestView, Fido2RegistrationVie
 class Fido2RegistrationAdminForm(Fido2RegistrationForm):
     """Registration form with user selection."""
 
-    user = forms.ModelChoiceField(queryset=get_user_model().objects.all())
+    user = forms.ModelChoiceField(queryset=get_user_model().objects.order_by(get_user_model().USERNAME_FIELD))
 
     field_order = ('user', 'label')
 
