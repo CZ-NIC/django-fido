@@ -101,3 +101,9 @@ class TestAuthenticatorAddView(TestCase):
             [(1, 'kryten', ATTESTATION_OBJECT, 'My key')],
             transform=tuple,
         )
+
+    def test_get(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(self.url)
+        choices = list(response.context['form'].fields['user'].choices)
+        self.assertEqual([choice[1] for choice in choices][1:], sorted(['admin', USERNAME]))
