@@ -3,6 +3,8 @@ import base64
 import json
 import warnings
 from binascii import b2a_hex
+from datetime import date
+from operator import methodcaller
 from typing import List, Optional, cast
 from uuid import UUID
 
@@ -189,8 +191,11 @@ class AuthenticatorMetadata(models.Model):
     def level(self) -> AuthLevel:
         """Return last valid certification level."""
         decoded = json.loads(self.metadata_entry)
+        status_dict = sorted(decoded['statusReports'],
+                             key=methodcaller('get', 'effectiveDate', date.today().isoformat()),
+                             reverse=True)
         # The last status should be valid
-        for status in reversed(decoded['statusReports']):
+        for status in status_dict:
             # Is it directly a level?
             if status['status'] in tuple(AuthLevel):
                 return AuthLevel(status['status'])
