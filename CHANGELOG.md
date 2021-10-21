@@ -1,6 +1,7 @@
 # Changelog #
 ## Unreleased ##
  * Sort users in admin Authenticator add form by username
+ * Sort statusReport dictionary in metadata
 
 ## 0.35
  * Change authenticate request arg to positional
