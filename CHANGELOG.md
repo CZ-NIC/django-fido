@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.36
  * Sort users in admin Authenticator add form by username
  * Sort statusReport dictionary in metadata
 
