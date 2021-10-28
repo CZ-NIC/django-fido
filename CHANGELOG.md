@@ -1,5 +1,8 @@
 # Changelog #
 ## Unreleased ##
+ * Drop support for Django 1.11
+ * Sets a default_auto_field
+ * Fix django.conf.urls deprecation warnings
 
 ## 0.36
  * Sort users in admin Authenticator add form by username
