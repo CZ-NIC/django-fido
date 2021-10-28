@@ -1,6 +1,6 @@
 """Admin for django_fido authenticator."""
 from django import forms
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -81,7 +81,7 @@ class AuthenticatorAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url(
+            re_path(
                 '^registration/request/$',
                 self.admin_site.admin_view(Fido2RegistrationRequestAdminView.as_view()),
                 name='django_fido_registration_request',
