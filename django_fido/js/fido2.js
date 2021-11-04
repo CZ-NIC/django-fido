@@ -69,10 +69,12 @@ function _base64ToArrayBuffer(base64) {
     return bytes
 }
 
-function fido2SuccessRegistrationCallback(attestation) {
+function fido2SuccessRegistrationCallback(attestation, publicKey) {
     const form = document.getElementById(DJANGO_FIDO_FORM_ID)
     form.client_data.value = _arrayBufferToBase64(attestation.response.clientDataJSON)
     form.attestation.value = _arrayBufferToBase64(attestation.response.attestationObject)
+    form.user_handle.value = _arrayBufferToBase64(publicKey.user.id)
+
     form.submit()
 }
 
@@ -119,7 +121,7 @@ async function sendFido2Request(url, is_registration, credenetials_name, form_da
         try {
             if (is_registration){
                 const result = await navigator.credentials.create({ publicKey })
-                fido2SuccessRegistrationCallback(result)
+                fido2SuccessRegistrationCallback(result, publicKey)
             } else {
                 const result = await navigator.credentials.get({ publicKey })
                 fido2SuccessAuthenticationCallback(result)

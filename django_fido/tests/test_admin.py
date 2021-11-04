@@ -93,6 +93,7 @@ class TestAuthenticatorAddView(TestCase):
             'client_data': REGISTRATION_CLIENT_DATA,
             'attestation': ATTESTATION_OBJECT,
             'label': 'My key',
+            'user_handle': 'abc=='
         })
 
         self.assertRedirects(response, reverse('admin:django_fido_authenticator_change', args=(1,)))

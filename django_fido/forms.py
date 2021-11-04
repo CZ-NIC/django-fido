@@ -19,6 +19,7 @@ class Fido2RegistrationForm(forms.Form):
                                   widget=forms.HiddenInput)
     attestation = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
                                   widget=forms.HiddenInput)
+    user_handle = forms.CharField(widget=forms.HiddenInput)
     label = forms.CharField(required=False, max_length=255, label=_("Label"))
 
     class Media:
