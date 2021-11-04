@@ -74,7 +74,6 @@ function fido2SuccessRegistrationCallback(attestation, publicKey) {
     form.client_data.value = _arrayBufferToBase64(attestation.response.clientDataJSON)
     form.attestation.value = _arrayBufferToBase64(attestation.response.attestationObject)
     form.user_handle.value = _arrayBufferToBase64(publicKey.user.id)
-
     form.submit()
 }
 
