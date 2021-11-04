@@ -224,7 +224,7 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         assert user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
         return self.server.register_begin(self.get_user_data(user), credentials,
-                                          user_verification=self.user_verification)
+                                          user_verification=self.user_verification, resident_key=SETTINGS.resident_key)
 
 
 class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
