@@ -1,13 +1,12 @@
 """Admin for django_fido authenticator."""
 from django import forms
-from django.urls import re_path
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.urls import reverse, reverse_lazy
+from django.urls import re_path, reverse, reverse_lazy
 
 from django_fido.forms import Fido2RegistrationForm
 from django_fido.models import Authenticator

@@ -1,6 +1,6 @@
 """URLs for django_fido application tests."""
-from django.urls import re_path, include
 from django.contrib import admin
+from django.urls import include, re_path
 
 from django_fido.views import AttestationConveyancePreference, Fido2RegistrationView
 
