@@ -11,6 +11,7 @@ class DjangoFidoConfig(AppConfig):
 
     name = 'django_fido'
     verbose_name = _('Django application for FIDO protocol')
+    default_auto_field = 'django.db.models.AutoField'
 
     def ready(self):
         """Check configuration."""

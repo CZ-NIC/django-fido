@@ -12,7 +12,6 @@ LONG_DESCRIPTION = open('README.md').read() + '\n\n' + open('CHANGELOG.md').read
 CLASSIFIERS = ['Development Status :: 4 - Beta',
                'License :: OSI Approved :: MIT License',
                'Framework :: Django',
-               'Framework :: Django :: 1.11',
                'Framework :: Django :: 2.0',
                'Framework :: Django :: 2.1',
                'Framework :: Django :: 2.2',
@@ -30,7 +29,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Security :: Cryptography',
                'Topic :: Software Development :: Libraries :: Python Modules']
 INSTALL_REQUIRES = [
-    'Django>=1.11',
+    'Django>=2.0',
     'fido2',
     'fido2 < 0.9 ; python_version=="3.5.*"',
     'sqlparse',  # sqlparse is required for Django < 2.2
