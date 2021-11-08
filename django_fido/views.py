@@ -25,7 +25,6 @@ from fido2.attestation import Attestation, UnsupportedType
 from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 
-
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
 from .forms import Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2RegistrationForm
