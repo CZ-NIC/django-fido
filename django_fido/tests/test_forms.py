@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, override_settings
 from fido2.client import ClientData
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 
-from django_fido.forms import Fido2AuthenticationForm, Fido2RegistrationForm
+from django_fido.forms import Fido2AuthenticationForm, Fido2PasswordlessAuthenticationForm, Fido2RegistrationForm
 
 from .data import ATTESTATION_OBJECT, USER_HANDLE, USER_HANDLE_B64
 
@@ -31,8 +31,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': None,
-                        'label': 'My label'}
+                        'user_handle': None, 'label': 'My label'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_clean_client_data_empty(self):
@@ -182,3 +181,27 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'signature': ['FIDO 2 response is malformed.']})
+
+
+class TestFido2PasswordlessAuthenticationForm(SimpleTestCase):
+    def test_clean_user_handle(self):
+        form = Fido2PasswordlessAuthenticationForm(
+            {'client_data': 'e30=', 'credential_id': 'AA==', 'user_handle': USER_HANDLE_B64,
+             'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'GAZPACHO'}
+        )
+
+        self.assertTrue(form.is_valid())
+        cleaned_data = {
+            'credential_id': b'\0', 'client_data': ClientData(b'{}'), 'user_handle': USER_HANDLE,
+            'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+            'signature': base64.b64decode('GAZPACHO')}
+        self.assertEqual(form.cleaned_data, cleaned_data)
+
+    def test_clean_user_handle_invalid(self):
+        form = Fido2PasswordlessAuthenticationForm(
+            {'client_data': 'e30=', 'credential_id': 'AA==', 'user_handle': 'abc',
+             'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'GAZPACHO'}
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors, {'user_handle': ['FIDO 2 response is malformed.']})
