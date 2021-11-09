@@ -4,7 +4,6 @@
  * Sets a default_auto_field
  * Fix django.conf.urls deprecation warnings
  * Added DJANGO_FIDO_RESIDENT_KEY (default False) app setting
->>>>>>> 8c8930f (updated changelog and readme for resident_key setting)
 
 ## 0.36
  * Sort users in admin Authenticator add form by username
