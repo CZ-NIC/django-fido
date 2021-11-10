@@ -73,9 +73,8 @@ function fido2SuccessRegistrationCallback(attestation, publicKey) {
     const form = document.getElementById(DJANGO_FIDO_FORM_ID)
     form.client_data.value = _arrayBufferToBase64(attestation.response.clientDataJSON)
     form.attestation.value = _arrayBufferToBase64(attestation.response.attestationObject)
-    if (publicKey.user !== undefined){
-        form.user_handle.value = _arrayBufferToBase64(publicKey.user.id)
-    }
+    form.user_handle.value = _arrayBufferToBase64(publicKey.user.id)
+
     form.submit()
 }
 
