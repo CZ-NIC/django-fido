@@ -31,6 +31,12 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
 
 4. If you wish, set string variable `DJANGO_FIDO_RP_NAME`.
 
+### Extra configuration ###
+#### DJANGO_FIDO_RESIDENT_KEY ####
+Default: False
+
+Purpose: Set to True to enable discoverable credentials, private key and associated metadata is stored in persistent memory on the authenticator. This is useful for passwordless authentication.
+
 ## One step authentication
 
 You can also decide to use one step authentication.

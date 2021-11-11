@@ -3,6 +3,7 @@
  * Drop support for Django 1.11
  * Sets a default_auto_field
  * Fix django.conf.urls deprecation warnings
+ * Added DJANGO_FIDO_RESIDENT_KEY (default False) app setting
 
 ## 0.36
  * Sort users in admin Authenticator add form by username

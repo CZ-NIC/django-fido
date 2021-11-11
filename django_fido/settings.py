@@ -35,6 +35,7 @@ class DjangoFidoSettings(AppSettings):
         certificate=NestedListSetting(inner_setting=FileSetting(), default=[]),
         crl_list=NestedListSetting(inner_setting=FileSetting(), default=[]),
     ), default=None)
+    resident_key = BooleanSetting(default=False)
 
     class Meta:
         """Meta class."""
