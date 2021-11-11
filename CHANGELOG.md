@@ -9,7 +9,7 @@
  * Fix django.conf.urls deprecation warnings
  * Added user_handle field to Authenticator model
  * Added DJANGO_FIDO_RESIDENT_KEY (default False) app setting
- * Restructured js handling key registration and exposed additional functions
+ * Added passwordless auth backend
 
 ## 0.36
  * Sort users in admin Authenticator add form by username
