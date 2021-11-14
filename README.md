@@ -62,6 +62,14 @@ Then you can periodically run the `download_authenticator_metadata` management c
 If metadata are available for the given `Authenticator`, its `metadata` property will be an object.
 The `level`, `vulnerabilities` and `is_update_available` methods on `metadata` can be used to determine the trust and certification level.
 
+## Passwordless
+
+This authentication requires "discoverable credential" and using that credential to perform a user lookup using the passwordless authentication backend
+
+1. Set `DJANGO_FIDO_RESIDENT_KEY` to `True`
+2. Replace `django_fido.backends.Fido2AuthenticationBackend` with
+   `django_fido.backends.Fido2PasswordlessAuthenticationBackend` in `AUTHENTICATION_BACKENDS`.
+
 ## Changes ##
 See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).
 

@@ -27,14 +27,37 @@ def is_fido_backend_used() -> bool:
     return False
 
 
-class Fido2AuthenticationBackend(object):
+class Fido2AuthenticationBackendMixin(object):
     """
-    Authenticate user using FIDO 2.
+    Base class for authenticating user using FIDO 2.
 
     @cvar counter_error_message: Error message in case FIDO 2 device counter didn't increase.
     """
 
     counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
+
+    def mark_device_used(self, device, counter):
+        """Update FIDO 2 device usage information."""
+        if counter == 0 and device.counter == 0:
+            # Counter is unsupported by the device, bail out early
+            return
+        if counter <= device.counter:
+            _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
+            raise ValueError("Counter didn't increase.")
+        device.counter = counter
+        device.full_clean()
+        device.save()
+
+    def get_user(self, user_id):
+        """Return user based on its ID."""
+        try:
+            return get_user_model().objects.get(pk=user_id)
+        except get_user_model().DoesNotExist:
+            return None
+
+
+class Fido2AuthenticationBackend(Fido2AuthenticationBackendMixin):
+    """Authenticate user using FIDO 2."""
 
     def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
@@ -57,34 +80,9 @@ class Fido2AuthenticationBackend(object):
             raise PermissionDenied("Counter didn't increase.")
         return user
 
-    def mark_device_used(self, device, counter):
-        """Update FIDO 2 device usage information."""
-        if counter == 0 and device.counter == 0:
-            # Counter is unsupported by the device, bail out early
-            return
-        if counter <= device.counter:
-            _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
-            raise ValueError("Counter didn't increase.")
-        device.counter = counter
-        device.full_clean()
-        device.save()
 
-    def get_user(self, user_id):
-        """Return user based on its ID."""
-        try:
-            return get_user_model().objects.get(pk=user_id)
-        except get_user_model().DoesNotExist:
-            return None
-
-
-class Fido2PasswordlessAuthenticationBackend(object):
-    """
-    Authenticate user using FIDO 2 passwordlessly using supplied user handle.
-
-    @cvar counter_error_message: Error message in case FIDO 2 device counter didn't increase.
-    """
-
-    counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
+class Fido2PasswordlessAuthenticationBackend(Fido2AuthenticationBackendMixin):
+    """Authenticate user using FIDO 2 passwordlessly using supplied user handle."""
 
     def authenticate(self, request: HttpRequest, fido2_server: Fido2Server,
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
@@ -112,25 +110,6 @@ class Fido2PasswordlessAuthenticationBackend(object):
             messages.error(request, self.counter_error_message)
             raise PermissionDenied("Counter didn't increase.")
         return user
-
-    def mark_device_used(self, device, counter):
-        """Update FIDO 2 device usage information."""
-        if counter == 0 and device.counter == 0:
-            # Counter is unsupported by the device, bail out early
-            return
-        if counter <= device.counter:
-            _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
-            raise ValueError("Counter didn't increase.")
-        device.counter = counter
-        device.full_clean()
-        device.save()
-
-    def get_user(self, user_id):
-        """Return user based on its ID."""
-        try:
-            return get_user_model().objects.get(pk=user_id)
-        except get_user_model().DoesNotExist:
-            return None
 
 
 class Fido2GeneralAuthenticationBackend(ModelBackend):
