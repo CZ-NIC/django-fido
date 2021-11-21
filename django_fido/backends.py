@@ -27,7 +27,7 @@ def is_fido_backend_used() -> bool:
     return False
 
 
-class Fido2AuthenticationBackendMixin(object):
+class BaseFido2AuthenticationBackend(object):
     """
     Base class for authenticating user using FIDO 2.
 
@@ -35,6 +35,11 @@ class Fido2AuthenticationBackendMixin(object):
     """
 
     counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
+
+    def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
+                     fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+        """Authenticate to be implemented."""
+        raise NotImplementedError
 
     def mark_device_used(self, device, counter):
         """Update FIDO 2 device usage information."""
@@ -56,7 +61,7 @@ class Fido2AuthenticationBackendMixin(object):
             return None
 
 
-class Fido2AuthenticationBackend(Fido2AuthenticationBackendMixin):
+class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2."""
 
     def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
@@ -81,7 +86,7 @@ class Fido2AuthenticationBackend(Fido2AuthenticationBackendMixin):
         return user
 
 
-class Fido2PasswordlessAuthenticationBackend(Fido2AuthenticationBackendMixin):
+class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2 passwordlessly using supplied user handle."""
 
     def authenticate(self, request: HttpRequest, fido2_server: Fido2Server,
