@@ -107,6 +107,3 @@ node_modules/
 
 # Ignore transpiled JS code
 django_fido/static/django_fido/js
-
-# IDE
-.idea
