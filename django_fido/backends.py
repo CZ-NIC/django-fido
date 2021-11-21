@@ -55,8 +55,6 @@ class Fido2AuthenticationBackendMixin(object):
             return None
 
 
-<<<<<<< HEAD
-=======
 class Fido2AuthenticationBackend(Fido2AuthenticationBackendMixin):
     """Authenticate user using FIDO 2."""
 
@@ -113,7 +111,6 @@ class Fido2PasswordlessAuthenticationBackend(Fido2AuthenticationBackendMixin):
         return user
 
 
->>>>>>> d42b0bb (refactored backends to reduce duplicate code, added info in readme)
 class Fido2GeneralAuthenticationBackend(ModelBackend):
     """Authenticated user using any username-password backend and Fido2AuthenticationBackend."""
 
