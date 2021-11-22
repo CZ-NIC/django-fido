@@ -88,7 +88,7 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
 class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2 passwordlessly using supplied user handle."""
 
-    def authenticate(self, request: HttpRequest, fido2_server: Fido2Server,
+    def authenticate(self, request: HttpRequest, user: Optional[AbstractBaseUser], fido2_server: Fido2Server,
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate using FIDO 2."""
         user_handle = base64.b64encode(fido2_response['user_handle']).decode('utf-8')

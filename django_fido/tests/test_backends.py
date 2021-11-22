@@ -160,3 +160,97 @@ class TestIsFidoBackendUsed(SimpleTestCase):
     @override_settings(AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'])
     def test_is_not_used(self):
         self.assertFalse(is_fido_backend_used())
+
+
+class TestFido2PasswordlessAuthenticationBackend(TestCase):
+    """Test `Fido2AuthenticationBackend` class."""
+
+    backend = Fido2PasswordlessAuthenticationBackend()
+
+    server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
+
+    state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
+    user_handle = bytes(USERNAME, 'utf-8')
+    fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+                      'credential_id': base64.b64decode(CREDENTIAL_ID),
+                      'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+                      'signature': base64.b64decode(SIGNATURE),
+                      'user_handle': user_handle}
+
+    def setUp(self):
+        self.user = User.objects.create_user(USERNAME)
+        self.device = Authenticator.objects.create(user=self.user,
+                                                   user_handle=base64.b64encode(self.user_handle).decode('utf-8'),
+                                                   credential_id_data=CREDENTIAL_ID,
+                                                   attestation_data=ATTESTATION_OBJECT)
+
+    def test_authenticate(self):
+        authenticated_user = self.backend.authenticate(sentinel.request, None, self.server, self.state,
+                                                       self.fido2_response)
+
+        self.assertEqual(authenticated_user, self.user)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+                                 transform=tuple)
+
+    def test_authenticate_wrong_counter(self):
+        self.device.counter = 160
+        self.device.save()
+        request = RequestFactory().get('/dummy/')
+        request._messages = CookieStorage(request)
+
+        self.assertRaisesMessage(PermissionDenied, "Counter didn't increase.",
+                                 self.backend.authenticate, request, None, self.server, self.state, self.fido2_response)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
+                                 transform=tuple)
+
+    def test_authenticate_invalid_response(self):
+        fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+                          'credential_id': base64.b64decode(CREDENTIAL_ID),
+                          'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+                          'user_handle': self.user_handle,
+                          'signature': b'INVALID'}
+        self.assertIsNone(
+            self.backend.authenticate(sentinel.request, None, self.server, self.state, fido2_response))
+
+    def test_mark_device_used(self):
+        self.backend.mark_device_used(self.device, 42)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
+
+    def test_mark_device_used_equal(self):
+        # Test device returned the same counter.
+        self.device.counter = 42
+        self.device.save()
+
+        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 42)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
+
+    def test_mark_device_used_unsupported(self):
+        # Test device is allowed if counter is unsupported
+        self.device.counter = 0
+        self.device.save()
+
+        self.backend.mark_device_used(self.device, 0)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
+                                 transform=tuple)
+
+    def test_mark_device_used_decrease(self):
+        # Test device returned lower counter.
+        self.device.counter = 42
+        self.device.save()
+
+        self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 41)
+
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+                                 transform=tuple)
+
+    def test_get_user(self):
+        self.assertEqual(self.backend.get_user(self.user.pk), self.user)
+
+    def test_get_user_unknown(self):
+        self.assertIsNone(self.backend.get_user(42))
