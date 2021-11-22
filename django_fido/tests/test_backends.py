@@ -186,7 +186,8 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                                                    attestation_data=ATTESTATION_OBJECT)
 
     def test_authenticate(self):
-        authenticated_user = self.backend.authenticate(sentinel.request, self.server, self.state, self.fido2_response)
+        authenticated_user = self.backend.authenticate(sentinel.request, None, self.server, self.state,
+                                                       self.fido2_response)
 
         self.assertEqual(authenticated_user, self.user)
         self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
@@ -199,7 +200,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
         request._messages = CookieStorage(request)
 
         self.assertRaisesMessage(PermissionDenied, "Counter didn't increase.",
-                                 self.backend.authenticate, request, self.server, self.state, self.fido2_response)
+                                 self.backend.authenticate, request, None, self.server, self.state, self.fido2_response)
 
         self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
                                  transform=tuple)
@@ -211,7 +212,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                           'user_handle': self.user_handle,
                           'signature': b'INVALID'}
         self.assertIsNone(
-            self.backend.authenticate(sentinel.request, self.server, self.state, fido2_response))
+            self.backend.authenticate(sentinel.request, None, self.server, self.state, fido2_response))
 
     def test_mark_device_used(self):
         self.backend.mark_device_used(self.device, 42)
