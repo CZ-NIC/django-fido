@@ -52,6 +52,7 @@ describe('Fido 2', () => {
         form.authenticator_data = {value: 'authenticator_data'}
         form.signature = {value: 'signature'}
         form.attestation = {}
+        form.user_handle = {value: ''}
         form.submit = jest.fn()
 
         const submit_button = document.createElement('button')

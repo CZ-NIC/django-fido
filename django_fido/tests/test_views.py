@@ -118,7 +118,8 @@ class TestFido2RegistrationView(TestCase):
         session.save()
 
         response = self.client.post(self.url,
-                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
+                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT,
+                                     'user_handle': 'abc=='})
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
         queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
@@ -134,7 +135,8 @@ class TestFido2RegistrationView(TestCase):
 
         url = reverse_lazy('registration_direct')
         response = self.client.post(url,
-                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
+                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT,
+                                     'user_handle': 'abc=='})
 
         self.assertRedirects(response, reverse('django_fido:registration_done'))
         queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
@@ -146,7 +148,8 @@ class TestFido2RegistrationView(TestCase):
         self.client.force_login(self.user)
 
         response = self.client.post(self.url,
-                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT})
+                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT,
+                                     'user_handle': 'abc=='})
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration request not found.']})
@@ -159,7 +162,8 @@ class TestFido2RegistrationView(TestCase):
         session.save()
 
         client_data = base64.b64encode(json.dumps({"type": "invalid"}).encode()).decode()
-        response = self.client.post(self.url, {'client_data': client_data, 'attestation': ATTESTATION_OBJECT})
+        response = self.client.post(self.url, {'client_data': client_data, 'attestation': ATTESTATION_OBJECT,
+                                               'user_handle': 'abc=='})
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors, {NON_FIELD_ERRORS: ['Registration failed.']})
@@ -173,7 +177,8 @@ class TestFido2RegistrationView(TestCase):
 
         url = reverse_lazy('registration_direct')
         response = self.client.post(url, {'client_data': REGISTRATION_CLIENT_DATA,
-                                          'attestation': ATTESTATION_OBJECT_BOGUS})
+                                          'attestation': ATTESTATION_OBJECT_BOGUS,
+                                          'user_handle': 'abc=='})
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors,
@@ -188,7 +193,8 @@ class TestFido2RegistrationView(TestCase):
 
         url = reverse_lazy('registration_direct')
         response = self.client.post(url, {'client_data': REGISTRATION_CLIENT_DATA,
-                                          'attestation': ATTESTATION_OBJECT_U2F_MALFORMED})
+                                          'attestation': ATTESTATION_OBJECT_U2F_MALFORMED,
+                                          'user_handle': 'abc=='})
 
         self.assertContains(response, 'Register a new FIDO 2 authenticator')
         self.assertEqual(response.context['form'].errors,
