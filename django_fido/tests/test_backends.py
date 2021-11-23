@@ -176,7 +176,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE),
-                      'user_handle': base64.b64decode(user_handle).decode('utf-8')}
+                      'user_handle': base64.b64decode(user_handle)}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
