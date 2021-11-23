@@ -12,6 +12,7 @@ from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from fido2.server import Fido2Server
 
+from .models import Authenticator
 from .settings import SETTINGS
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,9 +92,9 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     def authenticate(self, request: HttpRequest, user: Optional[AbstractBaseUser], fido2_server: Fido2Server,
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate using FIDO 2."""
-        user_handle = fido2_response['user_handle']
+        user_handle = str(fido2_response['user_handle'])
         try:
-            authenticator = Authenticator.objects.get(user_handle=user_handle)
+            authenticator = Authenticator.objects.get(user__username=user_handle)
             user = authenticator.user
             credentials = [authenticator.credential]
             credential = fido2_server.authenticate_complete(

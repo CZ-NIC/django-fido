@@ -10,7 +10,8 @@ from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 from mock import sentinel
 
-from django_fido.backends import Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend, is_fido_backend_used
+from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend, is_fido_backend_used,
+                                  Fido2PasswordlessAuthenticationBackend)
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
@@ -170,17 +171,16 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
-    user_handle = bytes(USERNAME, 'utf-8')
+    user_handle = base64.b64encode(bytes(USERNAME, 'utf-8'))
     fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE),
-                      'user_handle': user_handle}
+                      'user_handle': base64.b64decode(user_handle).decode('utf-8')}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
         self.device = Authenticator.objects.create(user=self.user,
-                                                   user_handle=base64.b64encode(self.user_handle).decode('utf-8'),
                                                    credential_id_data=CREDENTIAL_ID,
                                                    attestation_data=ATTESTATION_OBJECT)
 
@@ -208,7 +208,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
         fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                           'credential_id': base64.b64decode(CREDENTIAL_ID),
                           'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
-                          'user_handle': self.user_handle,
+                          'user_handle': base64.b64decode(self.user_handle),
                           'signature': b'INVALID'}
         self.assertIsNone(
             self.backend.authenticate(sentinel.request, None, self.server, self.state, fido2_response))
