@@ -15,7 +15,7 @@ from django_fido.models import Authenticator
 from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_BOGUS, ATTESTATION_OBJECT_U2F_MALFORMED,
                    AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_ID, HOSTNAME,
                    PASSWORD, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE, USER_FIRST_NAME,
-                   USER_FULL_NAME, USER_LAST_NAME, USERNAME)
+                   USER_FULL_NAME, USER_LAST_NAME, USERNAME, USER_HANDLE)
 from .utils import TEMPLATES
 
 try:
@@ -413,3 +413,24 @@ class TestFido2AuthenticationView(TestCase):
         })
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
+
+    @override_settings(
+        DJANGO_FIDO_TWO_STEP_AUTH=False,
+        DJANGO_FIDO_PASSWORDLESS_AUTH=True,
+        AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2PasswordlessAuthenticationBackend'],
+        DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],
+    )
+    def test_post_passwordless(self):
+        session = self.client.session
+        session[FIDO2_REQUEST_SESSION_KEY] = self.state
+        session.save()
+
+        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'user_handle': USER_HANDLE,
+                'credential_id': CREDENTIAL_ID, 'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
+        with self.settings(LOGIN_REDIRECT_URL='/redirect/'):
+            response = self.client.post(self.url, post)
+
+        self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
+        self.assertEqual(get_user(self.client), self.user)
+        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+                                 transform=tuple)
