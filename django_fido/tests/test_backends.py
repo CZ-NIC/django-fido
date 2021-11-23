@@ -10,8 +10,8 @@ from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
 from mock import sentinel
 
-from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend, is_fido_backend_used,
-                                  Fido2PasswordlessAuthenticationBackend)
+from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend,
+                                  Fido2PasswordlessAuthenticationBackend, is_fido_backend_used)
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,

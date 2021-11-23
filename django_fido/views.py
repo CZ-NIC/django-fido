@@ -28,8 +28,8 @@ from fido2.server import Fido2Server
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
-from .forms import (Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2RegistrationForm,
-                    Fido2PasswordlessAuthenticationForm)
+from .forms import (Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2PasswordlessAuthenticationForm,
+                    Fido2RegistrationForm)
 from .models import Authenticator
 from .settings import SETTINGS
 

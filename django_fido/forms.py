@@ -155,6 +155,6 @@ class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
 
 
 class Fido2PasswordlessAuthenticationForm(Fido2AuthenticationForm):
-    """Authentication form for passwordless"""
+    """Authentication form for passwordless."""
 
     user_handle = forms.CharField(widget=forms.HiddenInput)
