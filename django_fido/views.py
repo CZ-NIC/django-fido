@@ -28,7 +28,8 @@ from fido2.server import Fido2Server
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
-from .forms import Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2RegistrationForm
+from .forms import (Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2RegistrationForm,
+                    Fido2PasswordlessAuthenticationForm)
 from .models import Authenticator
 from .settings import SETTINGS
 
@@ -309,6 +310,8 @@ class Fido2AuthenticationViewMixin(Fido2ViewMixin):
         user_pk = self.request.session.get(AUTHENTICATION_USER_SESSION_KEY)
         username = self.request.GET.get('username')
 
+        if SETTINGS.passwordless_auth:
+            return None
         if SETTINGS.two_step_auth and user_pk is not None:
             return get_user_model().objects.get(pk=user_pk)
         if not SETTINGS.two_step_auth and username is not None:
@@ -332,12 +335,15 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
 
         @raise ValueError: If request can't be created.
         """
-        user = self.get_user()
-        assert user and user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
-        credentials = self.get_credentials(user)
-        if not credentials:
-            raise Fido2Error("Can't create FIDO 2 authentication request, no authenticators found.",
-                             error_code=Fido2ServerError.NO_AUTHENTICATORS)
+        if SETTINGS.passwordless_auth:
+            credentials = []
+        else:
+            user = self.get_user()
+            assert user and user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
+            credentials = self.get_credentials(user)
+            if not credentials:
+                raise Fido2Error("Can't create FIDO 2 authentication request, no authenticators found.",
+                                 error_code=Fido2ServerError.NO_AUTHENTICATORS)
 
         return self.server.authenticate_begin(credentials,
                                               user_verification=self.user_verification)
@@ -360,7 +366,9 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
 
     def get_form_class(self):
         """Get form class for one step or two step authentication."""
-        if SETTINGS.two_step_auth:
+        if SETTINGS.passwordless_auth:
+            return Fido2PasswordlessAuthenticationForm
+        elif SETTINGS.two_step_auth:
             return Fido2AuthenticationForm
         else:
             return Fido2ModelAuthenticationForm
@@ -368,7 +376,7 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
     def get_form_kwargs(self):
         """Return form arguments depending on type of form (different for one and two step authentication)."""
         kwargs = super().get_form_kwargs()
-        if SETTINGS.two_step_auth:
+        if SETTINGS.two_step_auth or SETTINGS.passwordless_auth:
             # Fido2AuthenticationForm doesn't accept request.
             kwargs.pop('request', None)
         else:
@@ -401,7 +409,7 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the authentication and return response."""
         user = None
-        if SETTINGS.two_step_auth:
+        if SETTINGS.two_step_auth or SETTINGS.passwordless_auth:
             try:
                 user = self.complete_authentication(form)
             except ValidationError as error:

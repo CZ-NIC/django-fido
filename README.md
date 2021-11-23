@@ -67,7 +67,9 @@ The `level`, `vulnerabilities` and `is_update_available` methods on `metadata` c
 This authentication requires "discoverable credential" and using that credential to perform a user lookup using the passwordless authentication backend
 
 1. Set `DJANGO_FIDO_RESIDENT_KEY` to `True`
-2. Replace `django_fido.backends.Fido2AuthenticationBackend` with
+2. Set 'DJANGO_FIDO_PASSWORDLESS_AUTH' to 'True'
+3. Set 'DJANGO_FIDO_TWO_STEP_AUTH' to 'False'
+3. Replace `django_fido.backends.Fido2AuthenticationBackend` with
    `django_fido.backends.Fido2PasswordlessAuthenticationBackend` in `AUTHENTICATION_BACKENDS`.
 
 ## Changes ##

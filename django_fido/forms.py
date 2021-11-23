@@ -152,3 +152,9 @@ class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
             code='invalid_login',
             params={'username': self.username_field.verbose_name},
         )
+
+
+class Fido2PasswordlessAuthenticationForm(Fido2AuthenticationForm):
+    """Authentication form for passwordless"""
+
+    user_handle = forms.CharField(widget=forms.HiddenInput)
