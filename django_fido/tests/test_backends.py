@@ -176,7 +176,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE),
-                      'user_handle': base64.b64decode(user_handle)}
+                      'user_handle': user_handle}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
@@ -208,7 +208,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
         fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                           'credential_id': base64.b64decode(CREDENTIAL_ID),
                           'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
-                          'user_handle': base64.b64decode(self.user_handle),
+                          'user_handle': self.user_handle,
                           'signature': b'INVALID'}
         self.assertIsNone(
             self.backend.authenticate(sentinel.request, None, self.server, self.state, fido2_response))
