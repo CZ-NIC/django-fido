@@ -73,7 +73,7 @@ class Authenticator(models.Model):
     """
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='authenticators', on_delete=models.CASCADE)
-    user_handle = models.TextField(unique=True, blank=True)
+    user_handle = models.TextField(blank=True)
     create_datetime = models.DateTimeField(auto_now_add=True)
 
     credential_id_data = models.TextField(unique=True)
