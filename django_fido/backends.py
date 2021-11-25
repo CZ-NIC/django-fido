@@ -94,7 +94,7 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
         """Authenticate using FIDO 2."""
         user_handle = base64.b64decode(fido2_response['user_handle']).decode('utf-8')
         try:
-            authenticator = Authenticator.objects.get(user__username=user_handle)
+            authenticator = Authenticator.objects.get(user_handle=user_handle)
             user = authenticator.user
             credentials = [authenticator.credential]
             credential = fido2_server.authenticate_complete(
