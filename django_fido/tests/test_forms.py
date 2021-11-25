@@ -31,8 +31,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': None,
-                        'label': 'My label'}
+                        'user_handle': None, 'label': 'My label'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_clean_client_data_empty(self):
