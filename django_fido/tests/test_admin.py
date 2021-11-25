@@ -9,7 +9,8 @@ from django.urls import reverse, reverse_lazy
 import django_fido.admin.authenticator
 from django_fido.models import Authenticator
 
-from .data import ATTESTATION_OBJECT, REGISTRATION_CLIENT_DATA, USER_FIRST_NAME, USER_LAST_NAME, USERNAME
+from .data import (ATTESTATION_OBJECT, REGISTRATION_CLIENT_DATA, USER_FIRST_NAME, USER_HANDLE_B64, USER_LAST_NAME,
+                   USERNAME)
 
 User = get_user_model()
 
@@ -93,7 +94,7 @@ class TestAuthenticatorAddView(TestCase):
             'client_data': REGISTRATION_CLIENT_DATA,
             'attestation': ATTESTATION_OBJECT,
             'label': 'My key',
-            'user_handle': 'abc=='
+            'user_handle': USER_HANDLE_B64
         })
 
         self.assertRedirects(response, reverse('admin:django_fido_authenticator_change', args=(1,)))

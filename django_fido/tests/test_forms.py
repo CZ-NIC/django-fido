@@ -7,54 +7,56 @@ from fido2.ctap2 import AttestationObject, AuthenticatorData
 
 from django_fido.forms import Fido2AuthenticationForm, Fido2RegistrationForm
 
-from .data import ATTESTATION_OBJECT
+from .data import ATTESTATION_OBJECT, USER_HANDLE, USER_HANDLE_B64
 
 
 class TestFido2RegistrationForm(SimpleTestCase):
     def test_valid(self):
         # Test form with valid client data and attestation
         form = Fido2RegistrationForm({'client_data': 'eyJjaGFsbGVuZ2UiOiAiR2F6cGFjaG8hIn0=',
-                                      'user_handle': 'bGRhcF9qYW1lcy5saW4=', 'attestation': ATTESTATION_OBJECT})
+                                      'user_handle': USER_HANDLE_B64, 'attestation': ATTESTATION_OBJECT})
 
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': 'bGRhcF9qYW1lcy5saW4=', 'label': ''}
+                        'user_handle': USER_HANDLE, 'label': ''}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_valid_label(self):
         # Test form with valid client data and attestation
         form = Fido2RegistrationForm({'client_data': 'eyJjaGFsbGVuZ2UiOiAiR2F6cGFjaG8hIn0=',
                                       'attestation': ATTESTATION_OBJECT, 'label': 'My label',
-                                      'user_handle': 'bGRhcF9qYW1lcy5saW4='})
+                                      'user_handle': USER_HANDLE_B64})
 
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': 'bGRhcF9qYW1lcy5saW4=',
+                        'user_handle': USER_HANDLE,
                         'label': 'My label'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_clean_client_data_empty(self):
-        form = Fido2RegistrationForm({'client_data': '', 'attestation': ATTESTATION_OBJECT, 'user_handle': 'abc=='})
+        form = Fido2RegistrationForm({'client_data': '', 'attestation': ATTESTATION_OBJECT,
+                                      'user_handle': USER_HANDLE_B64})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'client_data': ["Operation wasn't completed."]})
 
     def test_clean_client_data_invalid(self):
-        form = Fido2RegistrationForm({'client_data': 'A', 'attestation': ATTESTATION_OBJECT, 'user_handle': 'abc=='})
+        form = Fido2RegistrationForm({'client_data': 'A', 'attestation': ATTESTATION_OBJECT,
+                                      'user_handle': USER_HANDLE_B64})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'client_data': ['FIDO 2 response is malformed.']})
 
     def test_clean_attestation_empty(self):
-        form = Fido2RegistrationForm({'client_data': 'e30=', 'attestation': '', 'user_handle': 'abc=='})
+        form = Fido2RegistrationForm({'client_data': 'e30=', 'attestation': '', 'user_handle': USER_HANDLE_B64})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'attestation': ["Operation wasn't completed."]})
 
     def test_clean_attestation_invalid(self):
-        form = Fido2RegistrationForm({'client_data': 'e30=', 'attestation': 'A', 'user_handle': 'abc=='})
+        form = Fido2RegistrationForm({'client_data': 'e30=', 'attestation': 'A', 'user_handle': USER_HANDLE_B64})
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'attestation': ['FIDO 2 response is malformed.']})
