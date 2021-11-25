@@ -15,7 +15,7 @@ from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthen
 from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
-                   CREDENTIAL_ID, HOSTNAME, PASSWORD, SIGNATURE, USERNAME)
+                   CREDENTIAL_ID, HOSTNAME, PASSWORD, SIGNATURE, USER_HANDLE, USER_HANDLE_B64, USERNAME)
 
 try:
     from fido2.webauthn import PublicKeyCredentialRpEntity, UserVerificationRequirement
@@ -171,16 +171,15 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
-    user_handle = base64.b64encode(bytes(USERNAME, 'utf-8'))
     fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE),
-                      'user_handle': user_handle}
+                      'user_handle': USER_HANDLE_B64}
 
     def setUp(self):
         self.user = User.objects.create_user(USERNAME)
-        self.device = Authenticator.objects.create(user=self.user,
+        self.device = Authenticator.objects.create(user=self.user, user_handle=USER_HANDLE,
                                                    credential_id_data=CREDENTIAL_ID,
                                                    attestation_data=ATTESTATION_OBJECT)
 
@@ -208,7 +207,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
         fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                           'credential_id': base64.b64decode(CREDENTIAL_ID),
                           'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
-                          'user_handle': self.user_handle,
+                          'user_handle': USER_HANDLE_B64,
                           'signature': b'INVALID'}
         self.assertIsNone(
             self.backend.authenticate(sentinel.request, None, self.server, self.state, fido2_response))

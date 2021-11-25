@@ -15,7 +15,7 @@ from django_fido.models import Authenticator
 from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_BOGUS, ATTESTATION_OBJECT_U2F_MALFORMED,
                    AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_ID, HOSTNAME,
                    PASSWORD, REGISTRATION_CHALLENGE, REGISTRATION_CLIENT_DATA, SIGNATURE, USER_FIRST_NAME,
-                   USER_FULL_NAME, USER_HANDLE, USER_LAST_NAME, USERNAME)
+                   USER_FULL_NAME, USER_HANDLE, USER_HANDLE_B64, USER_LAST_NAME, USERNAME)
 from .utils import TEMPLATES
 
 try:
@@ -280,7 +280,7 @@ class TestFido2AuthenticationView(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(USERNAME, password=PASSWORD)
         self.device = Authenticator.objects.create(user=self.user, credential_id_data=CREDENTIAL_ID,
-                                                   attestation_data=ATTESTATION_OBJECT)
+                                                   attestation_data=ATTESTATION_OBJECT, user_handle=USER_HANDLE)
 
     @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
     def test_no_user(self):
@@ -425,7 +425,7 @@ class TestFido2AuthenticationView(TestCase):
         session[FIDO2_REQUEST_SESSION_KEY] = self.state
         session.save()
 
-        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'user_handle': USER_HANDLE,
+        post = {'client_data': AUTHENTICATION_CLIENT_DATA, 'user_handle': USER_HANDLE_B64,
                 'credential_id': CREDENTIAL_ID, 'authenticator_data': AUTHENTICATOR_DATA, 'signature': SIGNATURE}
         with self.settings(LOGIN_REDIRECT_URL='/redirect/'):
             response = self.client.post(self.url, post)
