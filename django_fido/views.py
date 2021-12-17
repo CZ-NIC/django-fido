@@ -18,7 +18,7 @@ from django.forms import Form
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
 from fido2.attestation import Attestation, UnsupportedType
@@ -157,8 +157,8 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
         except ValueError as error:
             return JsonResponse({
                 'error_code': getattr(error, 'error_code', Fido2ServerError.DEFAULT),
-                'message': force_text(error),
-                'error': force_text(error),  # error key is deprecated and will be removed in the future
+                'message': force_str(error),
+                'error': force_str(error),  # error key is deprecated and will be removed in the future
             }, status=BAD_REQUEST)
 
         # Encode challenge into base64 encoding

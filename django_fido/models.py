@@ -15,7 +15,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.db import models
 from django.utils.deconstruct import deconstructible
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from fido2.ctap2 import AttestationObject, AttestedCredentialData
@@ -57,7 +57,7 @@ class TransportsValidator(object):
 
     def __call__(self, value):
         """Validate the input."""
-        for chunk in force_text(value).split(','):
+        for chunk in force_str(value).split(','):
             if chunk not in self.choices:
                 raise ValidationError(self.message, code=self.code, params={'value': chunk})
 
