@@ -118,14 +118,14 @@ async function sendFido2Request(url, is_registration, credenetials_name, form_da
 
         // Decode credentials
         const decoded_credentials = []
-        for (const credential of publicKey[credenetials_name]){
+        for (const credential of publicKey[credenetials_name]) {
             credential.id = _base64ToArrayBuffer(credential.id)
             decoded_credentials.push(credential)
         }
         publicKey[credenetials_name] = decoded_credentials
 
         try {
-            if (is_registration){
+            if (is_registration) {
                 const result = await navigator.credentials.create({ publicKey })
                 fido2SuccessRegistrationCallback(result, publicKey)
             } else {
@@ -145,12 +145,18 @@ async function sendFido2Request(url, is_registration, credenetials_name, form_da
     }
 }
 
-async function sendFido2RegistrationRequest(url, form_data) {
-    await sendFido2Request(url, true, 'excludeCredentials', form_data)
-}
-
 async function sendFido2AuthenticationRequest(url, form_data) {
     await sendFido2Request(url, false, 'allowCredentials', form_data)
+}
+
+const sendFido2RegistrationRequest = async (e) => {
+    e.preventDefault()
+    const form = document.getElementById(DJANGO_FIDO_FORM_ID)
+    let form_data = ''
+    const user_field = form.querySelector('[name=user]')
+    if (user_field)
+        form_data = `user=${user_field.value}`
+    await sendFido2Request(form.dataset.url, true, 'excludeCredentials', form_data)
 }
 
 async function startFido2() {
@@ -184,16 +190,7 @@ async function startFido2() {
     } else if (form.dataset.mode === FIDO2_REGISTRATION_REQUEST) {
         const submit_button = document.getElementById('submit-button')
         if (submit_button) {
-            submit_button.addEventListener('click', async e => {
-                e.preventDefault()
-
-                let form_data = ''
-                const user_field = form.querySelector('[name=user]')
-                if (user_field)
-                    form_data = `user=${user_field.value}`
-
-                await sendFido2RegistrationRequest(form.dataset.url, form_data)
-            })
+            submit_button.addEventListener('click', sendFido2RegistrationRequest)
         }
     } else {
         addFido2Error(TRANSLATIONS.UKNOWN_FIDO_REQUEST)
@@ -205,4 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     startFido2()
 }, false)
 
-export {startFido2, FIDO2_REGISTRATION_REQUEST, FIDO2_AUTHENTICATION_REQUEST, addFido2Error, clearFido2Errors}
+export {
+    FIDO2_REGISTRATION_REQUEST,
+    FIDO2_AUTHENTICATION_REQUEST,
+    DJANGO_FIDO_FORM_ID,
+    _arrayBufferToBase64,
+    _base64ToArrayBuffer,
+    addFido2Error,
+    clearFido2Errors,
+    fido2ErrorResponseCallback,
+    sendFido2RegistrationRequest,
+    startFido2,
+}
