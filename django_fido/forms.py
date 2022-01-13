@@ -1,5 +1,6 @@
 """Forms for FIDO 2 registration and login."""
 import base64
+from typing import Optional
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -10,6 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from fido2.client import ClientData
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 from fido2.server import Fido2Server
+
+from .settings import SETTINGS
 
 
 class Fido2RegistrationForm(forms.Form):
@@ -43,8 +46,11 @@ class Fido2RegistrationForm(forms.Form):
         except ValueError:
             raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
 
-    def clean_user_handle(self) -> AttestationObject:
+    def clean_user_handle(self) -> Optional[str]:
         """Return decoded attestation object."""
+        if not SETTINGS.resident_key:
+            return None
+
         value = self.cleaned_data['user_handle']
         try:
             return base64.b64decode(value).decode('utf-8')

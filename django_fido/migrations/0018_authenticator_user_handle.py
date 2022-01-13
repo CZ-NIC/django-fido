@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='authenticator',
             name='user_handle',
-            field=models.TextField(blank=True),
+            field=models.TextField(blank=True, unique=True, null=True),
         ),
     ]

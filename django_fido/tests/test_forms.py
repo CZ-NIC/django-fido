@@ -1,7 +1,7 @@
 """Test `django_fido.forms` module."""
 import base64
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from fido2.client import ClientData
 from fido2.ctap2 import AttestationObject, AuthenticatorData
 
@@ -19,7 +19,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': USER_HANDLE, 'label': ''}
+                        'user_handle': None, 'label': ''}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_valid_label(self):
@@ -31,7 +31,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
                         'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
-                        'user_handle': USER_HANDLE,
+                        'user_handle': None,
                         'label': 'My label'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
@@ -60,6 +60,20 @@ class TestFido2RegistrationForm(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'attestation': ['FIDO 2 response is malformed.']})
+
+
+@override_settings(DJANGO_FIDO_RESIDENT_KEY=True)
+class TestFido2RegistrationFormWithResidentKey(SimpleTestCase):
+    def test_valid(self):
+        # Test form with valid client data and attestation
+        form = Fido2RegistrationForm({'client_data': 'eyJjaGFsbGVuZ2UiOiAiR2F6cGFjaG8hIn0=',
+                                      'user_handle': USER_HANDLE_B64, 'attestation': ATTESTATION_OBJECT})
+
+        self.assertTrue(form.is_valid())
+        cleaned_data = {'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
+                        'attestation': AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
+                        'user_handle': USER_HANDLE, 'label': ''}
+        self.assertEqual(form.cleaned_data, cleaned_data)
 
     def test_clean_user_handle_invalid(self):
         form = Fido2RegistrationForm({'client_data': 'e30=', 'attestation': ATTESTATION_OBJECT, 'user_handle': ''})
