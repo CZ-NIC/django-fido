@@ -1,6 +1,7 @@
 # Changelog #
 ## Unreleased ##
  * Drop support for Django 1.11
+ * Drop support for python 3.5
  * Sets a default_auto_field
  * Fix django.conf.urls deprecation warnings
  * Added user_handle field to Authenticator model

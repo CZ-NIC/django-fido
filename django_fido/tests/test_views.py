@@ -234,10 +234,6 @@ class TestFido2AuthenticationRequestView(TestCase):
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
                           'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
-        if fido2.__version__ < '0.9':
-            fido2_request['publicKey']['timeout'] = 30000
-        if fido2.__version__ < '0.8':
-            fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
 
     @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=True)
@@ -270,10 +266,6 @@ class TestFido2AuthenticationRequestView(TestCase):
             'publicKey': {'rpId': 'testserver',
                           'challenge': base64.b64encode(challenge).decode('utf-8'),
                           'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
-        if fido2.__version__ < '0.9':
-            fido2_request['publicKey']['timeout'] = 30000
-        if fido2.__version__ < '0.8':
-            fido2_request['publicKey']['userVerification'] = 'preferred'
         self.assertEqual(response.json(), fido2_request)
 
 
