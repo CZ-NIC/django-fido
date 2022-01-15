@@ -63,7 +63,7 @@ if AttestationVerifier is not None:
             """Return empty CA lookup to disable trust path verification."""
             return []
 
-
+# a
 @unique
 class Fido2ServerError(str, Enum):
     """FIDO 2 server error types."""
