@@ -91,7 +91,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            'credential_id': b'\0', 'client_data': ClientData(b'{"challenge": "Gazpacho!"}'),
+            'credential_id': b'\0', 'client_data': ClientData(b'{"challenge": "Gazpacho!"}'), 'user_handle': None,
             'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)), 'signature': b'\0'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
@@ -115,7 +115,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            'credential_id': base64.b64decode('GAZPACHO'), 'client_data': ClientData(b'{}'),
+            'credential_id': base64.b64decode('GAZPACHO'), 'client_data': ClientData(b'{}'), 'user_handle': None,
             'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)), 'signature': b'\0'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
@@ -139,7 +139,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            'credential_id': b'\0', 'client_data': ClientData(b'{}'),
+            'credential_id': b'\0', 'client_data': ClientData(b'{}'), 'user_handle': None,
             'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)), 'signature': b'\0'}
         self.assertEqual(form.cleaned_data, cleaned_data)
 
@@ -163,7 +163,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            'credential_id': b'\0', 'client_data': ClientData(b'{}'),
+            'credential_id': b'\0', 'client_data': ClientData(b'{}'), 'user_handle': None,
             'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
             'signature': base64.b64decode('GAZPACHO')}
         self.assertEqual(form.cleaned_data, cleaned_data)
@@ -181,3 +181,24 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'signature': ['FIDO 2 response is malformed.']})
+
+
+@override_settings(DJANGO_FIDO_RESIDENT_KEY=True)
+class TestFido2AuthenticationFormWithResidentKey(SimpleTestCase):
+    def test_clean_user_handle(self):
+        form = Fido2AuthenticationForm({'client_data': 'e30=', 'credential_id': 'AA==', 'user_handle': USER_HANDLE_B64,
+                                        'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'GAZPACHO'})
+
+        self.assertTrue(form.is_valid())
+        cleaned_data = {
+            'credential_id': b'\0', 'client_data': ClientData(b'{}'), 'user_handle': USER_HANDLE,
+            'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
+            'signature': base64.b64decode('GAZPACHO')}
+        self.assertEqual(form.cleaned_data, cleaned_data)
+
+    def test_clean_user_handle_invalid(self):
+        form = Fido2AuthenticationForm({'client_data': 'e30=', 'credential_id': 'AA==', 'user_handle': 'abc',
+                                        'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'GAZPACHO'})
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors, {'user_handle': ['FIDO 2 response is malformed.']})
