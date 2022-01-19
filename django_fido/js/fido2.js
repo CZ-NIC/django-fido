@@ -83,7 +83,7 @@ function fido2SuccessAuthenticationCallback(assertion) {
     form.credential_id.value = _arrayBufferToBase64(assertion.rawId)
     form.authenticator_data.value = _arrayBufferToBase64(assertion.response.authenticatorData)
     form.signature.value = _arrayBufferToBase64(assertion.response.signature)
-    if (assertion.response.userHandle !== undefined) {
+    if (assertion.response.userHandle !== undefined && assertion.response.userHandle !== null) {
         form.user_handle.value = _arrayBufferToBase64(assertion.response.userHandle)
     } else {
         form.user_handle.value = ''
