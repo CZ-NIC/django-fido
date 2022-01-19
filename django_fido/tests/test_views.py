@@ -416,6 +416,7 @@ class TestFido2AuthenticationView(TestCase):
 
     @override_settings(
         DJANGO_FIDO_TWO_STEP_AUTH=False,
+        DJANGO_FIDO_RESIDENT_KEY=True,
         DJANGO_FIDO_PASSWORDLESS_AUTH=True,
         AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2PasswordlessAuthenticationBackend'],
         DJANGO_FIDO_AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],
