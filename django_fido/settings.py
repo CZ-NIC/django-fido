@@ -3,7 +3,7 @@ from typing import List, Optional, cast
 
 from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,
                          NestedListSetting, PositiveIntegerSetting, Setting, StringSetting)
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ImproperlyConfigured
 
 
 def timeout_validator(value):
@@ -37,6 +37,17 @@ class DjangoFidoSettings(AppSettings):
     ), default=None)
     resident_key = BooleanSetting(default=False)
     passwordless_auth = BooleanSetting(default=False)
+
+    @classmethod
+    def check(cls):
+        super(DjangoFidoSettings, cls).check()
+
+        # check passwordless settings
+        if cls.settings['passwordless_auth'].get_value() and not cls.settings['resident_key'].get_value():
+            raise ImproperlyConfigured("To use passwordless auth, RESIDENT_KEY settings must be set to True")
+
+        if cls.settings['passwordless_auth'].get_value() and cls.settings['resident_key'].get_value():
+            raise ImproperlyConfigured("To use passwordless auth, TWO_STEP_AUTH must be set to False")
 
     class Meta:
         """Meta class."""
