@@ -3,7 +3,7 @@ from typing import List, Optional, cast
 
 from appsettings import (AppSettings, BooleanSetting, CallablePathSetting, FileSetting, NestedDictSetting,
                          NestedListSetting, PositiveIntegerSetting, Setting, StringSetting)
-from django.core.exceptions import ValidationError, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 
 
 def timeout_validator(value):
@@ -40,6 +40,7 @@ class DjangoFidoSettings(AppSettings):
 
     @classmethod
     def check(cls):
+        """Extend parent class check method to perform further project specific settings check."""
         super(DjangoFidoSettings, cls).check()
 
         # check passwordless settings
