@@ -158,3 +158,11 @@ class Fido2PasswordlessAuthenticationForm(Fido2AuthenticationForm):
     """Authentication form for passwordless."""
 
     user_handle = forms.CharField(widget=forms.HiddenInput)
+
+    def clean_user_handle(self) -> str:
+        """Return decoded attestation object."""
+        value = self.cleaned_data['user_handle']
+        try:
+            return base64.b64decode(value).decode('utf-8')
+        except ValueError:
+            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
