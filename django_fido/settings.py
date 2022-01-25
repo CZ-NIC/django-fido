@@ -47,7 +47,7 @@ class DjangoFidoSettings(AppSettings):
         if cls.settings['passwordless_auth'].get_value() and not cls.settings['resident_key'].get_value():
             raise ImproperlyConfigured("To use passwordless auth, RESIDENT_KEY settings must be set to True")
 
-        if cls.settings['passwordless_auth'].get_value() and cls.settings['resident_key'].get_value():
+        if cls.settings['passwordless_auth'].get_value() and cls.settings['two_step_auth'].get_value():
             raise ImproperlyConfigured("To use passwordless auth, TWO_STEP_AUTH must be set to False")
 
     class Meta:
