@@ -182,17 +182,3 @@ class TestFido2AuthenticationForm(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors, {'signature': ['FIDO 2 response is malformed.']})
-
-
-@override_settings(DJANGO_FIDO_RESIDENT_KEY=True)
-class TestFido2AuthenticationFormWithResidentKey(SimpleTestCase):
-    def test_clean_user_handle(self):
-        form = Fido2AuthenticationForm({'client_data': 'e30=', 'credential_id': 'AA==',
-                                        'authenticator_data': AUTHENTICATOR_DATA, 'signature': 'GAZPACHO'})
-
-        self.assertTrue(form.is_valid())
-        cleaned_data = {
-            'credential_id': b'\0', 'client_data': ClientData(b'{}'),
-            'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
-            'signature': base64.b64decode('GAZPACHO')}
-        self.assertEqual(form.cleaned_data, cleaned_data)
