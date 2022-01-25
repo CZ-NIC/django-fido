@@ -69,7 +69,6 @@ class Fido2AuthenticationForm(forms.Form):
                                          widget=forms.HiddenInput)
     signature = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
                                 widget=forms.HiddenInput)
-    user_handle = forms.CharField(widget=forms.HiddenInput, required=False)
 
     class Media:
         """Add FIDO 2 related JS."""
@@ -105,16 +104,6 @@ class Fido2AuthenticationForm(forms.Form):
         value = self.cleaned_data['signature']
         try:
             return base64.b64decode(value)
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
-
-    def clean_user_handle(self) -> Optional[str]:
-        """Return decoded attestation object."""
-        if not SETTINGS.resident_key:
-            return None
-        value = self.cleaned_data['user_handle']
-        try:
-            return base64.b64decode(value).decode('utf-8')
         except ValueError:
             raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
 
