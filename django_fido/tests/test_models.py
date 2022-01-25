@@ -99,6 +99,18 @@ class TestAuthenticator(SimpleTestCase):
         self.assertEqual(authenticator.attestation_data, ATTESTATION_OBJECT)
         self.assertEqual(authenticator.credential_id_data, CREDENTIAL_ID)
 
+    def test_identifier_aaguid(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        self.assertEqual(authenticator.identifier, "95442b2e-f15e-4def-b270-efb106facb4e")
+
+    def test_identifier_u2f(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F)
+        self.assertEqual(authenticator.identifier, "3be6d2c06ff2e7b07c9d9e28c020b00d07c815c8")
+
+    def test_identifier_u2f_no_ext(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_U2F_NO_EXT)
+        self.assertEqual(authenticator.identifier, "ed5bdb96011e3d457d858af39e30ac57c5ac95e6")
+
 
 class TestAuthenticatorDatabase(TestCase):
     """Unittests for Authenticator methods that need database."""
