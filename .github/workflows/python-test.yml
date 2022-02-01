@@ -13,7 +13,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python: [3.5, 3.6, 3.7, 3.8]
+        python: [3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,9 +26,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox wheel
         sudo apt-get install gettext
-    - name: Explicitly install build_requires for python 3.5
-      run: pip install setuptools_webpack Babel
-      if: ${{ matrix.python == 3.5 }}
     - name: Run tests
       run: |
         tox
