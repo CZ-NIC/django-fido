@@ -5,7 +5,7 @@ import warnings
 from binascii import b2a_hex
 from datetime import date
 from operator import methodcaller
-from typing import List, Optional, cast
+from typing import List, Optional, Union, cast
 from uuid import UUID
 
 from cryptography.hazmat.backends import default_backend
@@ -104,17 +104,15 @@ class Authenticator(models.Model):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
         self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')
 
-    def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
-        """Get the appropriate metadata."""
-        # First test the presence of aaguid - FIDO 2
-        if hasattr(self.attestation.auth_data, 'credential_data') and \
-                self.attestation.auth_data.credential_data is not None and \
-                self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID:
-            identifier = str(UUID(b2a_hex(self.credential.aaguid).decode()))
-            try:
-                return AuthenticatorMetadata.objects.get(identifier=identifier)
-            except AuthenticatorMetadata.DoesNotExist:
-                return None
+    @cached_property
+    def identifier(self) -> Optional[Union[str, bytes]]:
+        """Return key identifier."""
+        if (
+            hasattr(self.attestation.auth_data, "credential_data")
+            and self.attestation.auth_data.credential_data is not None
+            and self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID
+        ):
+            return str(UUID(b2a_hex(self.credential.aaguid).decode()))
         else:
             # FIXME: Add handling for UAF devices with AAID
             # Get the certificate FIDO U2F
@@ -129,12 +127,19 @@ class Authenticator(models.Model):
                 subject_identifier = cast(SubjectKeyIdentifier, extension.value)
             except ExtensionNotFound:
                 subject_identifier = SubjectKeyIdentifier.from_public_key(certificate.public_key())
-            identifier = b2a_hex(subject_identifier.digest).decode()
-            # Key identifiers are stored as lists...
-            try:
-                return AuthenticatorMetadata.objects.get(identifier__contains=identifier)
-            except AuthenticatorMetadata.DoesNotExist:
-                return None
+            return b2a_hex(subject_identifier.digest).decode()
+
+    def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
+        """Get the appropriate metadata."""
+        try:
+            return AuthenticatorMetadata.objects.get(identifier=self.identifier)
+        except AuthenticatorMetadata.DoesNotExist:
+            # Fallback - key identifiers can be stored as lists...
+            pass
+        try:
+            return AuthenticatorMetadata.objects.get(identifier__contains=self.identifier)
+        except AuthenticatorMetadata.DoesNotExist:
+            return None
 
     def _prepare_store(self, root_certs: List[str]) -> crypto.X509Store:
         """Prepare crypto store for verification."""
