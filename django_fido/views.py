@@ -1,6 +1,7 @@
 """Views for FIDO 2 registration and login."""
 import base64
 import logging
+import uuid
 import warnings
 from abc import ABCMeta, abstractmethod
 from enum import Enum, unique
@@ -204,7 +205,11 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         In such case, it is required to provide another identifier which would differentiate users.
         See https://www.w3.org/TR/webauthn/#dom-publickeycredentialuserentity-id and
         https://tools.ietf.org/html/rfc8266#section-6.1 for details.
+
+        If resident_key is True, we need to return an uuid string that does not disclose user identity
         """
+        if SETTINGS.resident_key:
+            return uuid.uuid4().hex
         return user.username
 
     def get_user_data(self, user: AbstractBaseUser) -> Dict[str, str]:

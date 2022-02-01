@@ -74,7 +74,6 @@ function fido2SuccessRegistrationCallback(attestation, publicKey) {
     form.client_data.value = _arrayBufferToBase64(attestation.response.clientDataJSON)
     form.attestation.value = _arrayBufferToBase64(attestation.response.attestationObject)
     form.user_handle.value = _arrayBufferToBase64(publicKey.user.id)
-
     form.submit()
 }
 
@@ -84,6 +83,13 @@ function fido2SuccessAuthenticationCallback(assertion) {
     form.credential_id.value = _arrayBufferToBase64(assertion.rawId)
     form.authenticator_data.value = _arrayBufferToBase64(assertion.response.authenticatorData)
     form.signature.value = _arrayBufferToBase64(assertion.response.signature)
+    if (form.user_handle) {
+        if (assertion.response.userHandle !== undefined && assertion.response.userHandle !== null) {
+            form.user_handle.value = _arrayBufferToBase64(assertion.response.userHandle)
+        } else {
+            form.user_handle.value = ''
+        }
+    }
     form.submit()
 }
 

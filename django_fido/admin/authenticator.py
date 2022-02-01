@@ -58,6 +58,7 @@ class AuthenticatorAddView(PermissionRequiredMixin, Fido2RegistrationView):
             user=form.cleaned_data['user'],
             attestation=form.cleaned_data['attestation'],
             label=form.cleaned_data.get('label'),
+            user_handle=form.cleaned_data.get('user_handle'),
         )
         return HttpResponseRedirect(reverse('admin:django_fido_authenticator_change', args=(authenticator.pk,)))
 
