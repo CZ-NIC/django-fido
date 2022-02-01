@@ -149,7 +149,7 @@ async function sendFido2AuthenticationRequest(url, form_data) {
     await sendFido2Request(url, false, 'allowCredentials', form_data)
 }
 
-const sendFido2RegistrationRequest = async (e) => {
+const sendFido2RegistrationRequest = async(e) => {
     e.preventDefault()
     const form = document.getElementById(DJANGO_FIDO_FORM_ID)
     let form_data = ''
