@@ -151,11 +151,8 @@ async function sendFido2AuthenticationRequest(url, form_data) {
 
 const sendFido2RegistrationRequest = async(e) => {
     e.preventDefault()
-    const form = document.getElementById(DJANGO_FIDO_FORM_ID)
-    let form_data = ''
-    const user_field = form.querySelector('[name=user]')
-    if (user_field)
-        form_data = `user=${user_field.value}`
+    const form = document.querySelector(`#${DJANGO_FIDO_FORM_ID}`)
+    const form_data = form.querySelector('[name=user]') ? `user=${form.querySelector('[name=user]').value}` : ''
     await sendFido2Request(form.dataset.url, true, 'excludeCredentials', form_data)
 }
 
