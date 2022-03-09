@@ -1,6 +1,6 @@
 {
   "name": "@cz-nic/django-fido",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "description": "Django application for FIDO protocol",
   "scripts": {
     "check": "eslint --ext .js django_fido/js-tests django_fido/js",

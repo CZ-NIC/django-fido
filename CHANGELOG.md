@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.37
  * Drop support for Django 1.11
  * Drop support for python 3.5
  * Sets a default_auto_field
