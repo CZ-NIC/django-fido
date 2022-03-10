@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Fix Authenticator.metadata if no identifier is present
 
 ## 0.37
  * Drop support for Django 1.11

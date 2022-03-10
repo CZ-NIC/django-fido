@@ -131,6 +131,8 @@ class Authenticator(models.Model):
 
     def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
         """Get the appropriate metadata."""
+        if self.identifier is None:
+            return None
         try:
             return AuthenticatorMetadata.objects.get(identifier=self.identifier)
         except AuthenticatorMetadata.DoesNotExist:

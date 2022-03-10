@@ -10,9 +10,10 @@ from fido2.ctap2 import AttestationObject, AuthenticatorData
 from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
 
-from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT,
-                   CREDENTIAL_ID, DETAILED_METADATA, DETAILED_METADATA_ATTESTATION_KEYS,
-                   DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT, DETAILED_METADATA_WRONG_CERT)
+from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_NO_ATTESTATION_HANDED,
+                   ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT, CREDENTIAL_ID, DETAILED_METADATA,
+                   DETAILED_METADATA_ATTESTATION_KEYS, DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT,
+                   DETAILED_METADATA_WRONG_CERT)
 
 
 class TestTransportsValidator(SimpleTestCase):
@@ -179,6 +180,10 @@ class TestAuthenticatorDatabase(TestCase):
                                                         detailed_metadata_entry='', metadata_entry=json.dumps(status))
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
         self.assertEqual(authenticator.metadata, metadata)
+
+    def test_metadata_no_identifier(self):
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_NO_ATTESTATION_HANDED)
+        self.assertIsNone(authenticator.metadata)
 
 
 class TestAuthenticatorMetadata(TestCase):
