@@ -1,6 +1,7 @@
 """Authentication backends for Django FIDO."""
 import base64
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from django.contrib import messages
@@ -27,7 +28,7 @@ def is_fido_backend_used() -> bool:
     return False
 
 
-class BaseFido2AuthenticationBackend(object):
+class BaseFido2AuthenticationBackend(ABC):
     """
     Base class for authenticating user using FIDO 2.
 
@@ -36,6 +37,7 @@ class BaseFido2AuthenticationBackend(object):
 
     counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
 
+    @abstractmethod
     def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate to be implemented."""
@@ -94,9 +96,9 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
         """Authenticate using FIDO 2."""
         user_handle = fido2_response['user_handle']
         try:
-            authenticator = Authenticator.objects.get(user_handle=user_handle)
-            user = authenticator.user
-            credentials = [authenticator.credential]
+            device = Authenticator.objects.get(user_handle=user_handle)
+            user = device.user
+            credentials = [device.credential]
             credential = fido2_server.authenticate_complete(
                 fido2_state, credentials, fido2_response['credential_id'], fido2_response['client_data'],
                 fido2_response['authenticator_data'], fido2_response['signature'])
