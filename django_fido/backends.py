@@ -100,7 +100,7 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             device = Authenticator.objects.get(user_handle=user_handle)
             user = device.user
             credentials = [device.credential]
-            credential = fido2_server.authenticate_complete(
+            fido2_server.authenticate_complete(
                 fido2_state, credentials, fido2_response['credential_id'], fido2_response['client_data'],
                 fido2_response['authenticator_data'], fido2_response['signature'])
         except ValueError as error:
