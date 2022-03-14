@@ -95,6 +95,7 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
                      fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate using FIDO 2."""
         user_handle = fido2_response['user_handle']
+
         try:
             device = Authenticator.objects.get(user_handle=user_handle)
             user = device.user
@@ -109,7 +110,6 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             _LOGGER.info("FIDO 2 authentication could not find user handle: %s", user_handle)
             return None
 
-        device = user.authenticators.get(credential_id_data=base64.b64encode(credential.credential_id).decode('utf-8'))
         try:
             self.mark_device_used(device, fido2_response['authenticator_data'].counter)
         except ValueError:
