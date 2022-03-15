@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.38
  * Fix Authenticator.metadata if no identifier is present
  * Added passwordless auth backend
 
