@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased ##
 
+## 0.39
+ * Fix uncaught exception when user does not exist
+
 ## 0.38
  * Fix Authenticator.metadata if no identifier is present
  * Added passwordless auth backend
