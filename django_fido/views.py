@@ -312,10 +312,13 @@ class Fido2AuthenticationViewMixin(Fido2ViewMixin):
 
         if SETTINGS.passwordless_auth:
             return None
-        if SETTINGS.two_step_auth and user_pk is not None:
-            return get_user_model().objects.get(pk=user_pk)
-        if not SETTINGS.two_step_auth and username is not None:
-            return get_user_model().objects.get_by_natural_key(username)
+        try:
+            if SETTINGS.two_step_auth and user_pk is not None:
+                return get_user_model().objects.get(pk=user_pk)
+            if not SETTINGS.two_step_auth and username is not None:
+                return get_user_model().objects.get_by_natural_key(username)
+        except get_user_model().DoesNotExist:
+            return None
         return None
 
     def dispatch(self, request, *args, **kwargs):
@@ -339,9 +342,9 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
             credentials = []
         else:
             user = self.get_user()
-            assert user and user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
-            credentials = self.get_credentials(user)
-            if not credentials:
+            if user:
+                credentials = self.get_credentials(user)
+            if not user or not credentials:
                 raise Fido2Error("Can't create FIDO 2 authentication request, no authenticators found.",
                                  error_code=Fido2ServerError.NO_AUTHENTICATORS)
 
