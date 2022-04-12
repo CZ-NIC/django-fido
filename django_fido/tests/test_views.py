@@ -268,6 +268,17 @@ class TestFido2AuthenticationRequestView(TestCase):
                           'allowCredentials': [{'id': CREDENTIAL_ID, 'type': 'public-key'}]}}
         self.assertEqual(response.json(), fido2_request)
 
+    @override_settings(DJANGO_FIDO_TWO_STEP_AUTH=False)
+    def test_get_by_username_does_not_exist(self):
+        response = self.client.get(self.url, data={'username': 'unknown'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'message': "Can't create FIDO 2 authentication request, no authenticators found.",
+            'error': "Can't create FIDO 2 authentication request, no authenticators found.",
+            'error_code': 'NoAuthenticatorsError',
+        })
+
 
 @override_settings(ROOT_URLCONF='django_fido.tests.urls', TEMPLATES=TEMPLATES,
                    AUTHENTICATION_BACKENDS=['django_fido.backends.Fido2AuthenticationBackend'])
