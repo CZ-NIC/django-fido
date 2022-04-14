@@ -1,14 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """Setup script for django_fido."""
+import os
 from distutils.command.build import build
 
 from setuptools import find_packages, setup
 from setuptools.command.sdist import sdist
 
-import django_fido
-
-LONG_DESCRIPTION = open('README.md').read() + '\n\n' + open('CHANGELOG.md').read()
 CLASSIFIERS = ['Development Status :: 4 - Beta',
                'License :: OSI Approved :: MIT License',
                'Framework :: Django',
@@ -43,9 +41,17 @@ EXTRAS_REQUIRE = {'quality': ['isort', 'flake8', 'pydocstyle', 'mypy', 'polint']
                   'types': ['types-requests', 'types-mock', 'types-pyOpenSSL']}
 
 
+def run_npm(build) -> bool:
+    return not bool(os.environ.get('SKIP_NPM', False))
+
+
 class custom_build(build):
 
-    sub_commands = [('compile_catalog', None), ('build_js', None)] + build.sub_commands
+    sub_commands = [
+        ('compile_catalog', None),
+        ('npm_install', run_npm),
+        ('npm_run', run_npm),
+    ] + build.sub_commands
 
 
 class custom_sdist(sdist):
@@ -57,20 +63,15 @@ class custom_sdist(sdist):
 
 
 setup(name='django-fido',
-      version=django_fido.__version__,
       description='Django application for FIDO protocol',
-      long_description=LONG_DESCRIPTION,
-      long_description_content_type='text/markdown',
       author='Vlastimil Zíma',
       author_email='vlastimil.zima@nic.cz',
       url='https://github.com/CZ-NIC/django-fido',
       packages=find_packages(),
       include_package_data=True,
       python_requires='~=3.7',
-      setup_requires=['Babel >=2.3', 'setuptools-webpack'],
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       keywords=['django', 'fido', 'u2f', 'fido2'],
       classifiers=CLASSIFIERS,
-      webpack_output_path='django_fido/static/django_fido/js',
       cmdclass={'build': custom_build, 'sdist': custom_sdist})
