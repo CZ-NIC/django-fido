@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Drop support for Django 2.x
 
 ## 0.39
  * Fix uncaught exception when user does not exist

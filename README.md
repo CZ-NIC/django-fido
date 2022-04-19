@@ -17,7 +17,7 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
 
 ## Dependencies ##
  * Python 3.5 and higher
- * Django >= 2.0
+ * Django >= 3.0
 
 ## Configuration ##
 
