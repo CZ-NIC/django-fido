@@ -28,7 +28,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Software Development :: Libraries :: Python Modules']
 INSTALL_REQUIRES = [
     'Django>=3.0',
-    'fido2>=0.9',
+    'fido2~=0.9',
     'sqlparse',  # sqlparse is required for Django < 2.2
     'django-app-settings>=0.7.1',
     'jwcrypto',
