@@ -1,6 +1,10 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.40
+ * Pin fido2 to ~= 0.9
  * Drop support for Django 2.x
+ * Fix package build with setuptools-npm
 
 ## 0.39
  * Fix uncaught exception when user does not exist
