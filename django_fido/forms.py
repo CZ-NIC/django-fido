@@ -8,9 +8,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
-from fido2.client import ClientData
-from fido2.ctap2 import AttestationObject, AuthenticatorData
 from fido2.server import Fido2Server
+from fido2.webauthn import AttestationObject, AuthenticatorData, CollectedClientData
 
 from .settings import SETTINGS
 
@@ -30,12 +29,12 @@ class Fido2RegistrationForm(forms.Form):
 
         js = ('django_fido/js/fido2.js', )
 
-    def clean_client_data(self) -> ClientData:
+    def clean_client_data(self) -> CollectedClientData:
         """Return decoded client data."""
         value = self.cleaned_data['client_data']
         try:
-            return ClientData(base64.b64decode(value))
-        except ValueError:
+            return CollectedClientData(base64.b64decode(value))
+        except (ValueError, KeyError):
             raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
 
     def clean_attestation(self) -> AttestationObject:
@@ -43,7 +42,7 @@ class Fido2RegistrationForm(forms.Form):
         value = self.cleaned_data['attestation']
         try:
             return AttestationObject(base64.b64decode(value))
-        except ValueError:
+        except (ValueError, KeyError):
             raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
 
     def clean_user_handle(self) -> Optional[str]:
@@ -75,11 +74,11 @@ class Fido2AuthenticationForm(forms.Form):
 
         js = ('django_fido/js/fido2.js', )
 
-    def clean_client_data(self) -> ClientData:
+    def clean_client_data(self) -> CollectedClientData:
         """Return decoded client data."""
         value = self.cleaned_data['client_data']
         try:
-            return ClientData(base64.b64decode(value))
+            return CollectedClientData(base64.b64decode(value))
         except ValueError:
             raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
 

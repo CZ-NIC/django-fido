@@ -8,13 +8,13 @@ from enum import Enum, unique
 from http.client import BAD_REQUEST
 from typing import Dict, List, Optional, Tuple
 
-import fido2
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ValidationError
+from django.core.serializers.json import DjangoJSONEncoder
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
@@ -22,9 +22,11 @@ from django.urls import reverse_lazy
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
-from fido2.attestation import Attestation, UnsupportedType
-from fido2.ctap2 import AuthenticatorData
+from fido2.attestation import Attestation, AttestationVerifier, UnsupportedType
+from fido2.attestation.base import AttestationResult, InvalidSignature
 from fido2.server import Fido2Server
+from fido2.utils import _DataClassMapping
+from fido2.webauthn import AttestationConveyancePreference, AuthenticatorData, PublicKeyCredentialRpEntity
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
@@ -33,37 +35,17 @@ from .forms import (Fido2AuthenticationForm, Fido2ModelAuthenticationForm, Fido2
 from .models import Authenticator
 from .settings import SETTINGS
 
-try:
-    from fido2.server import AttestationVerifier
-except ImportError:
-    AttestationVerifier = None
-else:
-    from fido2.attestation.base import AttestationResult
-
-try:
-    from fido2.attestation.base import InvalidAttestation
-except ImportError:
-    from fido2.attestation import InvalidAttestation
-
-try:
-    from fido2.webauthn import AttestationConveyancePreference, PublicKeyCredentialRpEntity, UserVerificationRequirement
-except ImportError:
-    from fido2.server import (ATTESTATION as AttestationConveyancePreference,
-                              USER_VERIFICATION as UserVerificationRequirement,
-                              RelyingParty as PublicKeyCredentialRpEntity)
-
 _LOGGER = logging.getLogger(__name__)
 
 
-if AttestationVerifier is not None:
-    class BaseAttestationVerifier(AttestationVerifier):
-        """Verify the attestation, but not the trust chain."""
+class BaseAttestationVerifier(AttestationVerifier):
+    """Verify the attestation, but not the trust chain."""
 
-        def ca_lookup(self,
-                      attestation_result: AttestationResult,
-                      client_data_hash: AuthenticatorData) -> Optional[List[bytes]]:
-            """Return empty CA lookup to disable trust path verification."""
-            return []
+    def ca_lookup(self,
+                  attestation_result: AttestationResult,
+                  client_data_hash: AuthenticatorData) -> Optional[List[bytes]]:
+        """Return empty CA lookup to disable trust path verification."""
+        return []
 
 
 @unique
@@ -101,8 +83,8 @@ class Fido2ViewMixin(object):
 
     attestation = AttestationConveyancePreference.NONE
     attestation_types = None  # type: Optional[List[Attestation]]
-    verify_attestation = BaseAttestationVerifier if fido2.__version__ >= '0.9' else None
-    user_verification = UserVerificationRequirement.PREFERRED if fido2.__version__ < '0.8' else None
+    verify_attestation = BaseAttestationVerifier
+    user_verification = None
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     rp_name = None  # type: Optional[str]
@@ -119,10 +101,8 @@ class Fido2ViewMixin(object):
     @property
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
-        rp = PublicKeyCredentialRpEntity(self.get_rp_id(), self.get_rp_name())
-        if AttestationVerifier is None:
-            return Fido2Server(rp, attestation=self.attestation, attestation_types=self.attestation_types)
-        elif self.verify_attestation is None:
+        rp = PublicKeyCredentialRpEntity(self.get_rp_name(), self.get_rp_id())
+        if self.verify_attestation is None:
             if self.attestation_types is not None:
                 warnings.warn('You have defined `attestation_types` but not `verify_attestation`, this means that the '
                               '`attestation_types` setting is being iognored.', DeprecationWarning)
@@ -139,6 +119,21 @@ class Fido2ViewMixin(object):
     def get_credentials(self, user: AbstractBaseUser):
         """Return list of user's credentials."""
         return [a.credential for a in user.authenticators.all()]
+
+
+class Fido2Encoder(DjangoJSONEncoder):
+    """Added encoding of fido2 classes."""
+
+    def default(self, obj):
+        """Handle `_DataClassMapping` objects and bytes."""
+        converted = {}
+        if isinstance(obj, _DataClassMapping):
+            for key in obj.keys():
+                converted[key] = obj[key]
+            return converted
+        elif isinstance(obj, bytes):
+            return base64.b64encode(obj).decode('utf-8')
+        return super().default(obj)
 
 
 class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
@@ -163,33 +158,10 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
                 'error': force_str(error),  # error key is deprecated and will be removed in the future
             }, status=BAD_REQUEST)
 
-        # Encode challenge into base64 encoding
-        challenge = request_data['publicKey']['challenge']
-        challenge = base64.b64encode(challenge).decode('utf-8')
-        request_data['publicKey']['challenge'] = challenge
-
-        # Encode credential IDs, if exists - registration
-        if 'excludeCredentials' in request_data['publicKey']:
-            encoded_credentials = []
-            for credential in request_data['publicKey']['excludeCredentials']:
-                encoded_credential = credential.copy()
-                encoded_credential['id'] = base64.b64encode(encoded_credential['id']).decode('utf-8')
-                encoded_credentials.append(encoded_credential)
-            request_data['publicKey']['excludeCredentials'] = encoded_credentials
-
-        # Encode credential IDs, if exists - authentication
-        if 'allowCredentials' in request_data['publicKey']:
-            encoded_credentials = []
-            for credential in request_data['publicKey']['allowCredentials']:
-                encoded_credential = credential.copy()
-                encoded_credential['id'] = base64.b64encode(encoded_credential['id']).decode('utf-8')
-                encoded_credentials.append(encoded_credential)
-            request_data['publicKey']['allowCredentials'] = encoded_credentials
-
         # Store the state into session
         self.request.session[self.session_key] = state
 
-        return JsonResponse(request_data)
+        return JsonResponse(request_data, encoder=Fido2Encoder)
 
 
 class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
@@ -230,7 +202,8 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         assert user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
         return self.server.register_begin(self.get_user_data(user), credentials,
-                                          user_verification=self.user_verification, resident_key=SETTINGS.resident_key)
+                                          user_verification=self.user_verification,
+                                          resident_key_requirement=SETTINGS.resident_key)
 
 
 class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
@@ -270,7 +243,7 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
         except UnsupportedType as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
             raise ValidationError(_('Security key is not supported because it cannot be identified.'), code='invalid')
-        except InvalidAttestation as error:
+        except InvalidSignature as error:
             _LOGGER.info("FIDO2 registration failed with error: %r", error)
             raise ValidationError(_('Registration failed, incorrect data from security key.'), code='invalid')
 
@@ -291,6 +264,13 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
     def form_invalid(self, form: Form) -> HttpResponse:
         """Clean the FIDO 2 request from session."""
         self.request.session.pop(self.session_key, None)
+        if 'attestation' in form.errors.keys():
+            form.add_error(None, ValidationError(_('Security key is not supported because it cannot be identified.'),
+                                                 code='invalid'))
+            del form.errors['attestation']
+        if 'client_data' in form.errors.keys():
+            form.add_error(None, ValidationError(_('Registration failed.'), code='invalid'))
+            del form.errors['client_data']
         return super().form_invalid(form)
 
 
