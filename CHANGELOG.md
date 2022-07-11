@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased ##
 
+## 0.41
+ * Fix reversing of the order of statusReports in metadata
+
 ## 0.40
  * Pin fido2 to ~= 0.9
  * Drop support for Django 2.x
