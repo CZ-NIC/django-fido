@@ -200,10 +200,9 @@ class AuthenticatorMetadata(models.Model):
         """Return last valid certification level."""
         decoded = json.loads(self.metadata_entry)
         status_dict = sorted(decoded['statusReports'],
-                             key=methodcaller('get', 'effectiveDate', date.today().isoformat()),
-                             reverse=True)
+                             key=methodcaller('get', 'effectiveDate', date.today().isoformat()))
         # The last status should be valid
-        for status in status_dict:
+        for status in status_dict[::-1]:
             # Is it directly a level?
             if status['status'] in tuple(AuthLevel):
                 return AuthLevel(status['status'])

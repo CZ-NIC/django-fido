@@ -215,6 +215,24 @@ class TestAuthenticatorMetadata(TestCase):
                                                         metadata_entry=json.dumps({'statusReports': []}))
         self.assertEqual(metadata.level, AuthLevel.NONE)
 
+    def test_level_multiple_ordered(self):
+        # Some metadata have two status reports in one day. It is not clear from specs what should the end result be
+        # Lets take the last one in that day and use that
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'},
+                                    {'status': 'FIDO_CERTIFIED_L2', 'effectiveDate': '2021-03-05'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L2)
+
+    def test_level_multiple_badly_ordered(self):
+        # Some metadata have two status reports in one day. It is not clear from specs what should the end result be
+        # Lets take the last one in that day and use that
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L2', 'effectiveDate': '2021-03-05'},
+                                    {'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L0)
+
     def test_level_breach_fixed(self):
         status = {'statusReports': [{'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'},
                                     {'status': 'USER_VERIFICATION_BYPASS', 'effectiveDate': '2021-03-06'},
