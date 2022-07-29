@@ -210,4 +210,5 @@ export {
     fido2ErrorResponseCallback,
     sendFido2RegistrationRequest,
     startFido2,
+    createTranslations,
 }
