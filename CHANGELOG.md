@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased ##
 
+## 0.42
+ * Export createTranslations function in fido2.js
+
 ## 0.41
  * Fix reversing of the order of statusReports in metadata
 
