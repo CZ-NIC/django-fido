@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Handle InvalidStateError
 
 ## 0.42
  * Export createTranslations function in fido2.js
