@@ -190,10 +190,10 @@ class TestAuthenticatorMetadata(TestCase):
     """Unittests for AuthenticatorMetadata model."""
 
     def test_level_single(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}]}
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
-        self.assertEqual(metadata.level, AuthLevel.L0)
+        self.assertEqual(metadata.level, AuthLevel.L1)
 
     def test_level_revoked(self):
         status = {'statusReports': [{'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'},
@@ -215,10 +215,17 @@ class TestAuthenticatorMetadata(TestCase):
                                                         metadata_entry=json.dumps({'statusReports': []}))
         self.assertEqual(metadata.level, AuthLevel.NONE)
 
+    def test_level_L0_ignored(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1', 'effectiveDate': '2021-03-05'},
+                                    {'status': 'FIDO_CERTIFIED_L0', 'effectiveDate': '2021-03-06'}]}
+        metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
+                                                        metadata_entry=json.dumps(status))
+        self.assertEqual(metadata.level, AuthLevel.L1)
+
     def test_level_multiple_ordered(self):
         # Some metadata have two status reports in one day. It is not clear from specs what should the end result be
         # Lets take the last one in that day and use that
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1', 'effectiveDate': '2021-03-05'},
                                     {'status': 'FIDO_CERTIFIED_L2', 'effectiveDate': '2021-03-05'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
@@ -228,26 +235,26 @@ class TestAuthenticatorMetadata(TestCase):
         # Some metadata have two status reports in one day. It is not clear from specs what should the end result be
         # Lets take the last one in that day and use that
         status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L2', 'effectiveDate': '2021-03-05'},
-                                    {'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'}]}
+                                    {'status': 'FIDO_CERTIFIED_L1', 'effectiveDate': '2021-03-05'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
-        self.assertEqual(metadata.level, AuthLevel.L0)
+        self.assertEqual(metadata.level, AuthLevel.L1)
 
     def test_level_breach_fixed(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1', 'effectiveDate': '2021-03-05'},
                                     {'status': 'USER_VERIFICATION_BYPASS', 'effectiveDate': '2021-03-06'},
                                     {'status': 'UPDATE_AVAILABLE', 'effectiveDate': '2021-03-07'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
-        self.assertEqual(metadata.level, AuthLevel.L0)
+        self.assertEqual(metadata.level, AuthLevel.L1)
 
     def test_level_breach_fixed_unordered(self):
         status = {'statusReports': [{'status': 'UPDATE_AVAILABLE'},
                                     {'status': 'USER_VERIFICATION_BYPASS', 'effectiveDate': '2021-03-06'},
-                                    {'status': 'FIDO_CERTIFIED', 'effectiveDate': '2021-03-05'}]}
+                                    {'status': 'FIDO_CERTIFIED_L1', 'effectiveDate': '2021-03-05'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
-        self.assertEqual(metadata.level, AuthLevel.L0)
+        self.assertEqual(metadata.level, AuthLevel.L1)
 
     def test_level_breach_unfixed(self):
         status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
@@ -257,20 +264,20 @@ class TestAuthenticatorMetadata(TestCase):
         self.assertEqual(metadata.level, AuthLevel.L1)
 
     def test_vulnerabilities_none(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}]}
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
         self.assertEqual(metadata.vulnerabilities, [])
 
     def test_vulnerabilities_single(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
                                     {'status': 'USER_VERIFICATION_BYPASS'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         metadata_entry=json.dumps(status))
         self.assertEqual(metadata.vulnerabilities, [AuthVulnerability.USER_BYPASS])
 
     def test_vulnerabilities_multiple(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
                                     {'status': 'ATTESTATION_KEY_COMPROMISE'},
                                     {'status': 'USER_VERIFICATION_BYPASS'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
@@ -279,7 +286,7 @@ class TestAuthenticatorMetadata(TestCase):
                                                     AuthVulnerability.ATTESTATION_COMPROMISE])
 
     def test_is_update_available_none(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
                                     {'status': 'ATTESTATION_KEY_COMPROMISE'},
                                     {'status': 'USER_VERIFICATION_BYPASS'}]}
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
@@ -287,7 +294,7 @@ class TestAuthenticatorMetadata(TestCase):
         self.assertFalse(metadata.is_update_available)
 
     def test_is_update_available_available(self):
-        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'},
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED_L1'},
                                     {'status': 'ATTESTATION_KEY_COMPROMISE'},
                                     {'status': 'UPDATE_AVAILABLE'},
                                     {'status': 'USER_VERIFICATION_BYPASS'}]}

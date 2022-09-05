@@ -1,6 +1,7 @@
 # Changelog #
 ## Unreleased ##
  * Handle InvalidStateError
+ * Drop `FIDO_CERTIFIED` from `AUTH_LEVELS`
 
 ## 0.42
  * Export createTranslations function in fido2.js
