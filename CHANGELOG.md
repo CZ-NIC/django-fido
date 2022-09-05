@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 0.43
  * Handle InvalidStateError
  * Drop `FIDO_CERTIFIED` from `AUTH_LEVELS`
 
