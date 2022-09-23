@@ -6,7 +6,7 @@ import {
     FIDO2_AUTHENTICATION_REQUEST,
     addFido2Error,
     clearFido2Errors,
-} from '../js/fido2'
+} from '../js/fido2-utils'
 import fetchMock from 'fetch-mock'
 import {TextEncoder} from 'util'
 

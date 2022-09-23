@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Provide fido2 JS functions without side effects
 
 ## 0.43
  * Handle InvalidStateError
