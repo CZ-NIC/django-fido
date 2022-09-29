@@ -18,7 +18,7 @@ from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_str
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from fido2.ctap2 import AttestationObject, AttestedCredentialData
+from fido2.webauthn import AttestationObject, AttestedCredentialData
 from OpenSSL import crypto
 
 from django_fido.constants import NULL_AAGUID, PEM_CERT_TEMPLATE, AuthLevel, AuthVulnerability
@@ -116,8 +116,8 @@ class Authenticator(models.Model):
         else:
             # FIXME: Add handling for UAF devices with AAID
             # Get the certificate FIDO U2F
-            if 'x5c' in self.attestation.att_statement:
-                cert = self.attestation.att_statement['x5c'][0]
+            if 'x5c' in self.attestation.att_stmt:
+                cert = self.attestation.att_stmt['x5c'][0]
                 certificate = load_der_x509_certificate(cert, default_backend())
             else:
                 # ECDSAA attestation or self attestation?
@@ -149,8 +149,8 @@ class Authenticator(models.Model):
         for root_cert in root_certs:
             cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert).encode())
             store.add_cert(cert)
-        if len(self.attestation.att_statement['x5c']) > 1:
-            for interm_cert in self.attestation.att_statement['x5c'][1:]:
+        if len(self.attestation.att_stmt['x5c']) > 1:
+            for interm_cert in self.attestation.att_stmt['x5c'][1:]:
                 try:
                     store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
                 except crypto.Error:
@@ -166,10 +166,10 @@ class Authenticator(models.Model):
             metadata = self._get_metadata()
         except MultipleObjectsReturned:
             metadata = None
-        if metadata is None or 'x5c' not in self.attestation.att_statement:
+        if metadata is None or 'x5c' not in self.attestation.att_stmt:
             return metadata
         # Take the device certificate and try to validate against all certs in MDS
-        device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_statement['x5c'][0])
+        device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_stmt['x5c'][0])
         if metadata.detailed_metadata_entry != '':
             root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
         else:

@@ -5,9 +5,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.cookie import CookieStorage
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
-from fido2.client import ClientData
-from fido2.ctap2 import AuthenticatorData
 from fido2.server import Fido2Server
+from fido2.webauthn import AuthenticatorData, CollectedClientData
 from mock import sentinel
 
 from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend,
@@ -23,6 +22,7 @@ except ImportError:
     from fido2.server import (USER_VERIFICATION as UserVerificationRequirement,
                               RelyingParty as PublicKeyCredentialRpEntity)
 
+
 User = get_user_model()
 
 
@@ -34,7 +34,7 @@ class TestFido2AuthenticationBackend(TestCase):
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
-    fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+    fido2_response = {'client_data': CollectedClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE)}
@@ -67,7 +67,7 @@ class TestFido2AuthenticationBackend(TestCase):
                                  transform=tuple)
 
     def test_authenticate_invalid_response(self):
-        fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+        fido2_response = {'client_data': CollectedClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                           'credential_id': base64.b64decode(CREDENTIAL_ID),
                           'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                           'signature': b'INVALID'}
@@ -126,7 +126,7 @@ class TestFido2GeneralAuthenticationBackend(TestCase):
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
-    fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+    fido2_response = {'client_data': CollectedClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE)}
@@ -171,7 +171,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
     server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
 
     state = {'challenge': AUTHENTICATION_CHALLENGE, 'user_verification': UserVerificationRequirement.PREFERRED}
-    fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+    fido2_response = {'client_data': CollectedClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                       'credential_id': base64.b64decode(CREDENTIAL_ID),
                       'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                       'signature': base64.b64decode(SIGNATURE),
@@ -204,7 +204,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                                  transform=tuple)
 
     def test_authenticate_invalid_response(self):
-        fido2_response = {'client_data': ClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
+        fido2_response = {'client_data': CollectedClientData(base64.b64decode(AUTHENTICATION_CLIENT_DATA)),
                           'credential_id': base64.b64decode(CREDENTIAL_ID),
                           'authenticator_data': AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
                           'user_handle': USER_HANDLE_B64,

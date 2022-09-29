@@ -5,7 +5,7 @@ import json
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from fido2.cose import ES256
-from fido2.ctap2 import AttestationObject, AuthenticatorData
+from fido2.webauthn import AttestationObject, AuthenticatorData
 
 from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator

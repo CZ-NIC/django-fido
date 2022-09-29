@@ -2,7 +2,6 @@
 import base64
 import json
 
-import fido2
 from django.contrib.auth import get_user, get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase, override_settings
@@ -43,6 +42,7 @@ class TestFido2RegistrationRequestView(TestCase):
 
     def _get_fido2_request(self, challenge, credentials):
         credential_params = [{'alg': -7, 'type': 'public-key'}, {'alg': -8, 'type': 'public-key'},
+                             {'alg': -35, 'type': 'public-key'}, {'alg': -36, 'type': 'public-key'},
                              {'alg': -37, 'type': 'public-key'}, {'alg': -257, 'type': 'public-key'}]
         rp_data = {
             'id': HOSTNAME,
@@ -56,11 +56,6 @@ class TestFido2RegistrationRequestView(TestCase):
             'attestation': 'none',
             'excludeCredentials': credentials,
         }}
-        if fido2.__version__ < '0.9':
-            fido2_request['publicKey']['timeout'] = 30000
-        if fido2.__version__ < '0.8':
-            fido2_request['publicKey']['authenticatorSelection'] = {'requireResidentKey': False,
-                                                                    'userVerification': 'preferred'}
         return fido2_request
 
     def test_get(self):
@@ -118,23 +113,6 @@ class TestFido2RegistrationView(TestCase):
         session.save()
 
         response = self.client.post(self.url,
-                                    {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT,
-                                     'user_handle': 'NmM3YzVkZTJhNWRlNDAzYmExNGY5MDNmZTkwNmNkNjg='})
-
-        self.assertRedirects(response, reverse('django_fido:registration_done'))
-        queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
-        key_data = (self.user.pk, CREDENTIAL_ID, ATTESTATION_OBJECT, 0)
-        self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
-        self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
-
-    def test_post_verifier(self):
-        self.client.force_login(self.user)
-        session = self.client.session
-        session[FIDO2_REQUEST_SESSION_KEY] = self.state
-        session.save()
-
-        url = reverse_lazy('registration_direct')
-        response = self.client.post(url,
                                     {'client_data': REGISTRATION_CLIENT_DATA, 'attestation': ATTESTATION_OBJECT,
                                      'user_handle': 'NmM3YzVkZTJhNWRlNDAzYmExNGY5MDNmZTkwNmNkNjg='})
 
