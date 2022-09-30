@@ -1,5 +1,7 @@
 # Changelog #
 ## Unreleased ##
+
+## 1.0.0
  * Add support for fido2 1.0
  * Drop support for fido2 < 1.0
  * Provide fido2 JS functions without side effects
