@@ -1,3 +1,4 @@
+import base64
 from unittest import skipIf
 from unittest.mock import patch
 
@@ -5,7 +6,6 @@ from django import VERSION as DJANGO_VERSION
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
-from fido2.utils import websafe_encode
 
 import django_fido.admin.authenticator
 from django_fido.models import Authenticator
@@ -49,7 +49,7 @@ class TestFido2RegistrationRequestAdminView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['publicKey']['user'], {
             'displayName': 'Kryten 2X4B-523P',
-            'id': websafe_encode(b'kryten'),
+            'id': base64.b64encode(b'kryten').decode("utf-8"),
             'name': 'kryten',
         })
 
