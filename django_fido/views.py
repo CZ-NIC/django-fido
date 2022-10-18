@@ -160,7 +160,7 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
 
         # Store the state into session
         self.request.session[self.session_key] = state
-        return JsonResponse(request_data, encoder=Fido2Encoder, safe=False)
+        return JsonResponse(dict(request_data), encoder=Fido2Encoder)
 
 
 class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
