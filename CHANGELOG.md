@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased ##
+ * Add support for fido2 1.1
 
 ## 1.0.0
  * Add support for fido2 1.0
