@@ -50,7 +50,9 @@ class TestFido2RegistrationRequestView(TestCase):
         }
         fido2_request = {'publicKey': {
             'rp': rp_data,
-            'user': {'displayName': USER_FULL_NAME, 'id': websafe_encode(bytes(USERNAME, encoding="utf-8")), 'name': USERNAME},
+            'user': {
+                'displayName': USER_FULL_NAME, 'id': websafe_encode(bytes(USERNAME, encoding="utf-8")), 'name': USERNAME
+            },
             'challenge': base64.b64encode(challenge).decode('utf-8'),
             'pubKeyCredParams': credential_params,
             'attestation': 'none',
