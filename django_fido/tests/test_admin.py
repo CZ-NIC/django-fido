@@ -5,6 +5,7 @@ from django import VERSION as DJANGO_VERSION
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
+from fido2.utils import websafe_encode
 
 import django_fido.admin.authenticator
 from django_fido.models import Authenticator
@@ -45,11 +46,10 @@ class TestFido2RegistrationRequestAdminView(TestCase):
         self.client.force_login(self.superuser)
 
         response = self.client.get(self.url, data={'user': str(self.user.pk)})
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['publicKey']['user'], {
             'displayName': 'Kryten 2X4B-523P',
-            'id': 'kryten',
+            'id': websafe_encode(b'kryten'),
             'name': 'kryten',
         })
 

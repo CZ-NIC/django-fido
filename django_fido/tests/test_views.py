@@ -6,7 +6,7 @@ from django.contrib.auth import get_user, get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
-from fido2.utils import websafe_decode
+from fido2.utils import websafe_decode, websafe_encode
 
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
 from django_fido.models import Authenticator
@@ -50,7 +50,7 @@ class TestFido2RegistrationRequestView(TestCase):
         }
         fido2_request = {'publicKey': {
             'rp': rp_data,
-            'user': {'displayName': USER_FULL_NAME, 'id': USERNAME, 'name': USERNAME},
+            'user': {'displayName': USER_FULL_NAME, 'id': websafe_encode(bytes(USERNAME, encoding="utf-8")), 'name': USERNAME},
             'challenge': base64.b64encode(challenge).decode('utf-8'),
             'pubKeyCredParams': credential_params,
             'attestation': 'none',

@@ -160,8 +160,7 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
 
         # Store the state into session
         self.request.session[self.session_key] = state
-
-        return JsonResponse(request_data, encoder=Fido2Encoder)
+        return JsonResponse(request_data, encoder=Fido2Encoder, safe=False)
 
 
 class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
@@ -171,7 +170,7 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         """Return user which is subject of the request."""
         return self.request.user
 
-    def get_user_id(self, user: AbstractBaseUser) -> str:
+    def get_user_id(self, user: AbstractBaseUser) -> bytes:
         """Return a unique, persistent identifier of a user.
 
         Default implementation return user's username, but it is only secure if the username can't be reused.
@@ -182,8 +181,8 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         If resident_key is True, we need to return an uuid string that does not disclose user identity
         """
         if SETTINGS.resident_key:
-            return uuid.uuid4().hex
-        return user.username
+            return uuid.uuid4().bytes
+        return bytes(user.username, encoding="utf-8")
 
     def get_user_data(self, user: AbstractBaseUser) -> Dict[str, str]:
         """Convert user instance to user data for registration."""
