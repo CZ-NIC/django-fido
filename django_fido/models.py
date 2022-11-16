@@ -90,7 +90,7 @@ class Authenticator(models.Model):
         return base64.b64decode(self.credential_id_data)
 
     @property
-    def credential(self) -> AttestedCredentialData:
+    def credential(self) -> Optional[AttestedCredentialData]:
         """Return AttestedCredentialData object."""
         return self.attestation.auth_data.credential_data
 
@@ -102,7 +102,9 @@ class Authenticator(models.Model):
     @attestation.setter
     def attestation(self, value: AttestationObject):
         self.attestation_data = base64.b64encode(value).decode('utf-8')
-        self.credential_id_data = base64.b64encode(value.auth_data.credential_data.credential_id).decode('utf-8')
+        self.credential_id_data = base64.b64encode(
+            cast(AttestedCredentialData, value.auth_data.credential_data).credential_id
+        ).decode('utf-8')
 
     @cached_property
     def identifier(self) -> Optional[Union[str, bytes]]:
@@ -112,7 +114,7 @@ class Authenticator(models.Model):
             and self.attestation.auth_data.credential_data is not None
             and self.attestation.auth_data.credential_data.aaguid != NULL_AAGUID
         ):
-            return str(UUID(b2a_hex(self.credential.aaguid).decode()))
+            return str(UUID(b2a_hex(cast(AttestedCredentialData, self.credential).aaguid).decode()))
         else:
             # FIXME: Add handling for UAF devices with AAID
             # Get the certificate FIDO U2F

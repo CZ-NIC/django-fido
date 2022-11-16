@@ -28,7 +28,7 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Topic :: Software Development :: Libraries :: Python Modules']
 INSTALL_REQUIRES = [
     'Django>=3.0',
-    'fido2~=1.0',
+    'fido2~=1.1.0',
     'django-app-settings>=0.7.1',
     'jwcrypto',
     'requests',
