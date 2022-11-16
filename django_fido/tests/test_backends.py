@@ -6,7 +6,8 @@ from django.contrib.messages.storage.cookie import CookieStorage
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from fido2.server import Fido2Server
-from fido2.webauthn import AuthenticatorData, CollectedClientData
+from fido2.webauthn import (AuthenticatorData, CollectedClientData, PublicKeyCredentialRpEntity,
+                            UserVerificationRequirement)
 from mock import sentinel
 
 from django_fido.backends import (Fido2AuthenticationBackend, Fido2GeneralAuthenticationBackend,
@@ -15,13 +16,6 @@ from django_fido.models import Authenticator
 
 from .data import (ATTESTATION_OBJECT, AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA,
                    CREDENTIAL_ID, HOSTNAME, PASSWORD, SIGNATURE, USER_HANDLE, USER_HANDLE_B64, USERNAME)
-
-try:
-    from fido2.webauthn import PublicKeyCredentialRpEntity, UserVerificationRequirement
-except ImportError:
-    from fido2.server import (USER_VERIFICATION as UserVerificationRequirement,
-                              RelyingParty as PublicKeyCredentialRpEntity)
-
 
 User = get_user_model()
 

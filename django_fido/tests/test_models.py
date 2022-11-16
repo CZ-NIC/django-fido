@@ -1,11 +1,12 @@
 """Test `django_fido.models`."""
 import base64
 import json
+from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from fido2.cose import ES256
-from fido2.webauthn import AttestationObject, AuthenticatorData
+from fido2.webauthn import AttestationObject, AttestedCredentialData, AuthenticatorData
 
 from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
@@ -81,10 +82,10 @@ class TestAuthenticator(SimpleTestCase):
 
     def test_credential_getter(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)
-
-        self.assertEqual(authenticator.credential.aaguid, b'\0' * 16)
-        self.assertEqual(authenticator.credential.credential_id, base64.b64decode(CREDENTIAL_ID))
-        self.assertIsInstance(authenticator.credential.public_key, ES256)
+        credential = cast(AttestedCredentialData, authenticator.credential)
+        self.assertEqual(credential.aaguid, b'\0' * 16)
+        self.assertEqual(credential.credential_id, base64.b64decode(CREDENTIAL_ID))
+        self.assertIsInstance(credential.public_key, ES256)
 
     def test_attestation_getter(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)

@@ -39,7 +39,7 @@ class BaseFido2AuthenticationBackend(ABC):
 
     @abstractmethod
     def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
-                     fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate to be implemented."""
         raise NotImplementedError
 
@@ -67,7 +67,7 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2."""
 
     def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
-                     fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate using FIDO 2."""
         credentials = [a.credential for a in user.authenticators.all()]
         try:
@@ -92,7 +92,7 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2 passwordlessly using supplied user handle."""
 
     def authenticate(self, request: HttpRequest, user: Optional[AbstractBaseUser], fido2_server: Fido2Server,
-                     fido2_state: Dict[str, bytes], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
         """Authenticate using FIDO 2."""
         user_handle = fido2_response['user_handle']
 
@@ -133,7 +133,7 @@ class Fido2GeneralAuthenticationBackend(ModelBackend):
         username: str,
         password: str,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, bytes],
+        fido2_state: Dict[str, str],
         fido2_response: Dict[str, Any],
         **kwargs
     ) -> Optional[AbstractBaseUser]:

@@ -1,3 +1,4 @@
+import base64
 from unittest import skipIf
 from unittest.mock import patch
 
@@ -45,11 +46,10 @@ class TestFido2RegistrationRequestAdminView(TestCase):
         self.client.force_login(self.superuser)
 
         response = self.client.get(self.url, data={'user': str(self.user.pk)})
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['publicKey']['user'], {
             'displayName': 'Kryten 2X4B-523P',
-            'id': 'kryten',
+            'id': base64.b64encode(b'kryten').decode("utf-8"),
             'name': 'kryten',
         })
 
