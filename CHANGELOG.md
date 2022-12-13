@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased ##
 
+## 1.0.1
+ * Pin fido2 dependency
+
 ## 1.0.0
  * Add support for fido2 1.0
  * Drop support for fido2 < 1.0
