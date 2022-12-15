@@ -37,6 +37,7 @@ class DjangoFidoSettings(AppSettings):
     ), default=None)
     resident_key = BooleanSetting(default=False)
     passwordless_auth = BooleanSetting(default=False)
+    user_verification = StringSetting(default=None)
 
     @classmethod
     def check(cls):
