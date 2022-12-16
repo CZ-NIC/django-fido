@@ -2,6 +2,7 @@
 ## Unreleased
  * Changed redirect after adding authenticator in administration to changelist instead of change view
  * Made `user_handle` in admin readonly
+ * Upgrade to nodejs 18.x
 
 ## 1.1.0
  * Add support for fido2 1.1
