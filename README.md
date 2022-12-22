@@ -74,7 +74,7 @@ This authentication requires "discoverable credential" and using that credential
 
 # Set user verification requirement
 
-Set 'DJANGO_FIDO_USER_VERIFICATION' to 'required',  'preferred' or 'discouraged', default is None
+Set `DJANGO_FIDO_USER_VERIFICATION` to `required`,  `preferred` or `discouraged`, default is `None`
 
 ## Changes ##
 See [changelog](https://github.com/CZ-NIC/django-fido/blob/master/CHANGELOG.md).
