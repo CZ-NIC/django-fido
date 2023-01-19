@@ -1,5 +1,5 @@
 # Changelog #
-## Unreleased ##
+## 1.1.0
  * Add support for fido2 1.1
  * Drop support for fido2 < 1.1
  * Export js translations for optional modifications
