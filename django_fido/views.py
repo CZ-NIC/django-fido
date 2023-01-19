@@ -85,7 +85,7 @@ class Fido2ViewMixin(object):
     attestation = AttestationConveyancePreference.NONE
     attestation_types: Optional[List[Attestation]] = None
     verify_attestation = BaseAttestationVerifier
-    user_verification = None
+    user_verification = SETTINGS.user_verification
     session_key = FIDO2_REQUEST_SESSION_KEY
 
     rp_name = None  # type: Optional[str]
