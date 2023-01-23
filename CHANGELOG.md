@@ -1,4 +1,7 @@
 # Changelog #
+## Unreleased
+ * Made `user_handle` in admin readonly
+
 ## 1.1.0
  * Add support for fido2 1.1
  * Drop support for fido2 < 1.1

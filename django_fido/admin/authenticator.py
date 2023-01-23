@@ -73,7 +73,7 @@ class AuthenticatorAdmin(admin.ModelAdmin):
     """Authenticator admin."""
 
     list_display = ('label', 'user', 'create_datetime')
-    readonly_fields = ('user', 'credential_id_data', 'attestation_data', 'counter')
+    readonly_fields = ('user', 'user_handle', 'credential_id_data', 'attestation_data', 'counter')
     formfield_overrides = {
         models.TextField: {'widget': forms.TextInput},
     }
