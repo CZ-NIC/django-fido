@@ -54,13 +54,13 @@ class AuthenticatorAddView(PermissionRequiredMixin, Fido2RegistrationView):
             form.add_error(None, error)
             return self.form_invalid(form)
 
-        authenticator = Authenticator.objects.create(
+        Authenticator.objects.create(
             user=form.cleaned_data['user'],
             attestation=form.cleaned_data['attestation'],
             label=form.cleaned_data.get('label'),
             user_handle=form.cleaned_data.get('user_handle'),
         )
-        return HttpResponseRedirect(reverse('admin:django_fido_authenticator_change', args=(authenticator.pk,)))
+        return HttpResponseRedirect(reverse('admin:django_fido_authenticator_changelist'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

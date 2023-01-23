@@ -1,5 +1,6 @@
 # Changelog #
 ## Unreleased
+ * Changed redirect after adding authenticator in administration to changelist instead of change view
  * Made `user_handle` in admin readonly
 
 ## 1.1.0
