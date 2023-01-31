@@ -27,7 +27,7 @@ from fido2.attestation.base import AttestationResult, InvalidSignature
 from fido2.server import Fido2Server
 from fido2.utils import _DataClassMapping
 from fido2.webauthn import (AttestationConveyancePreference, AttestedCredentialData, AuthenticatorData,
-                            PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity)
+                            PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity, ResidentKeyRequirement)
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
@@ -202,9 +202,10 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         user = self.get_user()
         assert user.is_authenticated, "User must not be anonymous for FIDO 2 requests."
         credentials = self.get_credentials(user)
-        return self.server.register_begin(self.get_user_data(user), credentials,
-                                          user_verification=self.user_verification,
-                                          resident_key_requirement=SETTINGS.resident_key)
+        return self.server.register_begin(
+            self.get_user_data(user), credentials, user_verification=self.user_verification,
+            resident_key_requirement=ResidentKeyRequirement.REQUIRED if SETTINGS.resident_key else None
+        )
 
 
 class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):

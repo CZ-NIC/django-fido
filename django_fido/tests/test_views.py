@@ -1,6 +1,7 @@
 """Test `django_fido.views` module."""
 import base64
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user, get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS
@@ -36,7 +37,7 @@ class TestFido2RegistrationRequestView(TestCase):
 
         self.assertRedirects(response, '/login/?next={}'.format(self.url), fetch_redirect_response=False)
 
-    def _get_fido2_request(self, challenge, credentials):
+    def _get_fido2_request(self, challenge, credentials, *, resident=False):
         credential_params = [{'alg': -7, 'type': 'public-key'}, {'alg': -8, 'type': 'public-key'},
                              {'alg': -35, 'type': 'public-key'}, {'alg': -36, 'type': 'public-key'},
                              {'alg': -37, 'type': 'public-key'}, {'alg': -257, 'type': 'public-key'}]
@@ -56,6 +57,10 @@ class TestFido2RegistrationRequestView(TestCase):
             'attestation': 'none',
             'excludeCredentials': credentials,
         }}
+        if resident:
+            fido2_request['publicKey']['authenticatorSelection'] = {'requireResidentKey': True,
+                                                                    'residentKey': 'required'}
+            fido2_request['publicKey']['user']['id'] = 'AA=='
         return fido2_request
 
     def test_get(self):
@@ -68,6 +73,20 @@ class TestFido2RegistrationRequestView(TestCase):
         state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
         challenge = websafe_decode(state['challenge'])
         self.assertEqual(response.json(), self._get_fido2_request(challenge, []))
+
+    @override_settings(DJANGO_FIDO_RESIDENT_KEY=True)
+    def test_get_resident(self):
+        self.client.force_login(self.user)
+
+        with patch('django_fido.views.uuid') as uuid_mock:
+            uuid_mock.uuid4.bytes.return_value = b'somebytes'
+            response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        # Check response
+        state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
+        challenge = websafe_decode(state['challenge'])
+        self.assertEqual(response.json(), self._get_fido2_request(challenge, [], resident=True))
 
     def test_get_registered_keys(self):
         Authenticator.objects.create(user=self.user, attestation_data=ATTESTATION_OBJECT)
