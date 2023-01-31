@@ -1,5 +1,5 @@
 # Changelog #
-## Unreleased
+## 1.2.0
  * Changed redirect after adding authenticator in administration to changelist instead of change view
  * Made `user_handle` in admin readonly
  * Upgrade to nodejs 18.x
