@@ -11,9 +11,10 @@ from fido2.webauthn import AttestationObject, AttestedCredentialData, Authentica
 from django_fido.constants import AuthLevel, AuthVulnerability
 from django_fido.models import Authenticator, AuthenticatorMetadata, TransportsValidator
 
-from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_NO_ATTESTATION_HANDED,
-                   ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT, CREDENTIAL_ID, DETAILED_METADATA,
-                   DETAILED_METADATA_ATTESTATION_KEYS, DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT,
+from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_AAGUID, ATTESTATION_OBJECT_DIRECT_CERT,
+                   ATTESTATION_OBJECT_NO_ATTESTATION_HANDED, ATTESTATION_OBJECT_U2F, ATTESTATION_OBJECT_U2F_NO_EXT,
+                   CREDENTIAL_ID, DETAILED_METADATA, DETAILED_METADATA_ATTESTATION_KEYS,
+                   DETAILED_METADATA_ATTESTATION_KEYS_NO_EXT, DETAILED_METADATA_DIRECT_CERT,
                    DETAILED_METADATA_WRONG_CERT)
 
 
@@ -185,6 +186,14 @@ class TestAuthenticatorDatabase(TestCase):
     def test_metadata_no_identifier(self):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_NO_ATTESTATION_HANDED)
         self.assertIsNone(authenticator.metadata)
+
+    def test_metadata_direct_device_cert(self):
+        status = {'statusReports': [{'status': 'FIDO_CERTIFIED'}],
+                  'metadataStatement': DETAILED_METADATA_DIRECT_CERT}
+        metadata = AuthenticatorMetadata.objects.create(identifier='998f358b-2dd2-4cbe-a43a-e8107438dfb3',
+                                                        detailed_metadata_entry='', metadata_entry=json.dumps(status))
+        authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_DIRECT_CERT)
+        self.assertEqual(authenticator.metadata, metadata)
 
 
 class TestAuthenticatorMetadata(TestCase):
