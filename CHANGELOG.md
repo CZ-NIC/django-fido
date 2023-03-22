@@ -1,4 +1,7 @@
 # Changelog #
+## 1.2.1
+ * Fixed metadata lookup for devices with device certificate directly in MDS
+
 ## 1.2.0
  * Changed redirect after adding authenticator in administration to changelist instead of change view
  * Made `user_handle` in admin readonly
