@@ -145,12 +145,11 @@ class Authenticator(models.Model):
         except AuthenticatorMetadata.DoesNotExist:
             return None
 
-    def _prepare_store(self, root_certs: List[str]) -> crypto.X509Store:
+    def _prepare_store(self, root_certs: List[crypto.X509]) -> crypto.X509Store:
         """Prepare crypto store for verification."""
         store = crypto.X509Store()
         for root_cert in root_certs:
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert).encode())
-            store.add_cert(cert)
+            store.add_cert(root_cert)
         if len(self.attestation.att_stmt['x5c']) > 1:
             for interm_cert in self.attestation.att_stmt['x5c'][1:]:
                 try:
@@ -179,7 +178,13 @@ class Authenticator(models.Model):
                                                                  {}).get('attestationRootCertificates', [])
             if not root_certs:
                 return metadata
-        store = self._prepare_store(root_certs)
+        conv_root_certs = [crypto.load_certificate(crypto.FILETYPE_PEM,
+                                                   PEM_CERT_TEMPLATE.format(root_cert).encode())
+                           for root_cert in root_certs]
+        if any([device_cert.to_cryptography() == c_r_cert.to_cryptography() for c_r_cert in conv_root_certs]):
+            # Certificate directly
+            return metadata
+        store = self._prepare_store(conv_root_certs)
         store_ctx = crypto.X509StoreContext(store, device_cert)
         try:
             store_ctx.verify_certificate()
