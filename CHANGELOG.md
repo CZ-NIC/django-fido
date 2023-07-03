@@ -1,4 +1,9 @@
 # Changelog #
+## Unreleased
+ * Removed support for Django 3.0 and 3.1
+ * Added support for Django 4.1 and 4.2
+ * Added support for Python 3.11
+
 ## 1.2.1
  * Fixed metadata lookup for devices with device certificate directly in MDS
 
