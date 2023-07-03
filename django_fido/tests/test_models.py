@@ -2,6 +2,7 @@
 import base64
 import json
 from typing import cast
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
@@ -122,10 +123,12 @@ class TestAuthenticatorDatabase(TestCase):
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT)
         self.assertIsNone(authenticator.metadata)
 
-    def test_metadata_aaguid(self):
+    @patch('django_fido.models.crypto')
+    def test_metadata_aaguid(self, crypto_mock):
         metadata = AuthenticatorMetadata.objects.create(identifier='95442b2e-f15e-4def-b270-efb106facb4e',
                                                         detailed_metadata_entry=json.dumps(DETAILED_METADATA))
         authenticator = Authenticator(attestation_data=ATTESTATION_OBJECT_AAGUID)
+        crypto_mock.verify_certificate.return_value = True
         self.assertEqual(authenticator.metadata, metadata)
 
     def test_metadata_aaguid_wrong_cert(self):
