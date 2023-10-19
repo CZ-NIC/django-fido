@@ -38,6 +38,10 @@ class DjangoFidoSettings(AppSettings):
     resident_key = BooleanSetting(default=False)
     passwordless_auth = BooleanSetting(default=False)
     user_verification = StringSetting(default=None)
+    get_user_id_callable = CallablePathSetting(required=False, default=None)
+    get_user_display_name_callable = CallablePathSetting(required=False, default=None)
+    get_username_callable = CallablePathSetting(required=False, default=None)
+
 
     @classmethod
     def check(cls):
