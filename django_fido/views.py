@@ -20,6 +20,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_str
+from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
 from fido2.attestation import Attestation, AttestationVerifier, UnsupportedType
@@ -28,6 +29,8 @@ from fido2.server import Fido2Server
 from fido2.utils import _DataClassMapping
 from fido2.webauthn import (AttestationConveyancePreference, AttestedCredentialData, AuthenticatorData,
                             PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity, ResidentKeyRequirement)
+
+from django_fido.utils import process_callable
 
 from .constants import (AUTHENTICATION_USER_SESSION_KEY, FIDO2_AUTHENTICATION_REQUEST, FIDO2_REGISTRATION_REQUEST,
                         FIDO2_REQUEST_SESSION_KEY)
@@ -174,8 +177,9 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         """Return user which is subject of the request."""
         return self.request.user
 
-    def get_user_id(self, user: AbstractBaseUser) -> bytes:
-        """Return a unique, persistent identifier of a user.
+    @staticmethod
+    def get_user_id(user: AbstractBaseUser) -> bytes:
+        """Return a unique, persistent identifier of a user. Prefer settings callable over default implementation.
 
         Default implementation return user's username, but it is only secure if the username can't be reused.
         In such case, it is required to provide another identifier which would differentiate users.
@@ -186,12 +190,31 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
         """
         if SETTINGS.resident_key:
             return uuid.uuid4().bytes
+        user_id = process_callable(SETTINGS.get_user_id_callable, user)
+        if user_id is not None:
+            return user_id
         return bytes(user.username, encoding="utf-8")
+
+    @staticmethod
+    def get_user_display_name(user: AbstractBaseUser) -> str:
+        """Retrieve user display name. Prefer settings callable over default implementation."""
+        display_name = process_callable(SETTINGS.get_user_display_name_callable, user)
+        if display_name is not None:
+            return display_name
+        return user.get_full_name() or user.username
+
+    @staticmethod
+    def get_username(user: AbstractBaseUser) -> str:
+        """Retrieve user username. Prefer settings callable over default implementation."""
+        username = process_callable(SETTINGS.get_username_callable, user)
+        if username is not None:
+            return username
+        return user.username
 
     def get_user_data(self, user: AbstractBaseUser) -> PublicKeyCredentialUserEntity:
         """Convert user instance to user data for registration."""
         return PublicKeyCredentialUserEntity(
-            user.username, self.get_user_id(user), user.get_full_name() or user.username
+            self.get_username(user), self.get_user_id(user), self.get_user_display_name(user)
         )
 
     def create_fido2_request(self) -> Tuple[Mapping[str, Any], Any]:
