@@ -51,3 +51,9 @@ msgstr "Bezpečnostní token (FIDO 2) nepodporuje požadovanou akci."
 
 msgid "Unknown FIDO 2 request."
 msgstr "Neznámý FIDO 2 požadavek."
+
+msgid "Wrong length"
+msgstr "Chybná délka"
+
+msgid "Wrong offset"
+msgstr "Chybný posun"
