@@ -38,9 +38,15 @@ class TestFido2RegistrationRequestView(TestCase):
         self.assertRedirects(response, '/login/?next={}'.format(self.url), fetch_redirect_response=False)
 
     def _get_fido2_request(self, challenge, credentials, *, resident=False):
-        credential_params = [{'alg': -7, 'type': 'public-key'}, {'alg': -8, 'type': 'public-key'},
-                             {'alg': -35, 'type': 'public-key'}, {'alg': -36, 'type': 'public-key'},
-                             {'alg': -37, 'type': 'public-key'}, {'alg': -257, 'type': 'public-key'}]
+        credential_params = [
+            {'alg': -7, 'type': 'public-key'},
+            {'alg': -8, 'type': 'public-key'},
+            {'alg': -35, 'type': 'public-key'},
+            {'alg': -36, 'type': 'public-key'},
+            {'alg': -37, 'type': 'public-key'},
+            {'alg': -257, 'type': 'public-key'},
+            {'alg': -47, 'type': 'public-key'},
+        ]
         rp_data = {
             'id': HOSTNAME,
             'name': HOSTNAME,
