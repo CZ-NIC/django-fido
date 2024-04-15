@@ -16,19 +16,34 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
 - [License](#license)
 
 ## Dependencies ##
- * Python 3.5 and higher
- * Django >= 3.0
+ * Python 3.8 and higher
+ * Django >= 4.0
 
 ## Configuration ##
 
 1. Add `django_fido` to `INSTALLED_APPS`.
+   ``` py
+   # <django_project>/settings.py
+   INSTALLED_APPS = [
+      ...
+      'django_fido',
+   ]
+   ```
 2. Add `django_fido.backends.Fido2AuthenticationBackend` to `AUTHENTICATION_BACKENDS`.
+   ``` py
+   # <django_project>/settings.py
+   AUTHENTICATION_BACKENDS = [
+      'django.contrib.auth.backends.ModelBackend',
+      'django_fido.backends.Fido2AuthenticationBackend',
+   ]
+   ```
 3. Link django-fido URLs into your `urls.py`:
-
-       urlpatterns += [
-          url(r'', include('django_fido.urls')),
-       ]
-
+   ``` py
+   # <django_project>/urls.py
+   urlpatterns += [
+         path('', include('django_fido.urls')),
+   ]
+   ```
 4. If you wish, set string variable `DJANGO_FIDO_RP_NAME`.
 
 ### Extra configuration ###
