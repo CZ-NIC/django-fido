@@ -12,6 +12,7 @@ from fido2.webauthn import UserVerificationRequirement
 
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
 from django_fido.models import Authenticator
+from django_fido.views import Fido2RegistrationRequestView
 
 from .data import (ATTESTATION_OBJECT, ATTESTATION_OBJECT_BOGUS, ATTESTATION_OBJECT_U2F_MALFORMED,
                    AUTHENTICATION_CHALLENGE, AUTHENTICATION_CLIENT_DATA, AUTHENTICATOR_DATA, CREDENTIAL_ID, HOSTNAME,
@@ -106,6 +107,18 @@ class TestFido2RegistrationRequestView(TestCase):
         challenge = websafe_decode(state['challenge'])
         credentials = [{'id': CREDENTIAL_ID, 'type': 'public-key'}]
         self.assertEqual(response.json(), self._get_fido2_request(challenge, credentials))
+
+    @override_settings(DJANGO_FIDO_GET_USER_ID_CALLABLE="django_fido.tests.utils.helper_bytes")
+    def test_get_user_id_overridden(self):
+        self.assertEqual(Fido2RegistrationRequestView.get_user_id(self.user), b"2X4B-523P")
+
+    @override_settings(DJANGO_FIDO_GET_USER_DISPLAY_NAME_CALLABLE="django_fido.tests.utils.helper_str")
+    def test_get_user_display_name_overridden(self):
+        self.assertEqual(Fido2RegistrationRequestView.get_user_display_name(self.user), USER_LAST_NAME)
+
+    @override_settings(DJANGO_FIDO_GET_USERNAME_CALLABLE="django_fido.tests.utils.helper_str")
+    def test_get_username_overridden(self):
+        self.assertEqual(Fido2RegistrationRequestView.get_username(self.user), USER_LAST_NAME)
 
 
 @override_settings(ROOT_URLCONF='django_fido.tests.urls', TEMPLATES=TEMPLATES)

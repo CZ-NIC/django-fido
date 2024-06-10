@@ -52,6 +52,24 @@ Default: False
 
 Purpose: Set to True to enable discoverable credentials, private key and associated metadata is stored in persistent memory on the authenticator. This is useful for passwordless authentication.
 
+#### DJANGO_FIDO_GET_USER_ID_CALLABLE ####
+Optional, default: None
+
+String path to callable that takes one argument `User`.
+Overrides default implementation of Fido2RegistrationRequestView.get_user_id.
+
+#### DJANGO_FIDO_GET_USER_DISPLAY_NAME_CALLABLE ####
+Optional, default: None
+
+String path to callable that takes one argument `User`.
+Overrides default implementation of Fido2RegistrationRequestView.get_user_display_name.
+
+#### DJANGO_FIDO_GET_USERNAME_CALLABLE ####
+Optional, default: None
+
+String path to callable that takes one argument `User`.
+Overrides default implementation of Fido2RegistrationRequestView.get_username.
+
 ## One step authentication
 
 You can also decide to use one step authentication.
