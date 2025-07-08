@@ -44,7 +44,7 @@ class TestFido2AuthenticationBackend(TestCase):
                                                        self.fido2_response)
 
         self.assertEqual(authenticated_user, self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
 
     def test_authenticate_wrong_counter(self):
@@ -57,7 +57,7 @@ class TestFido2AuthenticationBackend(TestCase):
                                  self.backend.authenticate, request, self.user, self.server, self.state,
                                  self.fido2_response)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
                                  transform=tuple)
 
     def test_authenticate_invalid_response(self):
@@ -71,7 +71,7 @@ class TestFido2AuthenticationBackend(TestCase):
     def test_mark_device_used(self):
         self.backend.mark_device_used(self.device, 42)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_mark_device_used_equal(self):
@@ -81,7 +81,7 @@ class TestFido2AuthenticationBackend(TestCase):
 
         self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 42)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_mark_device_used_unsupported(self):
@@ -91,7 +91,7 @@ class TestFido2AuthenticationBackend(TestCase):
 
         self.backend.mark_device_used(self.device, 0)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
                                  transform=tuple)
 
     def test_mark_device_used_decrease(self):
@@ -101,7 +101,7 @@ class TestFido2AuthenticationBackend(TestCase):
 
         self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 41)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_get_user(self):
@@ -135,14 +135,14 @@ class TestFido2GeneralAuthenticationBackend(TestCase):
         authenticated_user = self.backend.authenticate(
             sentinel.request, USERNAME, PASSWORD, self.server, self.state, self.fido2_response)
         self.assertEqual(authenticated_user, self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
 
     def test_authenticate_wrong_password(self):
         authenticated_user = self.backend.authenticate(
             sentinel.request, USERNAME, 'wrong_password', self.server, self.state, self.fido2_response)
         self.assertEqual(authenticated_user, None)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
                                  transform=tuple)
 
 
@@ -182,7 +182,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
                                                        self.fido2_response)
 
         self.assertEqual(authenticated_user, self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
 
     def test_authenticate_wrong_counter(self):
@@ -194,7 +194,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
         self.assertRaisesMessage(PermissionDenied, "Counter didn't increase.",
                                  self.backend.authenticate, request, None, self.server, self.state, self.fido2_response)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 160)],
                                  transform=tuple)
 
     def test_authenticate_invalid_response(self):
@@ -209,7 +209,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
     def test_mark_device_used(self):
         self.backend.mark_device_used(self.device, 42)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_mark_device_used_equal(self):
@@ -219,7 +219,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
 
         self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 42)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_mark_device_used_unsupported(self):
@@ -229,7 +229,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
 
         self.backend.mark_device_used(self.device, 0)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 0)],
                                  transform=tuple)
 
     def test_mark_device_used_decrease(self):
@@ -239,7 +239,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
 
         self.assertRaisesMessage(ValueError, "Counter didn't increase.", self.backend.mark_device_used, self.device, 41)
 
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 42)],
                                  transform=tuple)
 
     def test_get_user(self):

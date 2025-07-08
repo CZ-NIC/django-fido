@@ -144,7 +144,7 @@ class TestFido2RegistrationView(TestCase):
         self.assertRedirects(response, reverse('django_fido:registration_done'))
         queryset = Authenticator.objects.values_list('user__pk', 'credential_id_data', 'attestation_data', 'counter')
         key_data = (self.user.pk, CREDENTIAL_ID, ATTESTATION_OBJECT, 0)
-        self.assertQuerysetEqual(queryset, [key_data], transform=tuple)
+        self.assertQuerySetEqual(queryset, [key_data], transform=tuple)
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
 
     def test_post_no_session(self):
@@ -332,7 +332,7 @@ class TestFido2AuthenticationView(TestCase):
 
         self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
         self.assertEqual(get_user(self.client), self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
@@ -385,7 +385,7 @@ class TestFido2AuthenticationView(TestCase):
 
         self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
         self.assertEqual(get_user(self.client), self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
         self.assertNotIn(FIDO2_REQUEST_SESSION_KEY, self.client.session)
         self.assertNotIn(AUTHENTICATION_USER_SESSION_KEY, self.client.session)
@@ -447,5 +447,5 @@ class TestFido2AuthenticationView(TestCase):
 
         self.assertRedirects(response, '/redirect/', fetch_redirect_response=False)
         self.assertEqual(get_user(self.client), self.user)
-        self.assertQuerysetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
+        self.assertQuerySetEqual(Authenticator.objects.values_list('user', 'counter'), [(self.user.pk, 152)],
                                  transform=tuple)
