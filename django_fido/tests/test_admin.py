@@ -98,7 +98,7 @@ class TestAuthenticatorAddView(TestCase):
         })
 
         self.assertRedirects(response, reverse('admin:django_fido_authenticator_changelist'))
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Authenticator.objects.values_list('pk', 'user__username', 'attestation_data', 'label'),
             [(1, 'kryten', ATTESTATION_OBJECT, 'My key')],
             transform=tuple,
