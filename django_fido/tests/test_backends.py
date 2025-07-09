@@ -1,6 +1,7 @@
 """Test `django_fido.backends` module."""
 
 import base64
+from unittest.mock import sentinel
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.cookie import CookieStorage
@@ -13,7 +14,6 @@ from fido2.webauthn import (
     PublicKeyCredentialRpEntity,
     UserVerificationRequirement,
 )
-from mock import sentinel
 
 from django_fido.backends import (
     Fido2AuthenticationBackend,

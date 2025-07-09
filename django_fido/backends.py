@@ -1,9 +1,11 @@
 """Authentication backends for Django FIDO."""
 
+from __future__ import annotations
+
 import base64
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth import get_backends, get_user_model
@@ -30,8 +32,7 @@ def is_fido_backend_used() -> bool:
 
 
 class BaseFido2AuthenticationBackend(ABC):
-    """
-    Base class for authenticating user using FIDO 2.
+    """Base class for authenticating user using FIDO 2.
 
     @cvar counter_error_message: Error message in case FIDO 2 device counter didn't increase.
     """
@@ -44,9 +45,9 @@ class BaseFido2AuthenticationBackend(ABC):
         request: HttpRequest,
         user: AbstractBaseUser,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, str],
-        fido2_response: Dict[str, Any],
-    ) -> Optional[AbstractBaseUser]:
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate to be implemented."""
         raise NotImplementedError
 
@@ -78,9 +79,9 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
         request: HttpRequest,
         user: AbstractBaseUser,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, str],
-        fido2_response: Dict[str, Any],
-    ) -> Optional[AbstractBaseUser]:
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate using FIDO 2."""
         credentials = [a.credential for a in user.authenticators.all()]
         try:
@@ -102,7 +103,7 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
-            raise PermissionDenied("Counter didn't increase.")
+            raise PermissionDenied("Counter didn't increase.") from None
         return user
 
 
@@ -112,11 +113,11 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     def authenticate(
         self,
         request: HttpRequest,
-        user: Optional[AbstractBaseUser],
+        user: AbstractBaseUser | None,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, str],
-        fido2_response: Dict[str, Any],
-    ) -> Optional[AbstractBaseUser]:
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate using FIDO 2."""
         user_handle = fido2_response["user_handle"]
 
@@ -144,7 +145,7 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
-            raise PermissionDenied("Counter didn't increase.")
+            raise PermissionDenied("Counter didn't increase.") from None
         return user
 
 
@@ -162,10 +163,10 @@ class Fido2GeneralAuthenticationBackend(ModelBackend):
         username: str,
         password: str,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, str],
-        fido2_response: Dict[str, Any],
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
         **kwargs,
-    ) -> Optional[AbstractBaseUser]:
+    ) -> AbstractBaseUser | None:
         """Authenticate using username, password and FIDO 2 token."""
         for auth_backend in SETTINGS.authentication_backends:
             user = auth_backend().authenticate(request, username=username, password=password, **kwargs)

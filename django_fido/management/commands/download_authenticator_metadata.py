@@ -3,7 +3,7 @@
 import base64
 import hashlib
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import requests
 from cryptography import x509
@@ -61,8 +61,8 @@ def verify_certificate(jwt: JWT) -> JWK:
     # First element in the header is our actual key
     try:
         decoding_key = JWK.from_pem(PEM_CERT_TEMPLATE.format(jwt.token.jose_header["x5c"][0]).encode())
-    except ValueError:
-        raise InvalidCert("Cannot decode key.")
+    except ValueError as err:
+        raise InvalidCert("Cannot decode key.") from err
     if SETTINGS.metadata_service["disable_cert_verification"]:
         return decoding_key
     if not SETTINGS.metadata_service["certificate"]:
@@ -77,13 +77,13 @@ def verify_certificate(jwt: JWT) -> JWK:
     store_ctx = crypto.X509StoreContext(store, decoding_cert)
     try:
         store_ctx.verify_certificate()
-    except crypto.X509StoreContextError:
-        raise InvalidCert("Key could not be verified.")
+    except crypto.X509StoreContextError as err:
+        raise InvalidCert("Key could not be verified.") from err
     else:
         return decoding_key
 
 
-def _get_metadata() -> Tuple[Dict[str, Any], str]:
+def _get_metadata() -> tuple[dict[str, Any], str]:
     """Download the metadata TOC."""
     try:
         metadata = requests.get(
@@ -91,23 +91,23 @@ def _get_metadata() -> Tuple[Dict[str, Any], str]:
             params={"token": SETTINGS.metadata_service["access_token"]},
             timeout=SETTINGS.metadata_service["timeout"],
         )
-    except requests.exceptions.RequestException:
-        raise CommandError("MDS response error.")
+    except requests.exceptions.RequestException as err:
+        raise CommandError("MDS response error.") from err
     # First, we decode the unverified headers to get the certificate
     try:
         decoded_jwt = JWT(jwt=metadata.content.decode())
-    except ValueError:
-        raise CommandError("MDS response malformed.")
+    except ValueError as err:
+        raise CommandError("MDS response malformed.") from err
     # x5c element in header contains the signing certificate and possibly intermediate certificates
     # Use the first one to verify signature, the others can be used to verify the first one
     try:
         decoding_key = verify_certificate(decoded_jwt)
-    except InvalidCert:
-        raise CommandError("Could not read the key.")
+    except InvalidCert as err:
+        raise CommandError("Could not read the key.") from err
     try:
         decoded_jwt.deserialize(metadata.content.decode(), key=decoding_key)
-    except InvalidJWSSignature:
-        raise CommandError("Could not verify MDS signature.")
+    except InvalidJWSSignature as err:
+        raise CommandError("Could not verify MDS signature.") from err
     # Return parsed metadata and the algorith for signing
     return json.loads(decoded_jwt.claims), json.loads(decoded_jwt.header)["alg"]
 
@@ -120,7 +120,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         """Parse command arguments."""
 
-    def _update_auth(self, authenticator_data: Dict[str, Any], identifiers: List[str], hash_alg: str) -> List[str]:
+    def _update_auth(self, authenticator_data: dict[str, Any], identifiers: list[str], hash_alg: str) -> list[str]:
         """Update individual authenticators from MDS."""
         downloaded_identifiers = []
         mds3 = SETTINGS.metadata_service["mds_format"] == 3

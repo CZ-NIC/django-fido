@@ -32,8 +32,8 @@ class Fido2RegistrationRequestAdminView(PermissionRequiredMixin, Fido2Registrati
         user_id = get_user_model()._meta.pk.to_python(self.request.GET.get("user"))
         try:
             return get_user_model().objects.get(pk=user_id)
-        except get_user_model().DoesNotExist:
-            raise Http404("User does not exist")
+        except get_user_model().DoesNotExist as err:
+            raise Http404("User does not exist") from err
 
 
 class AuthenticatorAddView(PermissionRequiredMixin, Fido2RegistrationView):

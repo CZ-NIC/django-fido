@@ -1,7 +1,8 @@
 """Forms for FIDO 2 registration and login."""
 
+from __future__ import annotations
+
 import base64
-from typing import Optional
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -37,18 +38,18 @@ class Fido2RegistrationForm(forms.Form):
         value = self.cleaned_data["client_data"]
         try:
             return CollectedClientData(base64.b64decode(value))
-        except (ValueError, KeyError):
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except (ValueError, KeyError) as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_attestation(self) -> AttestationObject:
         """Return decoded attestation object."""
         value = self.cleaned_data["attestation"]
         try:
             return AttestationObject(base64.b64decode(value))
-        except (ValueError, KeyError):
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except (ValueError, KeyError) as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
-    def clean_user_handle(self) -> Optional[str]:
+    def clean_user_handle(self) -> str | None:
         """Return decoded attestation object."""
         if not SETTINGS.resident_key:
             return None
@@ -56,8 +57,8 @@ class Fido2RegistrationForm(forms.Form):
         value = self.cleaned_data["user_handle"]
         try:
             return base64.b64decode(value).decode("utf-8")
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
 
 class Fido2AuthenticationForm(forms.Form):
@@ -84,32 +85,32 @@ class Fido2AuthenticationForm(forms.Form):
         value = self.cleaned_data["client_data"]
         try:
             return CollectedClientData(base64.b64decode(value))
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_credential_id(self) -> bytes:
         """Return decoded credential ID."""
         value = self.cleaned_data["credential_id"]
         try:
             return base64.b64decode(value)
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_authenticator_data(self) -> AuthenticatorData:
         """Return decoded authenticator data."""
         value = self.cleaned_data["authenticator_data"]
         try:
             return AuthenticatorData(base64.b64decode(value))
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_signature(self) -> bytes:
         """Return decoded signature."""
         value = self.cleaned_data["signature"]
         try:
             return base64.b64decode(value)
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
 
 class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
@@ -168,5 +169,5 @@ class Fido2PasswordlessAuthenticationForm(Fido2AuthenticationForm):
         value = self.cleaned_data["user_handle"]
         try:
             return base64.b64decode(value).decode("utf-8")
-        except ValueError:
-            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err

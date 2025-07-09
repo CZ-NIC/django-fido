@@ -1,5 +1,4 @@
-"""
-Django FIDO constants.
+"""Django FIDO constants.
 
 Session key to store FIDO2 requests: FIDO2_REQUEST_SESSION_KEY
 

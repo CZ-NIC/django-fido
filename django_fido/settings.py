@@ -1,7 +1,5 @@
 """Django settings specific for django_fido."""
 
-from typing import List, Optional, cast
-
 from appsettings import (
     AppSettings,
     BooleanSetting,
@@ -30,26 +28,23 @@ def timeout_validator(value):
 class DjangoFidoSettings(AppSettings):
     """Application specific settings."""
 
-    authentication_backends = cast(
-        List,
-        NestedListSetting(
-            inner_setting=CallablePathSetting(),
-            default=("django.contrib.auth.backends.ModelBackend",),
-            transform_default=True,
-        ),
+    authentication_backends = NestedListSetting(
+        inner_setting=CallablePathSetting(),
+        default=("django.contrib.auth.backends.ModelBackend",),
+        transform_default=True,
     )
-    rp_name = cast(Optional[str], StringSetting(default=None))
+    rp_name = StringSetting(default=None)
     two_step_auth = BooleanSetting(default=True)
     metadata_service = NestedDictSetting(
-        settings=dict(
-            access_token=StringSetting(default=None),
-            mds_format=PositiveIntegerSetting(default=2),
-            url=StringSetting(default="https://mds2.fidoalliance.org/"),
-            timeout=Setting(default=3, validators=[timeout_validator]),
-            disable_cert_verification=BooleanSetting(default=False),
-            certificate=NestedListSetting(inner_setting=FileSetting(), default=[]),
-            crl_list=NestedListSetting(inner_setting=FileSetting(), default=[]),
-        ),
+        settings={
+            "access_token": StringSetting(default=None),
+            "mds_format": PositiveIntegerSetting(default=2),
+            "url": StringSetting(default="https://mds2.fidoalliance.org/"),
+            "timeout": Setting(default=3, validators=[timeout_validator]),
+            "disable_cert_verification": BooleanSetting(default=False),
+            "certificate": NestedListSetting(inner_setting=FileSetting(), default=[]),
+            "crl_list": NestedListSetting(inner_setting=FileSetting(), default=[]),
+        },
         default=None,
     )
     resident_key = BooleanSetting(default=False)
@@ -59,7 +54,7 @@ class DjangoFidoSettings(AppSettings):
     @classmethod
     def check(cls):
         """Extend parent class check method to perform further project specific settings check."""
-        super(DjangoFidoSettings, cls).check()
+        super().check()
 
         # check passwordless settings
         if cls.settings["passwordless_auth"].get_value() and not cls.settings["resident_key"].get_value():

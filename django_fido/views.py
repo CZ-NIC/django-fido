@@ -1,13 +1,16 @@
 """Views for FIDO 2 registration and login."""
 
+from __future__ import annotations
+
 import base64
 import logging
 import uuid
 import warnings
 from abc import ABCMeta, abstractmethod
+from collections.abc import Mapping
 from enum import Enum, unique
 from http.client import BAD_REQUEST
-from typing import Any, List, Mapping, Optional, Tuple, cast
+from typing import Any, cast
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
@@ -57,7 +60,7 @@ _LOGGER = logging.getLogger(__name__)
 class BaseAttestationVerifier(AttestationVerifier):
     """Verify the attestation, but not the trust chain."""
 
-    def ca_lookup(self, attestation_result: AttestationResult, client_data_hash: AuthenticatorData) -> Optional[bytes]:
+    def ca_lookup(self, attestation_result: AttestationResult, client_data_hash: AuthenticatorData) -> bytes | None:
         """Return empty CA lookup to disable trust path verification."""
         return None
 
@@ -79,9 +82,8 @@ class Fido2Error(ValueError):
         self.error_code = error_code
 
 
-class Fido2ViewMixin(object):
-    """
-    Mixin with common methods for all FIDO 2 views.
+class Fido2ViewMixin:
+    """Mixin with common methods for all FIDO 2 views.
 
     @cvar rp_name: Name of the relying party.
         If None, the value of setting ``DJANGO_FIDO_RP_NAME`` is used instead.
@@ -96,12 +98,12 @@ class Fido2ViewMixin(object):
     """
 
     attestation = AttestationConveyancePreference.NONE
-    attestation_types: Optional[List[Attestation]] = None
+    attestation_types: list[Attestation] | None = None
     verify_attestation = BaseAttestationVerifier
     user_verification = SETTINGS.user_verification
     session_key = FIDO2_REQUEST_SESSION_KEY
 
-    rp_name = None  # type: Optional[str]
+    rp_name: str | None = None
 
     def get_rp_name(self) -> str:
         """Return relying party name."""
@@ -122,13 +124,14 @@ class Fido2ViewMixin(object):
                     "You have defined `attestation_types` but not `verify_attestation`, this means that the "
                     "`attestation_types` setting is being iognored.",
                     DeprecationWarning,
+                    stacklevel=2,
                 )
             return Fido2Server(rp, attestation=self.attestation)
         else:
             return Fido2Server(
                 rp,
                 attestation=self.attestation,
-                verify_attestation=self.verify_attestation(cast(List[Attestation], self.attestation_types)),
+                verify_attestation=self.verify_attestation(cast(list[Attestation], self.attestation_types)),
             )
 
     @abstractmethod
@@ -136,7 +139,7 @@ class Fido2ViewMixin(object):
         """Return user which is subject of the request."""
         pass
 
-    def get_credentials(self, user: AbstractBaseUser) -> List[AttestedCredentialData]:
+    def get_credentials(self, user: AbstractBaseUser) -> list[AttestedCredentialData]:
         """Return list of user's credentials."""
         return [AttestedCredentialData(a.credential) for a in user.authenticators.all()]
 
@@ -160,7 +163,7 @@ class BaseFido2RequestView(Fido2ViewMixin, View, metaclass=ABCMeta):
     """Base view for FIDO 2 request views."""
 
     @abstractmethod
-    def create_fido2_request(self) -> Tuple[Mapping[str, Any], Any]:
+    def create_fido2_request(self) -> tuple[Mapping[str, Any], Any]:
         """Create and return FIDO 2 request.
 
         @raise ValueError: If request can't be created.
@@ -213,7 +216,7 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
             user.username, self.get_user_id(user), user.get_full_name() or user.username
         )
 
-    def create_fido2_request(self) -> Tuple[Mapping[str, Any], Any]:
+    def create_fido2_request(self) -> tuple[Mapping[str, Any], Any]:
         """Create and return FIDO 2 registration request.
 
         @raise ValueError: If request can't be created.
@@ -230,8 +233,7 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
 
 
 class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
-    """
-    View to register FIDO 2 authenticator.
+    """View to register FIDO 2 authenticator.
 
     @cvar title: View title.
     @cvar session_key: Session key where the FIDO 2 state is stored.
@@ -248,8 +250,7 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
     fido2_request_type = FIDO2_REGISTRATION_REQUEST
 
     def complete_registration(self, form: Form) -> AuthenticatorData:
-        """
-        Complete the registration.
+        """Complete the registration.
 
         @raise ValidationError: If the registration can't be completed.
         """
@@ -263,13 +264,17 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
             )
         except ValueError as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
-            raise ValidationError(_("Registration failed."), code="invalid")
+            raise ValidationError(_("Registration failed."), code="invalid") from error
         except UnsupportedType as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
-            raise ValidationError(_("Security key is not supported because it cannot be identified."), code="invalid")
+            raise ValidationError(
+                _("Security key is not supported because it cannot be identified."), code="invalid"
+            ) from error
         except InvalidSignature as error:
             _LOGGER.info("FIDO2 registration failed with error: %r", error)
-            raise ValidationError(_("Registration failed, incorrect data from security key."), code="invalid")
+            raise ValidationError(
+                _("Registration failed, incorrect data from security key."), code="invalid"
+            ) from error
 
     def form_valid(self, form: Form) -> HttpResponse:
         """Complete the registration and return response."""
@@ -304,15 +309,13 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
 
 
 class Fido2AuthenticationViewMixin(Fido2ViewMixin):
-    """
-    Mixin for FIDO 2 authentication views.
+    """Mixin for FIDO 2 authentication views.
 
     Ensure user to be authenticated exists.
     """
 
-    def get_user(self: View) -> Optional[AbstractBaseUser]:
-        """
-        Return user which is to be authenticated.
+    def get_user(self: View) -> AbstractBaseUser | None:
+        """Return user which is to be authenticated.
 
         Return None, if no user could be found.
         """
@@ -342,7 +345,7 @@ class Fido2AuthenticationViewMixin(Fido2ViewMixin):
 class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2RequestView):
     """Returns authentication request and stores its state in session."""
 
-    def create_fido2_request(self) -> Tuple[Mapping[str, Any], Any]:
+    def create_fido2_request(self) -> tuple[Mapping[str, Any], Any]:
         """Create and return FIDO 2 authentication request.
 
         @raise ValueError: If request can't be created.
@@ -363,8 +366,7 @@ class Fido2AuthenticationRequestView(Fido2AuthenticationViewMixin, BaseFido2Requ
 
 
 class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
-    """
-    View to authenticate FIDO 2 key.
+    """View to authenticate FIDO 2 key.
 
     @cvar title: View title.
     @cvar fido2_request_url: URL at which an FIDO 2 request is provided.
@@ -398,8 +400,7 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
         return kwargs
 
     def complete_authentication(self, form: Form) -> AbstractBaseUser:
-        """
-        Complete the authentication.
+        """Complete the authentication.
 
         @raise ValidationError: If the authentication can't be completed.
         """
@@ -407,11 +408,11 @@ class Fido2AuthenticationView(Fido2AuthenticationViewMixin, LoginView):
         if state is None:
             raise ValidationError(_("Authentication request not found."), code="missing")
 
-        fido_kwargs = dict(
-            fido2_server=self.server,
-            fido2_state=state,
-            fido2_response=form.cleaned_data,
-        )
+        fido_kwargs = {
+            "fido2_server": self.server,
+            "fido2_state": state,
+            "fido2_response": form.cleaned_data,
+        }
 
         user = authenticate(request=self.request, user=self.get_user(), **fido_kwargs)
 

@@ -1,12 +1,14 @@
 """Models for storing keys."""
 
+from __future__ import annotations
+
 import base64
 import json
 import warnings
 from binascii import b2a_hex
 from datetime import date
 from operator import methodcaller
-from typing import List, Optional, Union, cast
+from typing import cast
 from uuid import UUID
 
 from cryptography.hazmat.backends import default_backend
@@ -36,7 +38,7 @@ TRANSPORT_CHOICES = (
 
 
 @deconstructible
-class TransportsValidator(object):
+class TransportsValidator:
     """Validator for comma separated transport values.
 
     @ivar choices: List/tuple of available values.
@@ -48,7 +50,9 @@ class TransportsValidator(object):
 
     def __init__(self, choices=None, code=None, message=None):
         """Set custom `choices`, `code` or `message`."""
-        warnings.warn("TransportsValidator is deprecated. It is kept only for migrations.", DeprecationWarning)
+        warnings.warn(
+            "TransportsValidator is deprecated. It is kept only for migrations.", DeprecationWarning, stacklevel=2
+        )
         if choices is not None:
             self.choices = choices
         if code is not None:
@@ -91,7 +95,7 @@ class Authenticator(models.Model):
         return base64.b64decode(self.credential_id_data)
 
     @property
-    def credential(self) -> Optional[AttestedCredentialData]:
+    def credential(self) -> AttestedCredentialData | None:
         """Return AttestedCredentialData object."""
         return self.attestation.auth_data.credential_data
 
@@ -108,7 +112,7 @@ class Authenticator(models.Model):
         ).decode("utf-8")
 
     @cached_property
-    def identifier(self) -> Optional[Union[str, bytes]]:
+    def identifier(self) -> str | bytes | None:
         """Return key identifier."""
         if (
             hasattr(self.attestation.auth_data, "credential_data")
@@ -132,7 +136,7 @@ class Authenticator(models.Model):
                 subject_identifier = SubjectKeyIdentifier.from_public_key(certificate.public_key())
             return b2a_hex(subject_identifier.digest).decode()
 
-    def _get_metadata(self) -> Optional["AuthenticatorMetadata"]:
+    def _get_metadata(self) -> AuthenticatorMetadata | None:
         """Get the appropriate metadata."""
         if self.identifier is None:
             return None
@@ -146,7 +150,7 @@ class Authenticator(models.Model):
         except AuthenticatorMetadata.DoesNotExist:
             return None
 
-    def _prepare_store(self, root_certs: List[crypto.X509]) -> crypto.X509Store:
+    def _prepare_store(self, root_certs: list[crypto.X509]) -> crypto.X509Store:
         """Prepare crypto store for verification."""
         store = crypto.X509Store()
         for root_cert in root_certs:
@@ -162,7 +166,7 @@ class Authenticator(models.Model):
         return store
 
     @cached_property
-    def metadata(self) -> Optional["AuthenticatorMetadata"]:
+    def metadata(self) -> AuthenticatorMetadata | None:
         """Verify and return the appropriate metada for this authenticator."""
         try:
             metadata = self._get_metadata()
@@ -184,7 +188,7 @@ class Authenticator(models.Model):
             crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert).encode())
             for root_cert in root_certs
         ]
-        if any([device_cert.to_cryptography() == c_r_cert.to_cryptography() for c_r_cert in conv_root_certs]):
+        if any(device_cert.to_cryptography() == c_r_cert.to_cryptography() for c_r_cert in conv_root_certs):
             # Certificate directly
             return metadata
         store = self._prepare_store(conv_root_certs)
@@ -222,7 +226,7 @@ class AuthenticatorMetadata(models.Model):
         return AuthLevel.NONE
 
     @cached_property
-    def vulnerabilities(self) -> List[AuthVulnerability]:
+    def vulnerabilities(self) -> list[AuthVulnerability]:
         """Return a list of reported vulnerabilities."""
         decoded = json.loads(self.metadata_entry)
         vulnerabilities = tuple(AuthVulnerability)
