@@ -1,3 +1,47 @@
 [build-system]
 requires = ["setuptools", "babel ~= 2.3", "setuptools-npm"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "C90", "I", "D", "C", "UP", "B", "ISC", "G", "RSE"]
+ignore = ["D1", "UP032"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+section-order = ["future", "standard-library", "third-party", "mojeid", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+mojeid = ["openic", "sidacore", "sidaoidc", "sidasaml"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["B015", "B018"]
+"**/migrations/*" = ["D", "S"]
+
+[tool.coverage.report]
+exclude_also = ["raise NotImplementedError", "if TYPE_CHECKING:"]
+
+[tool.doc8]
+max-line-length = 120
+allow-long-titles = true
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+local_partial_types = true
+
+[[tool.mypy.overrides]]
+module = "django_fido.migrations.*"
+ignore_errors = true
