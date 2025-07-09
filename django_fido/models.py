@@ -1,4 +1,5 @@
 """Models for storing keys."""
+
 import base64
 import json
 import warnings
@@ -26,11 +27,11 @@ from django_fido.constants import NULL_AAGUID, PEM_CERT_TEMPLATE, AuthLevel, Aut
 # Deprecated, kept for migrations
 # https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#u2f-transports
 TRANSPORT_CHOICES = (
-    ('bt', _('Bluetooth Classic (Bluetooth BR/EDR)')),
-    ('ble', _('Bluetooth Low Energy (Bluetooth Smart)')),
-    ('nfc', _('Near-Field Communications')),
-    ('usb', _('USB HID')),
-    ('usb-internal', _('Non-removable USB HID')),
+    ("bt", _("Bluetooth Classic (Bluetooth BR/EDR)")),
+    ("ble", _("Bluetooth Low Energy (Bluetooth Smart)")),
+    ("nfc", _("Near-Field Communications")),
+    ("usb", _("USB HID")),
+    ("usb-internal", _("Non-removable USB HID")),
 )
 
 
@@ -42,8 +43,8 @@ class TransportsValidator(object):
     """
 
     choices = tuple(choice for choice, label in TRANSPORT_CHOICES)
-    code = 'invalid_choice'
-    message = _('Select a valid choice. %(value)s is not one of the available choices.')
+    code = "invalid_choice"
+    message = _("Select a valid choice. %(value)s is not one of the available choices.")
 
     def __init__(self, choices=None, code=None, message=None):
         """Set custom `choices`, `code` or `message`."""
@@ -57,9 +58,9 @@ class TransportsValidator(object):
 
     def __call__(self, value):
         """Validate the input."""
-        for chunk in force_str(value).split(','):
+        for chunk in force_str(value).split(","):
             if chunk not in self.choices:
-                raise ValidationError(self.message, code=self.code, params={'value': chunk})
+                raise ValidationError(self.message, code=self.code, params={"value": chunk})
 
 
 class Authenticator(models.Model):
@@ -72,7 +73,7 @@ class Authenticator(models.Model):
      * counter
     """
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='authenticators', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="authenticators", on_delete=models.CASCADE)
     user_handle = models.TextField(blank=True, unique=True, null=True)
     create_datetime = models.DateTimeField(auto_now_add=True)
 
@@ -82,7 +83,7 @@ class Authenticator(models.Model):
     label = models.TextField(max_length=255, blank=True)
 
     class Meta:
-        unique_together = [['user', 'label']]
+        unique_together = [["user", "label"]]
 
     @property
     def credential_id(self) -> bytes:
@@ -101,10 +102,10 @@ class Authenticator(models.Model):
 
     @attestation.setter
     def attestation(self, value: AttestationObject):
-        self.attestation_data = base64.b64encode(value).decode('utf-8')
+        self.attestation_data = base64.b64encode(value).decode("utf-8")
         self.credential_id_data = base64.b64encode(
             cast(AttestedCredentialData, value.auth_data.credential_data).credential_id
-        ).decode('utf-8')
+        ).decode("utf-8")
 
     @cached_property
     def identifier(self) -> Optional[Union[str, bytes]]:
@@ -118,8 +119,8 @@ class Authenticator(models.Model):
         else:
             # FIXME: Add handling for UAF devices with AAID
             # Get the certificate FIDO U2F
-            if 'x5c' in self.attestation.att_stmt:
-                cert = self.attestation.att_stmt['x5c'][0]
+            if "x5c" in self.attestation.att_stmt:
+                cert = self.attestation.att_stmt["x5c"][0]
                 certificate = load_der_x509_certificate(cert, default_backend())
             else:
                 # ECDSAA attestation or self attestation?
@@ -131,7 +132,7 @@ class Authenticator(models.Model):
                 subject_identifier = SubjectKeyIdentifier.from_public_key(certificate.public_key())
             return b2a_hex(subject_identifier.digest).decode()
 
-    def _get_metadata(self) -> Optional['AuthenticatorMetadata']:
+    def _get_metadata(self) -> Optional["AuthenticatorMetadata"]:
         """Get the appropriate metadata."""
         if self.identifier is None:
             return None
@@ -150,8 +151,8 @@ class Authenticator(models.Model):
         store = crypto.X509Store()
         for root_cert in root_certs:
             store.add_cert(root_cert)
-        if len(self.attestation.att_stmt['x5c']) > 1:
-            for interm_cert in self.attestation.att_stmt['x5c'][1:]:
+        if len(self.attestation.att_stmt["x5c"]) > 1:
+            for interm_cert in self.attestation.att_stmt["x5c"][1:]:
                 try:
                     store.add_cert(crypto.load_certificate(crypto.FILETYPE_ASN1, interm_cert))
                 except crypto.Error:
@@ -161,26 +162,28 @@ class Authenticator(models.Model):
         return store
 
     @cached_property
-    def metadata(self) -> Optional['AuthenticatorMetadata']:
+    def metadata(self) -> Optional["AuthenticatorMetadata"]:
         """Verify and return the appropriate metada for this authenticator."""
         try:
             metadata = self._get_metadata()
         except MultipleObjectsReturned:
             metadata = None
-        if metadata is None or 'x5c' not in self.attestation.att_stmt:
+        if metadata is None or "x5c" not in self.attestation.att_stmt:
             return metadata
         # Take the device certificate and try to validate against all certs in MDS
-        device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_stmt['x5c'][0])
-        if metadata.detailed_metadata_entry != '':
-            root_certs = json.loads(metadata.detailed_metadata_entry)['attestationRootCertificates']
+        device_cert = crypto.load_certificate(crypto.FILETYPE_ASN1, self.attestation.att_stmt["x5c"][0])
+        if metadata.detailed_metadata_entry != "":
+            root_certs = json.loads(metadata.detailed_metadata_entry)["attestationRootCertificates"]
         else:
-            root_certs = json.loads(metadata.metadata_entry).get('metadataStatement',
-                                                                 {}).get('attestationRootCertificates', [])
+            root_certs = (
+                json.loads(metadata.metadata_entry).get("metadataStatement", {}).get("attestationRootCertificates", [])
+            )
             if not root_certs:
                 return metadata
-        conv_root_certs = [crypto.load_certificate(crypto.FILETYPE_PEM,
-                                                   PEM_CERT_TEMPLATE.format(root_cert).encode())
-                           for root_cert in root_certs]
+        conv_root_certs = [
+            crypto.load_certificate(crypto.FILETYPE_PEM, PEM_CERT_TEMPLATE.format(root_cert).encode())
+            for root_cert in root_certs
+        ]
         if any([device_cert.to_cryptography() == c_r_cert.to_cryptography() for c_r_cert in conv_root_certs]):
             # Certificate directly
             return metadata
@@ -206,14 +209,15 @@ class AuthenticatorMetadata(models.Model):
     def level(self) -> AuthLevel:
         """Return last valid certification level."""
         decoded = json.loads(self.metadata_entry)
-        status_dict = sorted(decoded['statusReports'],
-                             key=methodcaller('get', 'effectiveDate', date.today().isoformat()))
+        status_dict = sorted(
+            decoded["statusReports"], key=methodcaller("get", "effectiveDate", date.today().isoformat())
+        )
         # The last status should be valid
         for status in status_dict[::-1]:
             # Is it directly a level?
-            if status['status'] in tuple(AuthLevel):
-                return AuthLevel(status['status'])
-            elif status['status'] == 'REVOKED':
+            if status["status"] in tuple(AuthLevel):
+                return AuthLevel(status["status"])
+            elif status["status"] == "REVOKED":
                 return AuthLevel.NONE
         return AuthLevel.NONE
 
@@ -222,11 +226,12 @@ class AuthenticatorMetadata(models.Model):
         """Return a list of reported vulnerabilities."""
         decoded = json.loads(self.metadata_entry)
         vulnerabilities = tuple(AuthVulnerability)
-        return [AuthVulnerability(s['status']) for s in reversed(decoded['statusReports'])
-                if s['status'] in vulnerabilities]
+        return [
+            AuthVulnerability(s["status"]) for s in reversed(decoded["statusReports"]) if s["status"] in vulnerabilities
+        ]
 
     @cached_property
     def is_update_available(self) -> bool:
         """Return whether an update is available."""
         decoded = json.loads(self.metadata_entry)
-        return 'UPDATE_AVAILABLE' in [status['status'] for status in decoded['statusReports']]
+        return "UPDATE_AVAILABLE" in [status["status"] for status in decoded["statusReports"]]

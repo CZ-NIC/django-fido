@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0004_remove_u2f_device'),
+        ("django_fido", "0004_remove_u2f_device"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='authenticator',
-            name='attestation_data',
+            model_name="authenticator",
+            name="attestation_data",
             field=models.TextField(null=True),
         ),
     ]

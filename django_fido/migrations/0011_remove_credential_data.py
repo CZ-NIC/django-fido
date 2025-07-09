@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0010_credential_id_not_null'),
+        ("django_fido", "0010_credential_id_not_null"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='authenticator',
-            name='credential_data',
+            model_name="authenticator",
+            name="credential_data",
         ),
     ]

@@ -5,21 +5,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('django_fido', '0012_authenticator_label'),
+        ("django_fido", "0012_authenticator_label"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='authenticator',
-            name='label',
-            field=models.TextField(blank=True, default='', max_length=255),
+            model_name="authenticator",
+            name="label",
+            field=models.TextField(blank=True, default="", max_length=255),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(
-            name='authenticator',
-            unique_together=set([('user', 'label')]),
+            name="authenticator",
+            unique_together=set([("user", "label")]),
         ),
     ]

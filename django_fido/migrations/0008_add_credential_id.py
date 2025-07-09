@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0007_attestation_data_not_null'),
+        ("django_fido", "0007_attestation_data_not_null"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='authenticator',
-            name='credential_id_data',
+            model_name="authenticator",
+            name="credential_id_data",
             field=models.TextField(null=True),
         ),
     ]

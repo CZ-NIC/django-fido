@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0014_authenticator_metadata'),
+        ("django_fido", "0014_authenticator_metadata"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='authenticatormetadata',
-            name='url',
+            model_name="authenticatormetadata",
+            name="url",
             field=models.URLField(unique=True),
         ),
     ]

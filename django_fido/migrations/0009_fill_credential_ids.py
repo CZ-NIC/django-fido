@@ -10,14 +10,13 @@ def fill_credential_ids(apps, schema_editor):
     Authenticator = apps.get_model("django_fido", "Authenticator")
     db_alias = schema_editor.connection.alias
     for authenticator in Authenticator.objects.all():
-        authenticator.credential_id_data = base64.b64encode(authenticator.credential.credential_id).decode('utf-8')
+        authenticator.credential_id_data = base64.b64encode(authenticator.credential.credential_id).decode("utf-8")
         authenticator.save()
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0008_add_credential_id'),
+        ("django_fido", "0008_add_credential_id"),
     ]
 
     operations = [

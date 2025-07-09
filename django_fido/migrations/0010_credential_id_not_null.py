@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0009_fill_credential_ids'),
+        ("django_fido", "0009_fill_credential_ids"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='authenticator',
-            name='credential_id_data',
+            model_name="authenticator",
+            name="credential_id_data",
             field=models.TextField(unique=True),
         ),
     ]

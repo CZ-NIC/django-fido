@@ -7,7 +7,6 @@ import django_fido.models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -16,17 +15,29 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='U2fDevice',
+            name="U2fDevice",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('create_datetime', models.DateTimeField(auto_now_add=True)),
-                ('version', models.TextField()),
-                ('key_handle', models.TextField()),
-                ('public_key', models.TextField()),
-                ('app_id', models.TextField(blank=True, default=None, null=True)),
-                ('raw_transports', models.TextField(blank=True, default=None, null=True, validators=[django_fido.models.TransportsValidator()])),
-                ('counter', models.PositiveIntegerField(default=0)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='u2f_devices', to=settings.AUTH_USER_MODEL)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("create_datetime", models.DateTimeField(auto_now_add=True)),
+                ("version", models.TextField()),
+                ("key_handle", models.TextField()),
+                ("public_key", models.TextField()),
+                ("app_id", models.TextField(blank=True, default=None, null=True)),
+                (
+                    "raw_transports",
+                    models.TextField(
+                        blank=True, default=None, null=True, validators=[django_fido.models.TransportsValidator()]
+                    ),
+                ),
+                ("counter", models.PositiveIntegerField(default=0)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="u2f_devices",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

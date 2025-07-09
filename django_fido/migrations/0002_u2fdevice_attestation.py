@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0001_initial'),
+        ("django_fido", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='u2fdevice',
-            name='attestation',
+            model_name="u2fdevice",
+            name="attestation",
             field=models.TextField(blank=True, default=None, null=True),
         ),
     ]

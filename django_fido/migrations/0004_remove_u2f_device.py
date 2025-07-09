@@ -4,17 +4,16 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0003_add_authenticator'),
+        ("django_fido", "0003_add_authenticator"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='u2fdevice',
-            name='user',
+            model_name="u2fdevice",
+            name="user",
         ),
         migrations.DeleteModel(
-            name='U2fDevice',
+            name="U2fDevice",
         ),
     ]

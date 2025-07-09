@@ -3,14 +3,15 @@
 from django.db import migrations
 
 
-SQL = ("UPDATE django_fido_authenticator "
-       "SET attestation_data = 'owFkbm9uZQJYJTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwAAAAACoDoA=='")
+SQL = (
+    "UPDATE django_fido_authenticator "
+    "SET attestation_data = 'owFkbm9uZQJYJTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwAAAAACoDoA=='"
+)
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0005_add_attestation_data'),
+        ("django_fido", "0005_add_attestation_data"),
     ]
 
     operations = [

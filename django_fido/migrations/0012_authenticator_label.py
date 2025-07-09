@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0011_remove_credential_data'),
+        ("django_fido", "0011_remove_credential_data"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='authenticator',
-            name='label',
+            model_name="authenticator",
+            name="label",
             field=models.TextField(blank=True, max_length=255, null=True),
         ),
     ]

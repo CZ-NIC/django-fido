@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0013_unique_user_label'),
+        ("django_fido", "0013_unique_user_label"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AuthenticatorMetadata',
+            name="AuthenticatorMetadata",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('url', models.URLField()),
-                ('identifier', models.TextField(unique=True)),
-                ('metadata_entry', models.TextField()),
-                ('detailed_metadata_entry', models.TextField()),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("url", models.URLField()),
+                ("identifier", models.TextField(unique=True)),
+                ("metadata_entry", models.TextField()),
+                ("detailed_metadata_entry", models.TextField()),
             ],
         ),
     ]

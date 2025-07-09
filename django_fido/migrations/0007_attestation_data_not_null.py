@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0006_fill_empty_attestation'),
+        ("django_fido", "0006_fill_empty_attestation"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='authenticator',
-            name='attestation_data',
+            model_name="authenticator",
+            name="attestation_data",
             field=models.TextField(),
         ),
     ]
