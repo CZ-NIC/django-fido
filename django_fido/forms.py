@@ -1,6 +1,8 @@
 """Forms for FIDO 2 registration and login."""
+
+from __future__ import annotations
+
 import base64
-from typing import Optional
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -17,94 +19,98 @@ from .settings import SETTINGS
 class Fido2RegistrationForm(forms.Form):
     """Form for FIDO 2 registration responses."""
 
-    client_data = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                  widget=forms.HiddenInput)
-    attestation = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                  widget=forms.HiddenInput)
+    client_data = forms.CharField(
+        error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput
+    )
+    attestation = forms.CharField(
+        error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput
+    )
     user_handle = forms.CharField(widget=forms.HiddenInput)
     label = forms.CharField(required=False, max_length=255, label=_("Label"))
 
     class Media:
         """Add FIDO 2 related JS."""
 
-        js = ('django_fido/js/fido2.js', )
+        js = ("django_fido/js/fido2.js",)
 
     def clean_client_data(self) -> CollectedClientData:
         """Return decoded client data."""
-        value = self.cleaned_data['client_data']
+        value = self.cleaned_data["client_data"]
         try:
             return CollectedClientData(base64.b64decode(value))
-        except (ValueError, KeyError):
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except (ValueError, KeyError) as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_attestation(self) -> AttestationObject:
         """Return decoded attestation object."""
-        value = self.cleaned_data['attestation']
+        value = self.cleaned_data["attestation"]
         try:
             return AttestationObject(base64.b64decode(value))
-        except (ValueError, KeyError):
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except (ValueError, KeyError) as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
-    def clean_user_handle(self) -> Optional[str]:
+    def clean_user_handle(self) -> str | None:
         """Return decoded attestation object."""
         if not SETTINGS.resident_key:
             return None
 
-        value = self.cleaned_data['user_handle']
+        value = self.cleaned_data["user_handle"]
         try:
-            return base64.b64decode(value).decode('utf-8')
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+            return base64.b64decode(value).decode("utf-8")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
 
 class Fido2AuthenticationForm(forms.Form):
     """Form for FIDO 2 authentication responses."""
 
-    client_data = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                  widget=forms.HiddenInput)
-    credential_id = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                    widget=forms.HiddenInput)
-    authenticator_data = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                         widget=forms.HiddenInput)
-    signature = forms.CharField(error_messages={'required': _("Operation wasn't completed.")},
-                                widget=forms.HiddenInput)
+    client_data = forms.CharField(
+        error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput
+    )
+    credential_id = forms.CharField(
+        error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput
+    )
+    authenticator_data = forms.CharField(
+        error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput
+    )
+    signature = forms.CharField(error_messages={"required": _("Operation wasn't completed.")}, widget=forms.HiddenInput)
 
     class Media:
         """Add FIDO 2 related JS."""
 
-        js = ('django_fido/js/fido2.js', )
+        js = ("django_fido/js/fido2.js",)
 
     def clean_client_data(self) -> CollectedClientData:
         """Return decoded client data."""
-        value = self.cleaned_data['client_data']
+        value = self.cleaned_data["client_data"]
         try:
             return CollectedClientData(base64.b64decode(value))
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_credential_id(self) -> bytes:
         """Return decoded credential ID."""
-        value = self.cleaned_data['credential_id']
+        value = self.cleaned_data["credential_id"]
         try:
             return base64.b64decode(value)
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_authenticator_data(self) -> AuthenticatorData:
         """Return decoded authenticator data."""
-        value = self.cleaned_data['authenticator_data']
+        value = self.cleaned_data["authenticator_data"]
         try:
             return AuthenticatorData(base64.b64decode(value))
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
     def clean_signature(self) -> bytes:
         """Return decoded signature."""
-        value = self.cleaned_data['signature']
+        value = self.cleaned_data["signature"]
         try:
             return base64.b64decode(value)
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err
 
 
 class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
@@ -115,17 +121,17 @@ class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
         super().__init__(request, *args, **kwargs)
         self.fido2_server = fido2_server
         self.session_key = session_key
-        self.error_messages['invalid_login'] = _(
+        self.error_messages["invalid_login"] = _(
             "Please enter a correct %(username)s and password and use valid FIDO2 security key."
         )
 
     def clean(self):
         """Authenticate user."""
-        username = self.cleaned_data.get('username')
-        password = self.cleaned_data.get('password')
+        username = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
         state = self.request.session.pop(self.session_key, None)
         if state is None:
-            raise ValidationError(_('Authentication request not found.'), code='missing')
+            raise ValidationError(_("Authentication request not found."), code="missing")
 
         self.user_cache = authenticate(
             self.request,
@@ -147,9 +153,9 @@ class Fido2ModelAuthenticationForm(AuthenticationForm, Fido2AuthenticationForm):
         # FIXME: This method of AuthenticationForm was first introduced in Django 2.1.
         # As soon as we stop supporting lower Django versions, we can delete it.
         return forms.ValidationError(
-            self.error_messages['invalid_login'],
-            code='invalid_login',
-            params={'username': self.username_field.verbose_name},
+            self.error_messages["invalid_login"],
+            code="invalid_login",
+            params={"username": self.username_field.verbose_name},
         )
 
 
@@ -160,8 +166,8 @@ class Fido2PasswordlessAuthenticationForm(Fido2AuthenticationForm):
 
     def clean_user_handle(self) -> str:
         """Return decoded attestation object."""
-        value = self.cleaned_data['user_handle']
+        value = self.cleaned_data["user_handle"]
         try:
-            return base64.b64decode(value).decode('utf-8')
-        except ValueError:
-            raise ValidationError(_('FIDO 2 response is malformed.'), code='invalid')
+            return base64.b64decode(value).decode("utf-8")
+        except ValueError as err:
+            raise ValidationError(_("FIDO 2 response is malformed."), code="invalid") from err

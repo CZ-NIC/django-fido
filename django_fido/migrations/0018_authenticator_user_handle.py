@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_fido', '0017_metadata_update'),
+        ("django_fido", "0017_metadata_update"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='authenticator',
-            name='user_handle',
+            model_name="authenticator",
+            name="user_handle",
             field=models.TextField(blank=True, unique=True, null=True),
         ),
     ]

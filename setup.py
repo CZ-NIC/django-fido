@@ -1,48 +1,11 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 """Setup script for django_fido."""
 
 import os
 from distutils.command.build import build
 
-from setuptools import find_packages, setup
+from setuptools import setup
 from setuptools.command.sdist import sdist
-
-CLASSIFIERS = [
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
-    "Framework :: Django",
-    "Framework :: Django :: 4.2",
-    "Framework :: Django :: 5.0",
-    "Framework :: Django :: 5.1",
-    "Framework :: Django :: 5.2",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Internet :: WWW/HTTP",
-    "Topic :: Security :: Cryptography",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
-INSTALL_REQUIRES = [
-    "Django>=4.2",
-    "fido2~=1.1",
-    "django-app-settings>=0.7.1",
-    "jwcrypto",
-    "requests",
-    "cryptography",
-    "pyopenssl",
-]
-EXTRAS_REQUIRE = {
-    "quality": ["isort", "flake8", "pydocstyle", "mypy", "polint"],
-    "test": ["mock", "responses"],
-    "types": ["types-requests", "types-mock", "types-pyOpenSSL"],
-}
 
 
 def run_npm(build) -> bool:
@@ -65,17 +28,5 @@ class custom_sdist(sdist):
 
 
 setup(
-    name="django-fido",
-    description="Django application for FIDO protocol",
-    author="Vlastimil Zíma",
-    author_email="vlastimil.zima@nic.cz",
-    url="https://github.com/CZ-NIC/django-fido",
-    packages=find_packages(),
-    include_package_data=True,
-    python_requires="~=3.8",
-    install_requires=INSTALL_REQUIRES,
-    extras_require=EXTRAS_REQUIRE,
-    keywords=["django", "fido", "u2f", "fido2"],
-    classifiers=CLASSIFIERS,
     cmdclass={"build": custom_build, "sdist": custom_sdist},
 )

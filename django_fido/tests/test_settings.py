@@ -1,4 +1,5 @@
 """Unittests for setting utilities."""
+
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
@@ -14,13 +15,13 @@ class TestTimeoutValidator(SimpleTestCase):
         timeout_validator((123, 45))
         timeout_validator((123.45, 678.9))
         timeout_validator((123, 45.67))
-        with self.assertRaisesRegex(ValidationError, r'Value .* must be a float, int or a tuple with 2 float .+'):
-            timeout_validator('Hello world!')
-        with self.assertRaisesRegex(ValidationError, r'Value .* must be a float, int or a tuple with 2 float .+'):
+        with self.assertRaisesRegex(ValidationError, r"Value .* must be a float, int or a tuple with 2 float .+"):
+            timeout_validator("Hello world!")
+        with self.assertRaisesRegex(ValidationError, r"Value .* must be a float, int or a tuple with 2 float .+"):
             timeout_validator([123])
-        with self.assertRaisesRegex(ValidationError, r'Value .* must be a float, int or a tuple with 2 float .+'):
-            timeout_validator({'hello': 'World!'})
-        with self.assertRaisesRegex(ValidationError, r'Value .* must be a float, int or a tuple with 2 float .+'):
+        with self.assertRaisesRegex(ValidationError, r"Value .* must be a float, int or a tuple with 2 float .+"):
+            timeout_validator({"hello": "World!"})
+        with self.assertRaisesRegex(ValidationError, r"Value .* must be a float, int or a tuple with 2 float .+"):
             timeout_validator((123,))
-        with self.assertRaisesRegex(ValidationError, r'Value .* must be a float, int or a tuple with 2 float .+'):
+        with self.assertRaisesRegex(ValidationError, r"Value .* must be a float, int or a tuple with 2 float .+"):
             timeout_validator((1, 2, 3))

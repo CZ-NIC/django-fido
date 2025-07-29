@@ -1,8 +1,11 @@
 """Authentication backends for Django FIDO."""
+
+from __future__ import annotations
+
 import base64
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth import get_backends, get_user_model
@@ -29,8 +32,7 @@ def is_fido_backend_used() -> bool:
 
 
 class BaseFido2AuthenticationBackend(ABC):
-    """
-    Base class for authenticating user using FIDO 2.
+    """Base class for authenticating user using FIDO 2.
 
     @cvar counter_error_message: Error message in case FIDO 2 device counter didn't increase.
     """
@@ -38,8 +40,14 @@ class BaseFido2AuthenticationBackend(ABC):
     counter_error_message = _("Counter of the FIDO 2 device decreased. Device may have been duplicated.")
 
     @abstractmethod
-    def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
-                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+    def authenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate to be implemented."""
         raise NotImplementedError
 
@@ -66,43 +74,65 @@ class BaseFido2AuthenticationBackend(ABC):
 class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2."""
 
-    def authenticate(self, request: HttpRequest, user: AbstractBaseUser, fido2_server: Fido2Server,
-                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+    def authenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate using FIDO 2."""
         credentials = [a.credential for a in user.authenticators.all()]
         try:
             credential = fido2_server.authenticate_complete(
-                fido2_state, credentials, fido2_response['credential_id'], fido2_response['client_data'],
-                fido2_response['authenticator_data'], fido2_response['signature'])
+                fido2_state,
+                credentials,
+                fido2_response["credential_id"],
+                fido2_response["client_data"],
+                fido2_response["authenticator_data"],
+                fido2_response["signature"],
+            )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
 
-        device = user.authenticators.get(credential_id_data=base64.b64encode(credential.credential_id).decode('utf-8'))
+        device = user.authenticators.get(credential_id_data=base64.b64encode(credential.credential_id).decode("utf-8"))
         try:
-            self.mark_device_used(device, fido2_response['authenticator_data'].counter)
+            self.mark_device_used(device, fido2_response["authenticator_data"].counter)
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
-            raise PermissionDenied("Counter didn't increase.")
+            raise PermissionDenied("Counter didn't increase.") from None
         return user
 
 
 class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
     """Authenticate user using FIDO 2 passwordlessly using supplied user handle."""
 
-    def authenticate(self, request: HttpRequest, user: Optional[AbstractBaseUser], fido2_server: Fido2Server,
-                     fido2_state: Dict[str, str], fido2_response: Dict[str, Any]) -> Optional[AbstractBaseUser]:
+    def authenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser | None,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
         """Authenticate using FIDO 2."""
-        user_handle = fido2_response['user_handle']
+        user_handle = fido2_response["user_handle"]
 
         try:
             device = Authenticator.objects.get(user_handle=user_handle)
             user = device.user
             credentials = [device.credential]
             fido2_server.authenticate_complete(
-                fido2_state, credentials, fido2_response['credential_id'], fido2_response['client_data'],
-                fido2_response['authenticator_data'], fido2_response['signature'])
+                fido2_state,
+                credentials,
+                fido2_response["credential_id"],
+                fido2_response["client_data"],
+                fido2_response["authenticator_data"],
+                fido2_response["signature"],
+            )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
@@ -111,11 +141,11 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             return None
 
         try:
-            self.mark_device_used(device, fido2_response['authenticator_data'].counter)
+            self.mark_device_used(device, fido2_response["authenticator_data"].counter)
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
-            raise PermissionDenied("Counter didn't increase.")
+            raise PermissionDenied("Counter didn't increase.") from None
         return user
 
 
@@ -133,10 +163,10 @@ class Fido2GeneralAuthenticationBackend(ModelBackend):
         username: str,
         password: str,
         fido2_server: Fido2Server,
-        fido2_state: Dict[str, str],
-        fido2_response: Dict[str, Any],
-        **kwargs
-    ) -> Optional[AbstractBaseUser]:
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+        **kwargs,
+    ) -> AbstractBaseUser | None:
         """Authenticate using username, password and FIDO 2 token."""
         for auth_backend in SETTINGS.authentication_backends:
             user = auth_backend().authenticate(request, username=username, password=password, **kwargs)
