@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Fido 2 addFido2Error 1`] = `
 <ul
@@ -24,10 +24,10 @@ exports[`Fido 2 addFido2Error 2`] = `
 `;
 
 exports[`Fido 2 auth workflow 1`] = `
-Object {
-  "publicKey": Object {
-    "allowCredentials": Array [
-      Object {
+{
+  "publicKey": {
+    "allowCredentials": [
+      {
         "id": Uint8Array [
           194,
           232,
@@ -44,15 +44,15 @@ Object {
       112,
       133,
     ],
-    "excludeCredentials": Array [
-      Object {
+    "excludeCredentials": [
+      {
         "id": "wuheehe",
         "type": "public-key",
       },
     ],
     "rpId": "mojeid.cz",
     "timeout": 30000,
-    "user": Object {
+    "user": {
       "id": "id",
     },
     "userVerification": "preferred",
@@ -80,10 +80,10 @@ exports[`Fido 2 clearFido2Errors 2`] = `
 `;
 
 exports[`Fido 2 registration workflow 1`] = `
-Object {
-  "publicKey": Object {
-    "allowCredentials": Array [
-      Object {
+{
+  "publicKey": {
+    "allowCredentials": [
+      {
         "id": "wuheehe",
         "type": "public-key",
       },
@@ -94,8 +94,8 @@ Object {
       112,
       133,
     ],
-    "excludeCredentials": Array [
-      Object {
+    "excludeCredentials": [
+      {
         "id": Uint8Array [
           194,
           232,
@@ -108,7 +108,7 @@ Object {
     ],
     "rpId": "mojeid.cz",
     "timeout": 30000,
-    "user": Object {
+    "user": {
       "id": Uint8Array [
         105,
         100,
