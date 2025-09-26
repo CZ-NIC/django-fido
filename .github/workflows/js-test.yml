@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        node: [12, 14, 16]
+        node: [20, 22, 24]
 
     steps:
     - uses: actions/checkout@v3

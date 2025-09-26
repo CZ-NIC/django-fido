@@ -139,7 +139,7 @@ export const sendFido2Request = async(url, is_registration, credenetials_name, f
         try {
             const error_response = await response.json()
             fido2ErrorResponseCallback({name: error_response.error_code})
-        } catch (error) {
+        } catch {
             fido2ErrorResponseCallback(null)
         }
     }

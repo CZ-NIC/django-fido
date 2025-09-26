@@ -7,8 +7,22 @@ import {
     addFido2Error,
     clearFido2Errors,
 } from '../js/fido2-utils'
-import fetchMock from 'fetch-mock'
-import {TextEncoder} from 'util'
+import fetchMock from 'jest-fetch-mock'
+import { TextEncoder } from 'util'
+
+fetchMock.enableMocks()
+
+fetchMock.mockResponse(JSON.stringify({
+    publicKey: {
+        rpId:'mojeid.cz',
+        challenge:'wuhwhe==',
+        allowCredentials:[{ type:'public-key', id:'wuheehe' }],
+        excludeCredentials:[{ type:'public-key', id:'wuheehe' }],
+        timeout:30000,
+        userVerification: 'preferred',
+        user: { id: 'id' },
+    },
+}))
 
 describe('Fido 2', () => {
 
@@ -28,19 +42,6 @@ describe('Fido 2', () => {
             return {response: {}}
         }),
     }
-
-
-    fetchMock.mock('/data', {
-        publicKey: {
-            rpId:'mojeid.cz',
-            challenge:'wuhwhe==',
-            allowCredentials:[{type:'public-key', id:'wuheehe'}],
-            excludeCredentials:[{type:'public-key', id:'wuheehe'}],
-            timeout:30000,
-            userVerification:'preferred',
-            user: {id: 'id'},
-        },
-    })
 
     async function testWorkflow(mode, done) {
         const form = document.createElement('form')
