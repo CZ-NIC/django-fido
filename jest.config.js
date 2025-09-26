@@ -1,6 +1,6 @@
 export default {
     transform: {
-      '^.+\\.jsx?$': 'babel-jest',
+      '^.+\\.jsx?$': 'jest-esbuild',
     },
     testEnvironment: 'jsdom',
 }

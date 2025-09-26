@@ -1,5 +1,3 @@
-import 'core-js/stable'
-import 'regenerator-runtime/runtime'
 import {
     startFido2,
     FIDO2_REGISTRATION_REQUEST,

@@ -1,6 +1,3 @@
-import 'core-js/stable'
-import 'regenerator-runtime/runtime'
-
 import {
     DJANGO_FIDO_FORM_ID,
     FIDO2_AUTHENTICATION_REQUEST,
