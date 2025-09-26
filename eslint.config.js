@@ -18,7 +18,7 @@ module.exports = defineConfig([
         files: ['**/*.test.js'],
         languageOptions: {
             globals: {
-                ...globals.jest,
+                ...globals.vitest,
                 ...globals.node,
             }
         }

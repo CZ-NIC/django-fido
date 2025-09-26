@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Fido 2 addFido2Error 1`] = `
+exports[`Fido 2 > addFido2Error 1`] = `
 <ul
   id="django-fido-errors"
 >
@@ -10,7 +10,7 @@ exports[`Fido 2 addFido2Error 1`] = `
 </ul>
 `;
 
-exports[`Fido 2 addFido2Error 2`] = `
+exports[`Fido 2 > addFido2Error 2`] = `
 <ul
   id="django-fido-errors"
 >
@@ -23,7 +23,7 @@ exports[`Fido 2 addFido2Error 2`] = `
 </ul>
 `;
 
-exports[`Fido 2 auth workflow 1`] = `
+exports[`Fido 2 > auth workflow 1`] = `
 {
   "publicKey": {
     "allowCredentials": [
@@ -60,7 +60,7 @@ exports[`Fido 2 auth workflow 1`] = `
 }
 `;
 
-exports[`Fido 2 clearFido2Errors 1`] = `
+exports[`Fido 2 > clearFido2Errors 1`] = `
 <ul
   id="django-fido-errors"
 >
@@ -73,13 +73,13 @@ exports[`Fido 2 clearFido2Errors 1`] = `
 </ul>
 `;
 
-exports[`Fido 2 clearFido2Errors 2`] = `
+exports[`Fido 2 > clearFido2Errors 2`] = `
 <ul
   id="django-fido-errors"
 />
 `;
 
-exports[`Fido 2 registration workflow 1`] = `
+exports[`Fido 2 > registration workflow 1`] = `
 {
   "publicKey": {
     "allowCredentials": [
