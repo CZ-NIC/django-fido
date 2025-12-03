@@ -1,8 +1,8 @@
 # Changelog #
 ## Unreleased
  * Removed support for Django 3.0 and 3.1
- * Added support for Django 4.1 and 4.2
- * Added support for Python 3.11
+ * Added support for Django 4.2, 5.1 and 5.2
+ * Added support for Python 3.11 and 3.12
  * Upgrade NPM dependencies
 
 ## 1.2.1
