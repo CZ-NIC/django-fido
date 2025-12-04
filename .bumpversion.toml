@@ -1,0 +1,58 @@
+[tool.bumpversion]
+current_version = "1.3.0"
+commit = true
+tag = true
+tag_name = "{new_version}"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-rc(?P<rc>\\d+))?"
+serialize = ["{major}.{minor}.{patch}-rc{rc}", "{major}.{minor}.{patch}"]
+pre_commit_hooks = ["git add CHANGELOG.md"]
+
+[[tool.bumpversion.files]]
+filename = "setup.cfg"
+search = "version = {current_version}"
+replace = "version = {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "django_fido/__init__.py"
+
+[[tool.bumpversion.files]]
+filename = "django_fido/locale/cs/LC_MESSAGES/django.po"
+search = "Project-Id-Version: django_fido {current_version}"
+replace = "Project-Id-Version: django_fido {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "django_fido/locale/cs/LC_MESSAGES/djangojs.po"
+search = "Project-Id-Version: django_fido {current_version}"
+replace = "Project-Id-Version: django_fido {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "package.json"
+parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-rc\.(?P<rc>\d+))?'
+serialize = ["{major}.{minor}.{patch}-rc.{rc}", "{major}.{minor}.{patch}"]
+regex = true
+search = '''
+{{
+( *)"name": "@cz-nic/django-fido",
+( *)"version": "{current_version}",
+'''
+replace = '''
+{{
+\1"name": "@cz-nic/django-fido",
+\2"version": "{new_version}",
+'''
+
+[[tool.bumpversion.files]]
+filename = "package-lock.json"
+parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-rc\.(?P<rc>\d+))?'
+serialize = ["{major}.{minor}.{patch}-rc.{rc}", "{major}.{minor}.{patch}"]
+regex = true
+search = '''
+{{
+( *)"name": "@cz-nic/django-fido",
+( *)"version": "{current_version}",
+'''
+replace = '''
+{{
+\1"name": "@cz-nic/django-fido",
+\2"version": "{new_version}",
+'''
