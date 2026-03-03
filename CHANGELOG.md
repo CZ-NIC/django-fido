@@ -1,6 +1,8 @@
 # Changelog #
 ## Unreleased
 
+* Make auth backends async compatible (Django 5.2+ only)
+
 ## 1.3.0
  * Removed support for Django 3.0 and 3.1
  * Added support for Django 4.2, 5.1 and 5.2
