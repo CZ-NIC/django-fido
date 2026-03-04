@@ -7,6 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
+from asgiref.sync import sync_to_async
 from django.contrib import messages
 from django.contrib.auth import get_backends, get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -51,6 +52,18 @@ class BaseFido2AuthenticationBackend(ABC):
         """Authenticate to be implemented."""
         raise NotImplementedError
 
+    @abstractmethod
+    async def aauthenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
+        """Async authenticate to be implemented."""
+        raise NotImplementedError
+
     def mark_device_used(self, device, counter):
         """Update FIDO 2 device usage information."""
         if counter == 0 and device.counter == 0:
@@ -63,10 +76,29 @@ class BaseFido2AuthenticationBackend(ABC):
         device.full_clean()
         device.save()
 
+    async def amark_device_used(self, device, counter):
+        """Update FIDO 2 device usage information."""
+        if counter == 0 and device.counter == 0:
+            # Counter is unsupported by the device, bail out early
+            return
+        if counter <= device.counter:
+            _LOGGER.info("FIDO 2 authentication failed because of not increasing counter.")
+            raise ValueError("Counter didn't increase.")
+        device.counter = counter
+        await sync_to_async(device.full_clean)()  # Django doesn't support async full_clean as of 5.2
+        await device.asave()
+
     def get_user(self, user_id):
         """Return user based on its ID."""
         try:
             return get_user_model().objects.get(pk=user_id)
+        except get_user_model().DoesNotExist:
+            return None
+
+    async def aget_user(self, user_id):
+        """Return user based on its ID."""
+        try:
+            return await get_user_model().objects.aget(pk=user_id)
         except get_user_model().DoesNotExist:
             return None
 
@@ -100,6 +132,40 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
         device = user.authenticators.get(credential_id_data=base64.b64encode(credential.credential_id).decode("utf-8"))
         try:
             self.mark_device_used(device, fido2_response["authenticator_data"].counter)
+        except ValueError:
+            # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
+            messages.error(request, self.counter_error_message)
+            raise PermissionDenied("Counter didn't increase.") from None
+        return user
+
+    async def aauthenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
+        """Authenticate using FIDO 2."""
+        credentials = [a.credential async for a in user.authenticators.all()]
+        try:
+            credential = fido2_server.authenticate_complete(
+                fido2_state,
+                credentials,
+                fido2_response["credential_id"],
+                fido2_response["client_data"],
+                fido2_response["authenticator_data"],
+                fido2_response["signature"],
+            )
+        except ValueError as error:
+            _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
+            return None
+
+        device = await user.authenticators.aget(
+            credential_id_data=base64.b64encode(credential.credential_id).decode("utf-8")
+        )
+        try:
+            await self.amark_device_used(device, fido2_response["authenticator_data"].counter)
         except ValueError:
             # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
             messages.error(request, self.counter_error_message)
@@ -148,6 +214,44 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             raise PermissionDenied("Counter didn't increase.") from None
         return user
 
+    async def aauthenticate(
+        self,
+        request: HttpRequest,
+        user: AbstractBaseUser | None,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+    ) -> AbstractBaseUser | None:
+        """Authenticate using FIDO 2."""
+        user_handle = fido2_response["user_handle"]
+
+        try:
+            device = await Authenticator.objects.aget(user_handle=user_handle)
+            user = await get_user_model().objects.aget(pk=device.user_id)
+            credentials = [device.credential]
+            fido2_server.authenticate_complete(
+                fido2_state,
+                credentials,
+                fido2_response["credential_id"],
+                fido2_response["client_data"],
+                fido2_response["authenticator_data"],
+                fido2_response["signature"],
+            )
+        except ValueError as error:
+            _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
+            return None
+        except Authenticator.DoesNotExist:
+            _LOGGER.info("FIDO 2 authentication could not find user handle: %s", user_handle)
+            return None
+
+        try:
+            await self.amark_device_used(device, fido2_response["authenticator_data"].counter)
+        except ValueError:
+            # Raise `PermissionDenied` to stop the authentication process and skip remaining backends.
+            messages.error(request, self.counter_error_message)
+            raise PermissionDenied("Counter didn't increase.") from None
+        return user
+
 
 class Fido2GeneralAuthenticationBackend(ModelBackend):
     """Authenticated user using any username-password backend and Fido2AuthenticationBackend."""
@@ -172,5 +276,23 @@ class Fido2GeneralAuthenticationBackend(ModelBackend):
             user = auth_backend().authenticate(request, username=username, password=password, **kwargs)
             if user is not None:
                 return self.fido_backend.authenticate(request, user, fido2_server, fido2_state, fido2_response)
+
+        return None
+
+    async def aauthenticate(
+        self,
+        request: HttpRequest,
+        username: str,
+        password: str,
+        fido2_server: Fido2Server,
+        fido2_state: dict[str, str],
+        fido2_response: dict[str, Any],
+        **kwargs,
+    ) -> AbstractBaseUser | None:
+        """Authenticate using username, password and FIDO 2 token."""
+        for auth_backend in SETTINGS.authentication_backends:
+            user = await auth_backend().aauthenticate(request, username=username, password=password, **kwargs)
+            if user is not None:
+                return await self.fido_backend.aauthenticate(request, user, fido2_server, fido2_state, fido2_response)
 
         return None
