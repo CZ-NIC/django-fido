@@ -1,7 +1,10 @@
 # Changelog #
 ## Unreleased
 
-## 1.4.0
+## 1.4.1
+ * Proper release of `1.4.0`
+
+## 1.4.0 (yanked)
  * Make auth backends async compatible (Django 5.2+ only)
 
 ## 1.3.0
