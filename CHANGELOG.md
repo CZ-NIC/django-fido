@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased
 
+## 1.4.2
+ * Fix NPM versioning
+
 ## 1.4.1
  * Proper release of `1.4.0`
 
