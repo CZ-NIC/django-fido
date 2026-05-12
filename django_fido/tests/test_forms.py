@@ -19,9 +19,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "attestation": AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
             "user_handle": None,
             "label": "",
@@ -41,9 +39,7 @@ class TestFido2RegistrationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "attestation": AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
             "user_handle": None,
             "label": "My label",
@@ -93,9 +89,7 @@ class TestFido2RegistrationFormWithResidentKey(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "attestation": AttestationObject(base64.b64decode(ATTESTATION_OBJECT)),
             "user_handle": USER_HANDLE,
             "label": "",
@@ -128,9 +122,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {
             "credential_id": b"\0",
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "authenticator_data": AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
             "signature": b"\0",
         }
@@ -165,9 +157,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {
             "credential_id": base64.b64decode("GAZPACHO"),
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "authenticator_data": AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
             "signature": b"\0",
         }
@@ -212,9 +202,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {
             "credential_id": b"\0",
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "authenticator_data": AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
             "signature": b"\0",
         }
@@ -259,9 +247,7 @@ class TestFido2AuthenticationForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
         cleaned_data = {
             "credential_id": b"\0",
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "authenticator_data": AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),
             "signature": base64.b64decode("GAZPACHO"),
         }
@@ -308,9 +294,7 @@ class TestFido2PasswordlessAuthenticationForm(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
         cleaned_data = {
-            "client_data": CollectedClientData(
-                b'{"type": "webauthn.create", "challenge": "Gazpacho!", "origin": "https://testserver"}'
-            ),
+            "client_data": CollectedClientData(base64.b64decode(REGISTRATION_CLIENT_DATA)),
             "credential_id": b"\0",
             "user_handle": USER_HANDLE,
             "authenticator_data": AuthenticatorData(base64.b64decode(AUTHENTICATOR_DATA)),

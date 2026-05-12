@@ -8,9 +8,10 @@ from django.contrib.auth import get_user, get_user_model
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase, override_settings
 from django.urls import reverse, reverse_lazy
-from fido2.utils import websafe_decode
+from fido2.utils import websafe_decode, websafe_encode
 from fido2.webauthn import UserVerificationRequirement
 
+from django_fido.compat import FIDO2_2
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
 from django_fido.models import Authenticator
 
@@ -22,6 +23,7 @@ from .data import (
     AUTHENTICATION_CLIENT_DATA,
     AUTHENTICATOR_DATA,
     CREDENTIAL_ID,
+    CREDENTIAL_ID_WEBSAFE,
     HOSTNAME,
     PASSWORD,
     REGISTRATION_CHALLENGE,
@@ -35,6 +37,14 @@ from .data import (
     USERNAME,
 )
 from .utils import TEMPLATES
+
+
+def _b64(data: bytes) -> str:
+    """Encode bytes to base64 using the encoding fido2 uses in JSON responses."""
+    if FIDO2_2:
+        return websafe_encode(data)
+    return base64.b64encode(data).decode()
+
 
 User = get_user_model()
 
@@ -73,10 +83,10 @@ class TestFido2RegistrationRequestView(TestCase):
                 "rp": rp_data,
                 "user": {
                     "displayName": USER_FULL_NAME,
-                    "id": base64.b64encode(bytes(USERNAME, encoding="utf-8")).decode("utf-8"),
+                    "id": _b64(bytes(USERNAME, encoding="utf-8")),
                     "name": USERNAME,
                 },
-                "challenge": base64.b64encode(challenge).decode("utf-8"),
+                "challenge": _b64(challenge),
                 "pubKeyCredParams": credential_params,
                 "attestation": "none",
                 "excludeCredentials": credentials,
@@ -87,7 +97,7 @@ class TestFido2RegistrationRequestView(TestCase):
                 "requireResidentKey": True,
                 "residentKey": "required",
             }
-            fido2_request["publicKey"]["user"]["id"] = "AA=="
+            fido2_request["publicKey"]["user"]["id"] = _b64(b"\x00")
         return fido2_request
 
     def test_get(self):
@@ -106,7 +116,7 @@ class TestFido2RegistrationRequestView(TestCase):
         self.client.force_login(self.user)
 
         with patch("django_fido.views.uuid") as uuid_mock:
-            uuid_mock.uuid4.bytes.return_value = b"somebytes"
+            uuid_mock.uuid4.return_value.bytes = b"\x00"
             response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
@@ -125,7 +135,8 @@ class TestFido2RegistrationRequestView(TestCase):
         # Check response contains the same request as session
         state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
         challenge = websafe_decode(state["challenge"])
-        credentials = [{"id": CREDENTIAL_ID, "type": "public-key"}]
+        cred_id = CREDENTIAL_ID_WEBSAFE if FIDO2_2 else CREDENTIAL_ID
+        credentials = [{"id": cred_id, "type": "public-key"}]
         self.assertEqual(response.json(), self._get_fido2_request(challenge, credentials))
 
 
@@ -284,11 +295,12 @@ class TestFido2AuthenticationRequestView(TestCase):
         # Check response
         state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
         challenge = websafe_decode(state["challenge"])
+        cred_id = CREDENTIAL_ID_WEBSAFE if FIDO2_2 else CREDENTIAL_ID
         fido2_request = {
             "publicKey": {
                 "rpId": "testserver",
-                "challenge": base64.b64encode(challenge).decode("utf-8"),
-                "allowCredentials": [{"id": CREDENTIAL_ID, "type": "public-key"}],
+                "challenge": _b64(challenge),
+                "allowCredentials": [{"id": cred_id, "type": "public-key"}],
             }
         }
         self.assertEqual(response.json(), fido2_request)
@@ -322,11 +334,12 @@ class TestFido2AuthenticationRequestView(TestCase):
         # Check response
         state = self.client.session[FIDO2_REQUEST_SESSION_KEY]
         challenge = websafe_decode(state["challenge"])
+        cred_id = CREDENTIAL_ID_WEBSAFE if FIDO2_2 else CREDENTIAL_ID
         fido2_request = {
             "publicKey": {
                 "rpId": "testserver",
-                "challenge": base64.b64encode(challenge).decode("utf-8"),
-                "allowCredentials": [{"id": CREDENTIAL_ID, "type": "public-key"}],
+                "challenge": _b64(challenge),
+                "allowCredentials": [{"id": cred_id, "type": "public-key"}],
             }
         }
         self.assertEqual(response.json(), fido2_request)
