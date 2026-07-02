@@ -47,7 +47,7 @@ class TestFido2AuthenticationBackend(TestCase):
 
     backend = Fido2AuthenticationBackend()
 
-    server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
+    server = Fido2Server(PublicKeyCredentialRpEntity(name=HOSTNAME, id=HOSTNAME))
 
     state = {"challenge": AUTHENTICATION_CHALLENGE, "user_verification": UserVerificationRequirement.PREFERRED}
     fido2_response = {
@@ -261,7 +261,7 @@ class TestFido2GeneralAuthenticationBackend(TestCase):
 
     backend = Fido2GeneralAuthenticationBackend()
 
-    server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
+    server = Fido2Server(PublicKeyCredentialRpEntity(name=HOSTNAME, id=HOSTNAME))
 
     state = {"challenge": AUTHENTICATION_CHALLENGE, "user_verification": UserVerificationRequirement.PREFERRED}
     fido2_response = {
@@ -335,7 +335,7 @@ class TestFido2PasswordlessAuthenticationBackend(TestCase):
 
     backend = Fido2PasswordlessAuthenticationBackend()
 
-    server = Fido2Server(PublicKeyCredentialRpEntity(HOSTNAME, HOSTNAME))
+    server = Fido2Server(PublicKeyCredentialRpEntity(name=HOSTNAME, id=HOSTNAME))
 
     state = {"challenge": AUTHENTICATION_CHALLENGE, "user_verification": UserVerificationRequirement.PREFERRED}
     fido2_response = {

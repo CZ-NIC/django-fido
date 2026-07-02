@@ -39,6 +39,7 @@ from fido2.webauthn import (
     ResidentKeyRequirement,
 )
 
+from .compat import FIDO2_2
 from .constants import (
     AUTHENTICATION_USER_SESSION_KEY,
     FIDO2_AUTHENTICATION_REQUEST,
@@ -117,7 +118,7 @@ class Fido2ViewMixin:
     @property
     def server(self) -> Fido2Server:
         """Return FIDO 2 server instance."""
-        rp = PublicKeyCredentialRpEntity(self.get_rp_name(), self.get_rp_id())
+        rp = PublicKeyCredentialRpEntity(name=self.get_rp_name(), id=self.get_rp_id())
         if self.verify_attestation is None:
             if self.attestation_types is not None:
                 warnings.warn(
@@ -213,7 +214,7 @@ class Fido2RegistrationRequestView(LoginRequiredMixin, BaseFido2RequestView):
     def get_user_data(self, user: AbstractBaseUser) -> PublicKeyCredentialUserEntity:
         """Convert user instance to user data for registration."""
         return PublicKeyCredentialUserEntity(
-            user.username, self.get_user_id(user), user.get_full_name() or user.username
+            name=user.username, id=self.get_user_id(user), display_name=user.get_full_name() or user.username
         )
 
     def create_fido2_request(self) -> tuple[Mapping[str, Any], Any]:
@@ -259,9 +260,19 @@ class Fido2RegistrationView(LoginRequiredMixin, Fido2ViewMixin, FormView):
             raise ValidationError(_("Registration request not found."), code="missing")
 
         try:
-            return self.server.register_complete(
-                state, form.cleaned_data["client_data"], form.cleaned_data["attestation"]
-            )
+            attestation = form.cleaned_data["attestation"]
+            credential_id = attestation.auth_data.credential_data.credential_id
+            if FIDO2_2:
+                response = {
+                    "rawId": credential_id,
+                    "response": {
+                        "clientDataJSON": form.cleaned_data["client_data"],
+                        "attestationObject": attestation,
+                    },
+                }
+                return self.server.register_complete(state, response)
+            else:
+                return self.server.register_complete(state, form.cleaned_data["client_data"], attestation)  # type: ignore[call-arg]
         except ValueError as error:
             _LOGGER.info("FIDO 2 registration failed with error: %r", error)
             raise ValidationError(_("Registration failed."), code="invalid") from error

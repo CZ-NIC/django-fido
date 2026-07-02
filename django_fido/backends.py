@@ -17,6 +17,7 @@ from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from fido2.server import Fido2Server
 
+from .compat import FIDO2_2
 from .models import Authenticator
 from .settings import SETTINGS
 
@@ -117,14 +118,25 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
         """Authenticate using FIDO 2."""
         credentials = [a.credential for a in user.authenticators.all()]
         try:
-            credential = fido2_server.authenticate_complete(
-                fido2_state,
-                credentials,
-                fido2_response["credential_id"],
-                fido2_response["client_data"],
-                fido2_response["authenticator_data"],
-                fido2_response["signature"],
-            )
+            if FIDO2_2:
+                auth_response = {
+                    "rawId": fido2_response["credential_id"],
+                    "response": {
+                        "clientDataJSON": fido2_response["client_data"],
+                        "authenticatorData": fido2_response["authenticator_data"],
+                        "signature": fido2_response["signature"],
+                    },
+                }
+                credential = fido2_server.authenticate_complete(fido2_state, credentials, auth_response)
+            else:
+                credential = fido2_server.authenticate_complete(  # type: ignore[call-arg]
+                    fido2_state,
+                    credentials,
+                    fido2_response["credential_id"],
+                    fido2_response["client_data"],
+                    fido2_response["authenticator_data"],
+                    fido2_response["signature"],
+                )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
@@ -149,14 +161,25 @@ class Fido2AuthenticationBackend(BaseFido2AuthenticationBackend):
         """Authenticate using FIDO 2."""
         credentials = [a.credential async for a in user.authenticators.all()]
         try:
-            credential = fido2_server.authenticate_complete(
-                fido2_state,
-                credentials,
-                fido2_response["credential_id"],
-                fido2_response["client_data"],
-                fido2_response["authenticator_data"],
-                fido2_response["signature"],
-            )
+            if FIDO2_2:
+                auth_response = {
+                    "rawId": fido2_response["credential_id"],
+                    "response": {
+                        "clientDataJSON": fido2_response["client_data"],
+                        "authenticatorData": fido2_response["authenticator_data"],
+                        "signature": fido2_response["signature"],
+                    },
+                }
+                credential = fido2_server.authenticate_complete(fido2_state, credentials, auth_response)
+            else:
+                credential = fido2_server.authenticate_complete(  # type: ignore[call-arg]
+                    fido2_state,
+                    credentials,
+                    fido2_response["credential_id"],
+                    fido2_response["client_data"],
+                    fido2_response["authenticator_data"],
+                    fido2_response["signature"],
+                )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
@@ -191,14 +214,25 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             device = Authenticator.objects.get(user_handle=user_handle)
             user = device.user
             credentials = [device.credential]
-            fido2_server.authenticate_complete(
-                fido2_state,
-                credentials,
-                fido2_response["credential_id"],
-                fido2_response["client_data"],
-                fido2_response["authenticator_data"],
-                fido2_response["signature"],
-            )
+            if FIDO2_2:
+                auth_response = {
+                    "rawId": fido2_response["credential_id"],
+                    "response": {
+                        "clientDataJSON": fido2_response["client_data"],
+                        "authenticatorData": fido2_response["authenticator_data"],
+                        "signature": fido2_response["signature"],
+                    },
+                }
+                fido2_server.authenticate_complete(fido2_state, credentials, auth_response)
+            else:
+                fido2_server.authenticate_complete(  # type: ignore[call-arg]
+                    fido2_state,
+                    credentials,
+                    fido2_response["credential_id"],
+                    fido2_response["client_data"],
+                    fido2_response["authenticator_data"],
+                    fido2_response["signature"],
+                )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None
@@ -229,14 +263,25 @@ class Fido2PasswordlessAuthenticationBackend(BaseFido2AuthenticationBackend):
             device = await Authenticator.objects.aget(user_handle=user_handle)
             user = await get_user_model().objects.aget(pk=device.user_id)
             credentials = [device.credential]
-            fido2_server.authenticate_complete(
-                fido2_state,
-                credentials,
-                fido2_response["credential_id"],
-                fido2_response["client_data"],
-                fido2_response["authenticator_data"],
-                fido2_response["signature"],
-            )
+            if FIDO2_2:
+                auth_response = {
+                    "rawId": fido2_response["credential_id"],
+                    "response": {
+                        "clientDataJSON": fido2_response["client_data"],
+                        "authenticatorData": fido2_response["authenticator_data"],
+                        "signature": fido2_response["signature"],
+                    },
+                }
+                fido2_server.authenticate_complete(fido2_state, credentials, auth_response)
+            else:
+                fido2_server.authenticate_complete(  # type: ignore[call-arg]
+                    fido2_state,
+                    credentials,
+                    fido2_response["credential_id"],
+                    fido2_response["client_data"],
+                    fido2_response["authenticator_data"],
+                    fido2_response["signature"],
+                )
         except ValueError as error:
             _LOGGER.info("FIDO 2 authentication failed with error: %r", error)
             return None

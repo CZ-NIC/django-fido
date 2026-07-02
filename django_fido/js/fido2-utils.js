@@ -61,7 +61,10 @@ export const _arrayBufferToBase64 = buffer => {
 
 // https://stackoverflow.com/a/21797381/2440346
 export const _base64ToArrayBuffer = base64 => {
-    const binary_string = window.atob(base64)
+    // Normalize websafe base64 (URL-safe, no padding) to standard base64
+    const normalized = base64.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized + '==='.slice(0, (4 - normalized.length % 4) % 4)
+    const binary_string = window.atob(padded)
     const bytes = new Uint8Array(binary_string.length)
     for (let i = 0; i < binary_string.length; i++) {
         bytes[i] = binary_string.charCodeAt(i)
