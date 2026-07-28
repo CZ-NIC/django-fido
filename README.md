@@ -33,15 +33,15 @@ Django-fido provides basic components for FIDO 2 authentication - model to store
    ``` py
    # <django_project>/settings.py
    AUTHENTICATION_BACKENDS = [
-      'django.contrib.auth.backends.ModelBackend',
-      'django_fido.backends.Fido2AuthenticationBackend',
+       "django.contrib.auth.backends.ModelBackend",
+       "django_fido.backends.Fido2AuthenticationBackend",
    ]
    ```
 3. Link django-fido URLs into your `urls.py`:
    ``` py
    # <django_project>/urls.py
    urlpatterns += [
-         path('', include('django_fido.urls')),
+       path("", include("django_fido.urls")),
    ]
    ```
 4. If you wish, set string variable `DJANGO_FIDO_RP_NAME`.
