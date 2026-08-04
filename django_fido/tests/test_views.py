@@ -11,7 +11,7 @@ from django.urls import reverse, reverse_lazy
 from fido2.utils import websafe_decode, websafe_encode
 from fido2.webauthn import UserVerificationRequirement
 
-from django_fido.compat import FIDO2_2
+from django_fido.compat import FIDO2_2, FIDO2_22
 from django_fido.constants import AUTHENTICATION_USER_SESSION_KEY, FIDO2_REQUEST_SESSION_KEY
 from django_fido.models import Authenticator
 
@@ -74,6 +74,12 @@ class TestFido2RegistrationRequestView(TestCase):
             {"alg": -257, "type": "public-key"},
             {"alg": -47, "type": "public-key"},
         ]
+        if FIDO2_22:
+            credential_params += [
+                {"alg": -48, "type": "public-key"},
+                {"alg": -49, "type": "public-key"},
+                {"alg": -50, "type": "public-key"},
+            ]
         rp_data = {
             "id": HOSTNAME,
             "name": HOSTNAME,
