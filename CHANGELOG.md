@@ -1,6 +1,9 @@
 # Changelog #
 ## Unreleased
 
+## 1.5.0
+  * Add support for fido2 <2.3
+
 ## 1.4.2
  * Fix NPM versioning
 
